@@ -83,7 +83,7 @@
         <br><br>
         <div class="page-header">
             <div style="background-color:var(--primary-color); width:100%; padding:12px; color: #ffff; font-size: 20px; border-radius:5px;">
-                Kanchi Chits<span id="pageHeaderName"></span>
+                Thendral<span id="pageHeaderName"></span>
             </div>
         </div><br>
         <div class="main-container" id="main-container"></div>

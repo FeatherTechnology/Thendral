@@ -337,7 +337,7 @@ class auctionUploadClass
                 '" . strip_tags($data['gur_id']) . "',
                 '" . strip_tags($data['relationship']) . "',
                 '" . $user_id . "',
-                  '" . strip_tags($data['settle_date']) . "',
+                  '" . strip_tags($data['settle_date']) . "'
             )";
 
             // Execute the insert query for settlement_info
@@ -385,6 +385,7 @@ class auctionUploadClass
         if ($data['date'] == 'Invalid Date') {
             $errcolumns[] = 'Auction Date';
         }
+        
         if (!empty($data['settle_date'])) {
             if ($data['settle_date'] == 'Invalid Date') {
                 $errcolumns[] = 'Settlement Date';
