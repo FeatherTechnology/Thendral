@@ -5,10 +5,10 @@
 	<!-- Meta -->
 	<meta name="description" content="Chit ERP Application">
 	<meta name="author" content="Feather Technology">
-	<link rel="shortcut icon" href="img/thendral_logo.jpeg" />
+	<link rel="shortcut icon" href="img/bg_none1.png" />
 
 	<!-- Title -->
-	<title>Thendral Software</title>
+	<title>Kanchi Chits Software</title>
 
 	<!-- ************************* Vendor Css Files *************-->
 	<link rel="stylesheet" href="vendor/customcss/customstyle.css" />

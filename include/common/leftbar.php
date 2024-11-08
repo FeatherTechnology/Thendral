@@ -7,7 +7,7 @@
 	<!-- Sidebar brand start  -->
 	<div class="sidebar-brand" style="background-color: var(--primary-color)">
 		<a href="#" class="logo">
-			<h2  style="color: white">THENDRAL</h2>
+			<h2  style="color: white">KANCHI CHITS</h2>
 		</a>
 	</div>
 

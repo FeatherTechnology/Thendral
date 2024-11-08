@@ -20,7 +20,7 @@ include "include/common/dashboardhead.php";
 		<div class="login-screen">
 			<div class="login-box">
 				<div class=" logo_div">
-					<img src="./img/thendral_logo.jpeg" alt="" class="img"><br>
+					<img src="./img/bg_none_eng_logo.png" alt="" class="img"><br>
 				</div>
 				<div>
 				
