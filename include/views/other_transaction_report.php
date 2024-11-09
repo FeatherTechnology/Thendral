@@ -3,7 +3,7 @@
         <div class="toggle-container col-12">
             <input type="date" id='from_date' name='from_date' class="toggle-button" value=''>
             <input type="date" id='to_date' name='to_date' class="toggle-button" value=''>
-            <input type="button" id='other_report_btn' name='other_report_btn' class="toggle-button" style="background-color: #e2776f;color:white" value='Search'>
+            <input type="button" id='other_report_btn' name='other_report_btn' class="toggle-button" style="background-color: #536589;color:white" value='Search'>
         </div> <br/>
         <!-- Loan Issue report Start -->
         <div class="card">

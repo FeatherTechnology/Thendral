@@ -1,4 +1,4 @@
 <?php
-$HOSTPATH = "https://" . $_SERVER['HTTP_HOST'] . "/chit/";
+$HOSTPATH = "https://" . $_SERVER['HTTP_HOST'] . "/thendral/";
 
 define('HOSTPATH', $HOSTPATH);
