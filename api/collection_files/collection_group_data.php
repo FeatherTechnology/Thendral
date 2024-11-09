@@ -1,0 +1,183 @@
+<?php
+require '../../ajaxconfig.php';
+@session_start();
+$id = $_POST['params']['id'];
+$user_id = $_SESSION['user_id'];
+$currentMonth = date('m');
+$currentYear = date('Y');
+include 'collectionStatus.php';
+$collectionSts = new CollectionStsClass($pdo);
+$column = array(
+    'cc.id',
+    'gc.grp_id',
+    'gc.grp_name',
+    'gc.chit_value',
+    'ad.chit_amount',
+    'status',
+    'gc.grace_period',
+    'cc.id',
+    'cc.id'
+);
+
+// First query
+$query = "SELECT
+    ad.id AS auction_id,
+    cc.id AS customer_id,
+    gc.grp_id,
+    gc.grp_name,
+    gc.chit_value,
+    ad.chit_amount,
+    ad.auction_month,
+    ad.date AS due_date,
+    gcm.id AS cus_mapping_id,
+    cc.cus_id,
+    gc.grace_period,
+    gcm.settle_status -- Fetch settle_status directly for all months
+FROM
+    auction_details ad
+LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
+LEFT JOIN group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
+LEFT JOIN customer_creation cc ON gcm.cus_id = cc.id
+    JOIN 
+        branch_creation bc ON gc.branch = bc.id
+    JOIN 
+        users us ON FIND_IN_SET(gc.branch, us.branch) > 0
+WHERE
+    gc.status BETWEEN 3 AND 4
+    AND cc.id = '$id'
+    AND YEAR(ad.date) = '$currentYear'
+    AND MONTH(ad.date) = '$currentMonth' AND  us.id = '$user_id'";
+
+// Handle search filter
+if (isset($_POST['search']) && $_POST['search'] != "") {
+    $search = $_POST['search'];
+    $query .= " AND (gc.grp_id LIKE '%$search%' OR gc.grp_name LIKE '%$search%' OR gc.chit_value LIKE '%$search%' OR ad.chit_amount LIKE '%$search%')";
+}
+
+$query .= " ORDER BY gc.grp_id";
+// Prepare the statement for the main query
+$statement = $pdo->prepare($query);
+$statement->execute();
+$result = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+// Count the number of filtered rows
+$number_filter_row = $statement->rowCount(); // Get the number of rows returned by the main query
+
+// Store settle statuses for all mappings in a separate query
+$settleStatusQuery = "SELECT
+    gcm.id AS cus_mapping_id,
+    gcm.settle_status
+FROM
+    group_cus_mapping gcm
+JOIN
+    auction_details ad ON gcm.grp_creation_id = ad.group_id
+WHERE
+    gcm.cus_id = (SELECT id FROM customer_creation WHERE id = '$id') AND ad.status='3'"; // Assuming you're filtering by the same customer id
+
+$settleStatusStatement = $pdo->prepare($settleStatusQuery);
+$settleStatusStatement->execute();
+$settleStatuses = $settleStatusStatement->fetchAll(PDO::FETCH_KEY_PAIR); // Fetch as key-value pairs
+
+$sno = isset($_POST['start']) ? $_POST['start'] + 1 : 1;
+$data = [];
+
+foreach ($result as $row) {
+    $sub_array = [];
+    $sub_array[] = $sno++;
+    $sub_array[] = $row['grp_id'];
+    $sub_array[] = $row['grp_name'];
+    $sub_array[] = moneyFormatIndia($row['chit_value']);
+
+    $chit_amount = isset($row['chit_amount']) && is_numeric($row['chit_amount']) ? $row['chit_amount'] : 0;
+    $roundedAmount = round($chit_amount);
+    $sub_array[] = moneyFormatIndia($roundedAmount);
+
+    // Get settle_status from the previously fetched settleStatuses array
+    $settle_status = $settleStatuses[$row['cus_mapping_id']] ?? ''; // Default to 'N/A' if not found
+    $sub_array[] = $settle_status;
+
+    // Update status logic
+    $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'], $row['auction_id'], $row['grp_id'], $row['cus_id'], $row['auction_month'], $chit_amount);
+    $sub_array[] = $status;
+
+    // Grace period calculation
+    $auction_month = $row['auction_month'] ?? 0;
+    $grace_period = $row['grace_period'] ?? 0;
+    $due_date = isset($row['due_date']) ? date('Y-m-d', strtotime($row['due_date'])) : '';
+    $grace_end_date = date('Y-m-d', strtotime($due_date . " + $grace_period days"));
+
+    $current_date = date('Y-m-d');
+    if ($status === "Paid") {
+        $status_color = 'green';
+    } elseif ($grace_end_date >= $current_date) {
+        $status_color = 'orange';
+    } else {
+        $status_color = 'red';
+    }
+
+    $sub_array[] = "<span style='display: inline-block; width: 20px; height: 20px; border-radius: 4px; background-color: $status_color;'></span>";
+
+    // Action dropdowns
+    $sub_array[] = "<div class='dropdown'>
+                        <button class='btn btn-outline-secondary'><i class='fa'>&#xf107;</i></button>
+                        <div class='dropdown-content'>
+                            <a href='#' class='add_due' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['auction_month']}'>Due Chart</a>
+                            <a href='#' class='commitment_chart' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}'>Commitment Chart</a>
+                        </div>
+                    </div>";
+
+    $sub_array[] = "<div class='dropdown'>
+                        <button class='btn btn-outline-secondary'><i class='fa'>&#xf107;</i></button>
+                        <div class='dropdown-content'>
+                            <a href='#' class='add_pay' data-value='{$row['grp_id']}_{$row['cus_id']}_{$row['auction_id']}_{$row['cus_mapping_id']}_{$row['customer_id']}'> Pay</a>
+                            <a href='#' class='add_commitment' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}'>Commitment</a>
+                        </div>
+                    </div>";
+
+    $data[] = $sub_array;
+}
+
+// Count function
+function count_all_data($pdo)
+{
+    $query = "SELECT COUNT(*) FROM group_creation";
+    $statement = $pdo->prepare($query);
+    $statement->execute();
+    return $statement->fetchColumn();
+}
+
+// Output results
+$output = array(
+    'draw' => isset($_POST['draw']) ? intval($_POST['draw']) : 0,
+    'recordsTotal' => count_all_data($pdo),
+    'recordsFiltered' => $number_filter_row,
+    'data' => $data
+);
+
+echo json_encode($output);
+
+
+// Money Format Function
+function moneyFormatIndia($num1)
+{
+    $num = abs($num1); // Handle negatives
+    $explrestunits = "";
+    if (strlen($num) > 3) {
+        $lastthree = substr($num, strlen($num) - 3, strlen($num));
+        $restunits = substr($num, 0, strlen($num) - 3);
+        $restunits = (strlen($restunits) % 2 == 1) ? "0" . $restunits : $restunits;
+        $expunit = str_split($restunits, 2);
+        for ($i = 0; $i < sizeof($expunit); $i++) {
+            if ($i == 0) {
+                $explrestunits .= (int)$expunit[$i] . ",";
+            } else {
+                $explrestunits .= $expunit[$i] . ",";
+            }
+        }
+        $thecash = $explrestunits . $lastthree;
+    } else {
+        $thecash = $num;
+    }
+    return ($num1 < 0 ? "-" : "") . $thecash;
+}
+?>
