@@ -6,7 +6,9 @@ $user_id = $_SESSION['user_id'];
 $currentMonth = date('m');
 $currentYear = date('Y');
 include 'collectionStatus.php';
+include './col_group_grace.php';
 $collectionSts = new CollectionStsClass($pdo);
+$graceperiodSts = new GraceperiodClass($pdo);
 $column = array(
     'cc.id',
     'gc.grp_id',
@@ -97,8 +99,9 @@ foreach ($result as $row) {
     $sub_array[] = $settle_status;
 
     // Update status logic
-    $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'], $row['auction_id'], $row['grp_id'], $row['cus_id'], $row['auction_month'], $chit_amount);
+    $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'], $row['grp_id']);
     $sub_array[] = $status;
+    $grace_status = $graceperiodSts->updateGraceStatus($row['cus_mapping_id'],$row['grp_id']);
 
     // Grace period calculation
     $auction_month = $row['auction_month'] ?? 0;
@@ -108,12 +111,23 @@ foreach ($result as $row) {
 
     $current_date = date('Y-m-d');
     if ($status === "Paid") {
-        $status_color = 'green';
-    } elseif ($grace_end_date >= $current_date) {
+            $status_color = 'green';
+        }
+    elseif ($grace_status === 'orange') {
         $status_color = 'orange';
-    } else {
+    } elseif ($grace_status === 'red') {
         $status_color = 'red';
+    } else {
+        $status_color = 'orange'; // Default color for 'Payable'
     }
+
+    // if ($status === "Paid") {
+    //     $status_color = 'green';
+    // } elseif ($status === "Payable" && $grace_end_date >= $current_date) {
+    //     $status_color = 'orange';
+    // } else {
+    //     $status_color = 'red';
+    // }
 
     $sub_array[] = "<span style='display: inline-block; width: 20px; height: 20px; border-radius: 4px; background-color: $status_color;'></span>";
 

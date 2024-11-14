@@ -48,14 +48,10 @@ class CollectStsClass
         foreach ($mappings as $mapping) {
             $cus_mapping_id = $mapping['cc_id'];
 
-       $qry2 = "SELECT c.coll_status
-                     FROM collection c
-                     LEFT JOIN auction_details ad ON c.auction_id = ad.id
-                     WHERE c.cus_mapping_id =  '$cus_mapping_id'
-                       AND c.group_id ='$group_id'  AND YEAR(ad.date) = '$currentYear'
-                           AND MONTH(ad.date) = '$currentMonth' AND ad.status IN (2, 3)
-                     ORDER BY c.created_on DESC
-                     LIMIT 1";
+       $qry2 = "SELECT gcm.coll_status
+                     FROM group_cus_mapping gcm
+                     WHERE gcm.id =  '$cus_mapping_id'
+                       AND gcm.grp_creation_id='$group_id'";
 
             $stmt2 = $this->pdo->query($qry2);
            

@@ -127,6 +127,7 @@ foreach ($result as $row) {
         <div class='dropdown-content'>
             <a href='#' class='auction_chart' data-value='{$row['grp_id']}_{$row['auction_month']}'>Auction Chart</a>
             <a href='#' class='settle_chart' data-value='{$row['grp_id']}_{$row['auction_id']}'>Settlement Chart</a>
+            <a href='#' class='advance_chart' data-value='{$row['grp_id']}_{$row['auction_month']}'>Chit Advance Chart</a>
         </div>
     </div>";
     // Action button

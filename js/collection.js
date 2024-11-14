@@ -178,6 +178,7 @@ $(document).ready(function () {
                             // Use the coll_id from the response to print the collection
                             setTimeout(function () {
                                 printCollection(response.coll_id); // Pass the collection ID here
+                                console.log(coll_id);
                             }, 1000);
                         } else {
                             swalError('Warning', 'Failed to save the collection details');

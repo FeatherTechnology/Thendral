@@ -106,8 +106,8 @@ $number_filter_row = $statement->rowCount();
 $sno = isset($_POST['start']) ? $_POST['start'] + 1 : 1;
 $data = [];
 foreach ($result as $row) {
-    $status = $collectionSts->updateCollectStatus($row['cus_id'], $row['id']);
-    $grace_status = $graceperiodSts->updateGraceStatus($row['cus_id'], $row['id']);
+   $status = $collectionSts->updateCollectStatus($row['cus_id'], $row['id']);
+    $grace_status = $graceperiodSts->updateGraceStatus($row['cus_id'],$row['id']);
 
     // Exclude customers with a 'Paid' status
   

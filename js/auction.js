@@ -153,80 +153,94 @@ $(document).ready(function () {
     ///////////////////////////////////////////////////////Auction Modal Start/////////////////////////////////////////////////////////////////  
     $(document).on('click', '.auctionBtn', function (event) {
         event.preventDefault();
-
+    
         var uniqueMonth = $(this).data('value');
         var [groupId, auction_month] = uniqueMonth.split('_');
-
-        // Fetch the auction details and validate date and time
+    
+        // Fetch the auction details and validate date
         $.post('api/auction_files/validate_auction_date.php', { group_id: groupId, auction_month: auction_month }, function (response) {
-            if (response.is_valid) {
-                // If date and time match, open modal
-                $('#pageHeaderName').text(` - Auction`);
-                $('#add_cus_map_modal').show();
-                $('.auction_detail_content').hide();
-                $('#back_to_list').show();
-                $('.back_btn').hide();
-
-                var auctionDetail = response.auction_detail; // assuming auction details are returned
-                var [date, id, low_value, high_value, group_name, chit_value, branch_name] = [
-                    auctionDetail.date,
-                    auctionDetail.id,
-                    auctionDetail.low_value,
-                    auctionDetail.high_value,
-                    auctionDetail.group_name,
-                    auctionDetail.chit_value,
-                    auctionDetail.branch_name,
-                ];
-
-                // Convert date to dd-mm-yyyy format
-                var formattedDate = formatDate(date); // Call the function to format the date
-
-                // Set attributes for submission
-                $('#submit_cus_map').attr('data-group_id', groupId);
-                $('#submit_cus_map').attr('data-id', id);
-                $('#submit_cus_map').attr('data-date', formattedDate); // Use formatted date
-                $('#submit_cus_map').attr('data-high_value', high_value);
-                $('#submit_cus_map').attr('data-low_value', low_value);
-
-                // Set the values in the modal form fields
-                $('#group_id').val(groupId); // Assuming you want to display the group ID
-                $('#grp_name').val(group_name); // Populate group name
-                $('#branch_name').val(branch_name); // Populate group name
-                $('#ch_value').val(chit_value); // Populate group name
-                var moneyChitVal = moneyFormatIndia(chit_value)
-                $('#chit_val').val(moneyChitVal);
-                $('#auction_date').val(formattedDate); // Populate auction date in dd-mm-yyyy format
-                var auctionTime = `${auctionDetail.hours}:${auctionDetail.minutes < 10 ? '0' + auctionDetail.minutes : auctionDetail.minutes} ${auctionDetail.ampm}`;
-                $('#auction_time').val(auctionTime); // Populate auction time in the field 
-                $('#grp_month').val(auction_month); // Populate auction month
-                var formattedLowValue = moneyFormatIndia(low_value);
-                var formattedHighValue = moneyFormatIndia(high_value);
-                $('#low_value').val(formattedLowValue); // Populate low value
-                $('#high_value').val(formattedHighValue); // Populate high value
-
-                // Set attributes for auction close button
-                $('.auction_close').attr('data-group_id', groupId);
-                $('.auction_close').attr('data-date', formattedDate); // Use formatted date
-                $('.auction_close').attr('data-id', id);
-
-                // Fetch customer names based on groupId
-                getCusName(groupId, auction_month);
-                // allowDeleteClick = false;
-                auctionStarted = false;
-                $('#auction_round1').prop('disabled', true)
-                $('.auction_close').prop('disabled', true)
-                $(this).find('input[name="cus_value[]"]').css('border', ''); // Reset border if filled
-                $('#auction_start').prop('disabled', false);
+    
+            if (response.is_valid && response.auction_detail) {
+                var auctionDetail = response.auction_detail;
+                var auctionDate = auctionDetail.date; // Fetch auction date from response
+                
+                // Get current date and format both auctionDate and currentDate to YYYY-MM-DD
+                var currentDate = new Date();
+                var currentDateString = currentDate.toISOString().split('T')[0]; // Extract YYYY-MM-DD part of current date
+                var auctionDateString = new Date(auctionDate).toISOString().split('T')[0]; // Convert auction date to YYYY-MM-DD
+    
+                // Compare only the date parts
+                if (auctionDateString < currentDateString) {
+                    // Auction date has passed, show warning
+                    swalError('Expired Auction', 'Please Reschedule the Auction Date.');
+                    return; // Exit, no further action
+                } else {
+                    // Continue with showing the modal and auction details
+    
+                    $('#pageHeaderName').text(` - Auction`);
+                    $('#add_cus_map_modal').show();
+                    $('.auction_detail_content').hide();
+                    $('#back_to_list').show();
+                    $('.back_btn').hide();
+    
+                    var [date, id, low_value, high_value, group_name, chit_value, branch_name] = [
+                        auctionDetail.date,
+                        auctionDetail.id,
+                        auctionDetail.low_value,
+                        auctionDetail.high_value,
+                        auctionDetail.group_name,
+                        auctionDetail.chit_value,
+                        auctionDetail.branch_name,
+                    ];
+    
+                    // Convert date to dd-mm-yyyy format
+                    var formattedDate = formatDate(date);
+    
+                    // Set attributes for submission
+                    $('#submit_cus_map').attr('data-group_id', groupId);
+                    $('#submit_cus_map').attr('data-id', id);
+                    $('#submit_cus_map').attr('data-date', formattedDate);
+                    $('#submit_cus_map').attr('data-high_value', high_value);
+                    $('#submit_cus_map').attr('data-low_value', low_value);
+    
+                    // Set the values in the modal form fields
+                    $('#group_id').val(groupId);
+                    $('#grp_name').val(group_name);
+                    $('#branch_name').val(branch_name);
+                    $('#ch_value').val(chit_value);
+                    var moneyChitVal = moneyFormatIndia(chit_value);
+                    $('#chit_val').val(moneyChitVal);
+                    $('#auction_date').val(formattedDate);
+                    var auctionTime = `${auctionDetail.hours}:${auctionDetail.minutes < 10 ? '0' + auctionDetail.minutes : auctionDetail.minutes} ${auctionDetail.ampm}`;
+                    $('#auction_time').val(auctionTime);
+                    $('#grp_month').val(auction_month);
+                    $('#low_value').val(moneyFormatIndia(low_value));
+                    $('#high_value').val(moneyFormatIndia(high_value));
+    
+                    // Set attributes for auction close button
+                    $('.auction_close').attr('data-group_id', groupId);
+                    $('.auction_close').attr('data-date', formattedDate);
+                    $('.auction_close').attr('data-id', id);
+    
+                    // Fetch customer names based on groupId
+                    getCusName(groupId, auction_month);
+    
+                    $('#auction_round1').prop('disabled', true);
+                    $('.auction_close').prop('disabled', true);
+                    $('#auction_start').prop('disabled', false);
+                }
             }
         }, 'json');
-
+    
         // Function to format date to dd-mm-yyyy
         function formatDate(dateString) {
-            if (!dateString) return 'N/A'; // Handle cases where date is undefined or null
+            if (!dateString) return 'N/A';
             var dateParts = dateString.split('-'); // Assuming input format is 'yyyy-mm-dd'
             return `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // Return as 'dd-mm-yyyy'
         }
     });
+    
+    
     // Global flag to track whether the auction has started
     // Global flag to track whether the auction has started
     let auctionStarted = false;
@@ -816,10 +830,10 @@ $(document).ready(function () {
         const content = `
         <div id="print_content" style="text-align: center;">
             <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                <img src="img/thendral_logo_icon.png" style="margin-right: 10px;" class="img">
+                <img src="img/bg_none_eng_logo.png" style="margin-right: 10px;" class="img">
                
             </h2>
-            <table style="margin: 0 auto; border-collapse: collapse; width: 35%;">
+            <table style="margin: 0 auto; border-collapse: collapse; width: 25%;">
                 <tr>
                     <td><strong>Group Name</strong></td>
                     <td>${$('#group_name').val()}</td>
@@ -1001,7 +1015,7 @@ function getCusName(groupId, auction_month) {
         response.forEach(function (val) {
             items.push({
                 value: val.id,
-                label: val.cus_name + ' - ' + val.cus_id,
+                label: val.cus_name + ' - ' + val.place +' - ' + val.cus_id,
                 selected: false
             });
         });

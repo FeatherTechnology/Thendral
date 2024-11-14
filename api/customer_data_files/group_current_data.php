@@ -4,7 +4,9 @@ require '../../ajaxconfig.php';
 
 $id = $_POST['id']; // Ensure that you have sanitized and validated this input
 include '../collection_files/collectionStatus.php';
+include '../collection_files/col_group_grace.php';
 $collectionSts = new CollectionStsClass($pdo);
+$graceperiodSts = new GraceperiodClass($pdo);
 $group_status = [3 => 'Current'];
 
 // Fetch auction details with customer mapping
@@ -60,9 +62,9 @@ if ($statement->rowCount() > 0) {
         // Grace Period Calculation
         $chit_amount = $row['chit_amount'] ?? 0;
         $auction_month = $row['auction_month'] ?? 0;
-        $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'], $row['auction_id'], $row['grp_id'], $row['cus_id'], $row['auction_month'], $row['chit_amount']);
+        $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'],$row['grp_id']);
         $sub_array['status'] = $status;
-
+        $grace_status = $graceperiodSts->updateGraceStatus($row['cus_mapping_id'],$row['grp_id']);
         $grace_period = $row['grace_period'] ?? 0;
         $due_date = $row['due_date'] ?? '';
 
@@ -72,12 +74,15 @@ if ($statement->rowCount() > 0) {
         $current_date = date('Y-m-d');
 
         if ($status === "Paid") {
-            $status_color = 'green'; // Payment is made
-        } elseif ($grace_end_date >= $current_date) {
-            $status_color = 'orange'; // Payment is due but not yet
-        } elseif ($grace_end_date < $current_date) {
-            $status_color = 'red'; // Missed payment after grace period
+            $status_color = 'green';
         }
+    elseif ($grace_status === 'orange') {
+        $status_color = 'orange';
+    } elseif ($grace_status === 'red') {
+        $status_color = 'red';
+    } else {
+        $status_color = 'orange'; // Default color for 'Payable'
+    }
 
 
         // Check payment status for all customers in the group

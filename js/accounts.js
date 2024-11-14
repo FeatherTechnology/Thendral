@@ -15,7 +15,7 @@ $(document).ready(function () {
             otherTransTable('#accounts_other_trans_table');
         }
     });
-   
+
     window.updateTotal = function (input, amount) {
         const quantity = parseInt($(input).val()) || 0; // Get quantity value
         const totalValue = quantity * amount; // Calculate total value
@@ -53,7 +53,7 @@ $(document).ready(function () {
         swalConfirm('Collect', `Do you want to collect Money from ${collectTableRowVal.username}?`, submitCollect, collectTableRowVal);
     });
 
-    
+
 
     $("input[name='issue_cash_type']").click(function () {
         let collCashType = $(this).val();
@@ -244,15 +244,43 @@ $(document).ready(function () {
                 $('.other_month_div').show();
 
                 if (category_type === '2') { // Debit
-                    getAuctionMonth(group_id);
-                    settleAmount(group_id);
+                    // Ensure other fields behave as required for Debit
                     $('#other_amnt').prop('readonly', true);
-                    $('#auction_month').prop('readonly', true);
-                } else {  // Credit or Both
+                    $('#auction_month').prop('readonly', false);
+                    $('#other_amnt').off('keyup');
+                    // Set up the validation logic for other_amnt when category_type is '2'
+                    $('#other_amnt').on('keyup', function () {
+                        // Get the other_amnt value, remove commas, and convert to a float
+                        let other_amnt = parseFloat($(this).val());
+                
+                        // Ensure high_value is updated first
+                        calculateHighAmount(function () {
+                            // Check if high_value and other_amnt are valid numbers
+                            if (!isNaN(high_value) && !isNaN(other_amnt)) {
+                                // Compare the amounts
+                                if (high_value === 0) {
+                                    swalError('Warning', 'Auction is not finished for this month. Please change the auction month.');
+                                } 
+                                if (other_amnt > high_value) {
+                                    // Trigger a warning if other_amnt exceeds high_value
+                                    swalError('Warning', 'The entered amount exceeds the high value.'+ high_value);
+                
+                                    // Optionally, clear the invalid input
+                                    $('#other_amnt').val(''); // Clears the field
+                                }
+                            }
+                        });
+                    });
+                } else { // Credit or Both
+                    // Clear the input field for Credit or Both
                     $('#other_amnt').val('');
+                    $('#other_amnt').off('keyup');
+                    // Call the function for handling Credit auction month (you can adjust this logic as needed)
                     getCreditAuctionMonth(group_id, category_type, group_mem_id);
-                    $('#other_amnt').prop('readonly', false);
-                    $('#auction_month').prop('readonly', true);
+                
+                    // Disable input for Debit related field
+                    $('#other_amnt').prop('readonly', false); // Allow editing
+                    $('#auction_month').prop('readonly', true); // Disable editing
                 }
             });
 
@@ -270,7 +298,7 @@ $(document).ready(function () {
 
             // Unbind the cat_type change event for other categories
             $('#cat_type').off('change');
-
+            $('#other_amnt').off('keyup');
             // Continue with other categories handling
             $('#trans_cat').val($(this).find(':selected').text());
             $('#trans_cat').attr('data-id', category);
@@ -303,6 +331,21 @@ $(document).ready(function () {
         }
     });
 
+
+    $('#auction_month').on('input', function () {
+        // Get the value of auction_month
+        let auc_month = $('#auction_month').val();
+        // Check if auction_month is empty
+        if (!auc_month || auc_month.trim() === '') {
+            // If auction_month is empty, ensure 'other_amnt' remains readonly
+            $('#other_amnt').prop('readonly', true);
+            // swalError('Warning', 'Auction month is required before entering the amount.');
+        } else {
+            // If auction_month is not empty, enable 'other_amnt'
+            $('#other_amnt').prop('readonly', false);
+            // Listen for input change on #other_amnt
+        }
+    });
 
     let group_id = '';
     $('#group_id').change(function () {
@@ -514,9 +557,9 @@ $(document).ready(function () {
 
     $(document).on('click', '.transDeleteBtn', function () {
         var unique = $(this).data('value');
-        var [id, grp_id, group_mem, auction_month] = unique.split('_');
+        var [id] = unique.split('_');
         swalConfirm('Delete', 'Are you sure you want to delete this Other Transaction?', function () {
-            deleteTrans(id, grp_id, group_mem, auction_month);
+            deleteTrans(id);
         });
 
     });
@@ -599,19 +642,19 @@ function getgroupMember(group_id) {
         $('#group_mem').empty().append(appenderOption);
     }, 'json');
 }
-function getAuctionMonth(group_id) {
-    // Post the group_id to the PHP script and handle the response
-    $.post('api/accounts_files/accounts/getAuctionMonth.php', { group_id: group_id }, function (response) {
-        // Check if the response has any data
-        if (response.length > 0) {
-            $('#auction_month').val(response[0].auction_month);
-        } else {
-            $('#auction_month').val(''); // Clear the field if no data is returned
-        }
-    }, 'json').fail(function () {
-        $('#auction_month').val(''); // Clear the field if there's an error
-    });
-}
+// function getAuctionMonth(group_id) {
+//     // Post the group_id to the PHP script and handle the response
+//     $.post('api/accounts_files/accounts/getAuctionMonth.php', { group_id: group_id }, function (response) {
+//         // Check if the response has any data
+//         if (response.length > 0) {
+//             $('#auction_month').val(response[0].auction_month);
+//         } else {
+//             $('#auction_month').val(''); // Clear the field if no data is returned
+//         }
+//     }, 'json').fail(function () {
+//         $('#auction_month').val(''); // Clear the field if there's an error
+//     });
+// }
 function getCreditAuctionMonth(group_id, category_type, group_mem_id) {
     // Post the group_id to the PHP script and handle the response
     $.post('api/accounts_files/accounts/getCreditAuctionMonth.php', { group_id: group_id, category_type: category_type, group_mem_id: group_mem_id }, function (response) {
@@ -625,18 +668,39 @@ function getCreditAuctionMonth(group_id, category_type, group_mem_id) {
         $('#auction_month').val(''); // Clear the field if there's an error
     });
 }
-function settleAmount(group_id) {
-    $.post('api/accounts_files/accounts/getSettleAccounts.php', { group_id: group_id }, function (response) {
-        // Check if the response has any data
+// function settleAmount(group_id) {
+//     $.post('api/accounts_files/accounts/getSettleAccounts.php', { group_id: group_id }, function (response) {
+//         // Check if the response has any data
+//         if (response.length > 0) {
+//             let settle_amount = moneyFormatIndia(response[0].settlement_amount)
+//             $('#other_amnt').val(settle_amount);
+//         } else {
+//             $('#other_amnt').val(''); // Clear the field if no data is returned
+//         }
+//     }, 'json').fail(function () {
+//         $('#other_amnt').val(''); // Clear the field if there's an error
+//     });
+// }
+
+// Function to calculate high value
+let high_value = 0;
+
+// Function to calculate high value
+function calculateHighAmount(callback) {
+    let group_id = $('#group_id').val();
+    let auction_month = $('#auction_month').val();
+
+    $.post('api/accounts_files/accounts/getHighValueAmount.php', { group_id: group_id, auction_month: auction_month }, function (response) {
         if (response.length > 0) {
-            let settle_amount = moneyFormatIndia(response[0].settlement_amount)
-            $('#other_amnt').val(settle_amount);
+            high_value = parseFloat(response[0].high_value); // Ensure it's a float
+            console.log('High Value:', high_value);
         } else {
-            $('#other_amnt').val(''); // Clear the field if no data is returned
+            high_value = 0; // Default if no value is returned
         }
-    }, 'json').fail(function () {
-        $('#other_amnt').val(''); // Clear the field if there's an error
-    });
+
+        // Call the callback function after the high_value is fetched
+        callback();
+    }, 'json');
 }
 function getClosingBal(callback) {
     $.post('api/accounts_files/accounts/closing_balance.php', function (response) {
@@ -887,10 +951,7 @@ function clearTransForm() {
 
 function deleteTrans(id, grp_id, group_mem, auction_month) {
     $.post('api/accounts_files/accounts/delete_other_transaction.php', {
-        id: id,
-        group_id: grp_id,
-        group_mem: group_mem,
-        auction_month: auction_month
+        id: id
     }, function (response) {
         if (response == '1') {
             swalSuccess('success', 'Other Transaction Deleted Successfully');
@@ -1004,7 +1065,7 @@ function updateTotalValue() {
         }
     });
 }
- 
+
 function loadToday() {
     // Clear table body
     $('#denominationTableBody').empty();
@@ -1013,7 +1074,7 @@ function loadToday() {
     $.ajax({
         url: 'api/accounts_files/accounts/get_today_data.php', // Replace with your actual API endpoint
         method: 'GET',
-        success: function(response) {
+        success: function (response) {
             let data;
             if (typeof response === "string") {
                 data = JSON.parse(response);
@@ -1044,7 +1105,7 @@ function loadToday() {
             // Recalculate the overall total after loading data
             calculateOverallTotal();
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error fetching data:", error);
             $('#denominationTableBody').append(`
                 <tr>
@@ -1086,7 +1147,7 @@ function loadPreviousDay() {
     $.ajax({
         url: 'api/accounts_files/accounts/get_previous_data.php', // Replace with your actual API endpoint
         method: 'GET',
-        success: function(response) {
+        success: function (response) {
             let data;
             if (typeof response === "string") {
                 data = JSON.parse(response);
@@ -1117,7 +1178,7 @@ function loadPreviousDay() {
             // Recalculate the overall total after loading data
             calculateOverallTotal();
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error fetching previous day's data:", error);
             $('#denominationTableBody').append(`
                 <tr>
@@ -1189,8 +1250,8 @@ toggleButtons.on("click", function () {
         loadPreviousDay();
     }
 });
-   // Button click for adding denominations
-$('#add_grup').on('click', function() {
+// Button click for adding denominations
+$('#add_grup').on('click', function () {
     // Clear the table body initially
     $('#denominationTableBody').empty();
 
@@ -1229,7 +1290,7 @@ function loadDataForPreviousDay() {
         $.ajax({
             url: 'api/accounts_files/accounts/get_previous_data.php', // Replace with your actual API endpoint
             method: 'GET',
-            success: function(response) {
+            success: function (response) {
                 let data;
                 if (typeof response === "string") {
                     data = JSON.parse(response);
@@ -1256,7 +1317,7 @@ function loadDataForPreviousDay() {
                 }
                 calculateOverallTotal();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("Error fetching previous day's data:", error);
                 resolve(false); // Error occurred, no data loaded
             }
@@ -1270,7 +1331,7 @@ function loadDataForToday() {
         $.ajax({
             url: 'api/accounts_files/accounts/get_today_data.php', // Replace with your actual API endpoint for today's data
             method: 'GET',
-            success: function(response) {
+            success: function (response) {
                 let data;
                 if (typeof response === "string") {
                     data = JSON.parse(response);
@@ -1297,7 +1358,7 @@ function loadDataForToday() {
                 }
                 calculateOverallTotal();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("Error fetching today's data:", error);
                 resolve(false); // Error occurred, no data loaded
             }
