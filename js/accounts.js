@@ -252,7 +252,7 @@ $(document).ready(function () {
                     $('#other_amnt').on('keyup', function () {
                         // Get the other_amnt value, remove commas, and convert to a float
                         let other_amnt = parseFloat($(this).val());
-                
+
                         // Ensure high_value is updated first
                         calculateHighAmount(function () {
                             // Check if high_value and other_amnt are valid numbers
@@ -260,13 +260,15 @@ $(document).ready(function () {
                                 // Compare the amounts
                                 if (high_value === 0) {
                                     swalError('Warning', 'Auction is not finished for this month. Please change the auction month.');
-                                } 
-                                if (other_amnt > high_value) {
-                                    // Trigger a warning if other_amnt exceeds high_value
-                                    swalError('Warning', 'The entered amount exceeds the high value.'+ high_value);
-                
-                                    // Optionally, clear the invalid input
-                                    $('#other_amnt').val(''); // Clears the field
+                                } else {
+                                    if (other_amnt > high_value) {
+                                        // Trigger a warning if other_amnt exceeds high_value
+                                         let highValue =  moneyFormatIndia(high_value)
+                                        swalError('Warning', 'The entered amount exceeds the high value:' + highValue);
+
+                                        // Optionally, clear the invalid input
+                                        $('#other_amnt').val(''); // Clears the field
+                                    }
                                 }
                             }
                         });
@@ -277,7 +279,7 @@ $(document).ready(function () {
                     $('#other_amnt').off('keyup');
                     // Call the function for handling Credit auction month (you can adjust this logic as needed)
                     getCreditAuctionMonth(group_id, category_type, group_mem_id);
-                
+
                     // Disable input for Debit related field
                     $('#other_amnt').prop('readonly', false); // Allow editing
                     $('#auction_month').prop('readonly', true); // Disable editing
