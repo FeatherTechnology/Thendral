@@ -2,15 +2,17 @@ $(document).ready(function () {
     //Add Group creation & Back.
     $(document).on('click', '#add_group, #back_btn', function () {
         swapTableAndCreation();
+        $('#add_cus_map_modal').hide();
+        $('#back_to_list').hide();
         getDateDropDown()
         getGroupCreationTable();
         $('#branch_name_edit').val('')
         $('#auction_modal_btn')
             .removeAttr('data-toggle')
             .removeAttr('data-target');
-        $('#add_cus_map')
-            .removeAttr('data-toggle')
-            .removeAttr('data-target');
+        // $('#add_cus_map')
+        //     .removeAttr('data-toggle')
+        //     .removeAttr('data-target');
         $('#reset_clear').show();
         $('#group_clear').show(); // Show reset button
         $('#submit_group_info').show();
@@ -21,11 +23,6 @@ $(document).ready(function () {
 
     $('#grp_date,#start_month, #total_month').change(function () {
         getModalAttr()
-    });
-
-
-    $('#total_members,#chit_value,#total_month').change(function () {
-        getCusModal()
     });
 
     document.getElementById('hours').addEventListener('input', function (e) {
@@ -118,62 +115,614 @@ $(document).ready(function () {
         }
     });
     ////////////////////////////////////////////////////////////// Customer Mapping Start//////////////////////////////////////////////////////////////////
-    $('#add_cus_map').click(function(event){
-        event.preventDefault(); // Prevent the default form submission
+    // $('#add_cus_map').click(function(event){
+    //     event.preventDefault(); // Prevent the default form submission
+    // $('#joining_month').css('border', '1px solid #cecece');
+    // $('#cus_name').css('border', '1px solid #cecece');
+    // $('#add_cus_map_modal').show();
+
+    // })
+    var counter = 1;
+    // $(document).on('input', '.share_value', function () {
+    //     // Get chit value (assumed to be a field with ID #chit_value)
+    //     var chit_value = $('#chit_value').val().replace(/,/g, ''); // Remove commas if any
+    //     console.log('Chit Value: ' + chit_value);
+    
+    //     // Get the current share value entered by the user
+    //     var share_value = parseFloat($(this).val().replace(/,/g, ''));
+    //     console.log('Entered Share Value: ' + share_value);
+    
+    //     // Validate if the share value is a number
+    //     if (isNaN(share_value) || share_value <= 0) {
+    //         $(this).val('');
+    //         $(this).siblings('.share_percent').val(''); // Clear the percentage if the share value is invalid
+    //         console.log('Invalid share value entered. Clearing percentage field.');
+    //         return; // Exit if the share value is invalid
+    //     }
+    
+    //     // Calculate share percentage
+    //     var share_percent = (share_value / chit_value) * 100;
+    //     console.log('Calculated Share Percentage: ' + share_percent);
+    
+    //     // Check if the total share percentage exceeds 100%
+    //     var totalSharePercentage = 0;
+    //     $('.share_value').each(function () {
+    //         totalSharePercentage += (parseFloat($(this).val().replace(/,/g, '')) / chit_value) * 100;
+    //     });
+    //     console.log('Total Share Percentage: ' + totalSharePercentage);
+    
+    //     if (totalSharePercentage > 100) {
+    //         swalError('Warning','Total share percentage cannot exceed 100%.');
+    //         $(this).val(''); // Clear the input if it exceeds 100%
+    //         $(this).siblings('.share_percent').val('');
+    //     } else {
+    //         // Find the .share_percent input within the same row as .share_value
+    //         var percentField = $(this).closest('.row').find('.share_percent');
+    //         console.log('Found share percent field:', percentField);
+            
+    //         // Set the calculated share percentage in the share_percent field
+    //         if (percentField.length) {
+    //             console.log('Setting Share Percentage: ' + share_percent);
+    //             percentField.val(share_percent); // Set the percentage with 2 decimal places
+    //         } else {
+    //             console.log('Share Percent field not found!');
+    //         }
+    //     }
+    // });
+    
+    
+    $(document).on('input', '.share_value', function () {
+        // Get chit value (assumed to be a field with ID #chit_value)
+        var chit_value = $('#chit_value').val().replace(/,/g, ''); // Remove commas if any
+        console.log('Chit Value: ' + chit_value);
+    
+        // Get the current share value entered by the user
+        var share_value = parseFloat($(this).val().replace(/,/g, ''));
+        console.log('Entered Share Value: ' + share_value);
+    
+        // Validate if the share value is a number
+        if (isNaN(share_value) || share_value <= 0) {
+            $(this).val(''); // Clear the share value if invalid
+            $(this).closest('.row').find('.share_percent').val(''); // Clear the share percentage field in the same row
+            console.log('Invalid share value entered. Clearing percentage field.');
+            return; // Exit if the share value is invalid
+        }
+    
+        // Calculate share percentage
+        var share_percent = (share_value / chit_value) * 100;
+        console.log('Calculated Share Percentage: ' + share_percent);
+    
+        // Check if the total share percentage exceeds 100%
+        var totalSharePercentage = 0;
+        $('.share_value').each(function () {
+            totalSharePercentage += (parseFloat($(this).val().replace(/,/g, '')) / chit_value) * 100;
+        });
+        console.log('Total Share Percentage: ' + totalSharePercentage);
+    
+        if (totalSharePercentage > 100) {
+            $(this).val(''); // Clear the share value input
+            $(this).closest('.row').find('.share_percent').val(''); // Clear the share percentage
+            swalError('Warning', 'Total share percentage cannot exceed 100%.'); // Show alert after clearing fields
+        } else {
+            // Find the .share_percent input within the same row as .share_value
+            var percentField = $(this).closest('.row').find('.share_percent');
+            console.log('Found share percent field:', percentField);
+    
+            // Set the calculated share percentage in the share_percent field
+            if (percentField.length) {
+                console.log('Setting Share Percentage: ' + share_percent);
+                percentField.val(share_percent); // Set the percentage with 2 decimal places
+            } else {
+                console.log('Share Percent field not found!');
+            }
+        }
+    });
+    
+      
+// // Handle click event for the "+" button
+// $('#add_btn').on('click', function (e) {
+//     e.preventDefault();
+
+//     // Get the current row containing the "+" button
+//     var currentRow = $(this).closest('.row');
+
+//     // Check if all fields in the current row are filled
+//     var allFieldsFilled = true;
+//     currentRow.find('input, select').each(function () {
+//         if ($(this).val() === '') {
+//             allFieldsFilled = false; // If any field is empty, set flag to false
+//             return false; // Exit the loop
+//         }
+//     });
+
+//     // If not all fields are filled, show an error and stop
+//     if (!allFieldsFilled) {
+//         swalError('Warning', 'Please fill all the fields before adding a new row.');
+//         return; // Prevent row addition
+//     }
+
+//     // Clone the row with all the fields
+//     var newRow = currentRow.clone();
+//     newRow.find('#add_btn').parent().remove(); // Remove the button from the clone
+
+//     // Update the IDs of cloned fields to make them unique
+//     newRow.find('input, select').each(function () {
+//         var oldId = $(this).attr('id');
+//         if (oldId) {
+//             $(this).attr('id', oldId + '_' + counter);
+//         }
+//         if ($(this).is('input[type="text"]') && oldId !== 'map_id') {
+//             $(this).val(''); // Clears the input field, except map_id
+//         }
+
+//         // Clear select fields
+//         if ($(this).is('select')) {
+//             $(this).val(''); // Clears the select field
+//         }
+//     });
+
+//     // Increment the counter for the next clone
+//     counter++;
+
+//     // Append the new cloned row to the container
+//     $('#mapping-container').append(newRow);
+// });
+// Handle click event for the "+" butto
+
+// var counter = 1; // Initialize a counter for unique field IDs
+
+// $('#add_btn').on('click', function (e) {
+//     e.preventDefault();
+
+//     // Check the total share percentage before adding a new row
+//     var totalSharePercentage = 0;
+//     $('.share_value').each(function () {
+//         var chit_value = $('#chit_value').val().replace(/,/g, ''); // Get chit value
+//         var share_value = parseFloat($(this).val().replace(/,/g, '')); // Get share value
+//         if (!isNaN(share_value) && share_value > 0) {
+//             var share_percent = (share_value / chit_value) * 100;
+//             totalSharePercentage += share_percent; // Add the share percentage to the total
+//         }
+//     });
+
+//     // Check if the total share percentage is >= 100
+//     if (totalSharePercentage >= 100) {
+//         swalError('Warning', 'Total share percentage is already 100%. Cannot add more rows.');
+//         return; // Prevent row addition if total share percentage is 100%
+//     }
+
+//     // Get the current row containing the "+" button
+//     var currentRow = $(this).closest('.row');
+
+//     // Check if all fields in the current row are filled
+//     var allFieldsFilled = true;
+//     currentRow.find('input, select').each(function () {
+//         if ($(this).val() === '') {
+//             allFieldsFilled = false; // If any field is empty, set flag to false
+//             return false; // Exit the loop
+//         }
+//     });
+
+//     // If not all fields are filled, show an error and stop
+//     if (!allFieldsFilled) {
+//         swalError('Warning', 'Please fill all the fields before adding a new row.');
+//         return; // Prevent row addition
+//     }
+
+//     // Iterate over all rows and make them readonly, including the first row
+//     $('#mapping-container .row').each(function () {
+//         $(this).find('input, select').each(function () {
+//             $(this).prop('readonly', true).prop('disabled', true); // Disable and set readonly for all previous rows
+//         });
+//     });
+
+//     // Clone the current row and remove the add button from the cloned row
+//     var newRow = currentRow.clone();
+//     newRow.find('#add_btn').parent().remove(); // Remove the button from the clone
+
+//     // Make "Customer Name" and "Share Value" editable in the new row
+//     newRow.find('input, select').each(function () {
+//         var fieldId = $(this).attr('id');
+        
+//         // Only allow "Customer Name" and "Share Value" to be editable
+//         if (fieldId !== 'cus_name' && fieldId !== 'share_value') {
+//             $(this).prop('readonly', true).prop('disabled', true); // Disable all other fields
+//         } else {
+//             $(this).prop('readonly', false).prop('disabled', false); // Allow "Customer Name" and "Share Value" to be editable
+//         }
+
+//         // If the field is "Share Percentage", disable it and keep the same value as the first row
+//         if (fieldId === 'share_percent') {
+//             $(this).prop('readonly', true).prop('disabled', true); // Disable the Share Percentage field
+//         }
+//     });
+
+//     // Copy the "Auction Start From" value from the first row to the new row
+//     var firstRowAuctionStart = $('#joining_month').val(); // Get the value from the first row
+//     newRow.find('#joining_month').val(firstRowAuctionStart); // Set the value in the new row
+
+//     // Update the IDs of cloned fields to make them unique
+//     newRow.find('input, select').each(function () {
+//         var oldId = $(this).attr('id');
+//         if (oldId) {
+//             $(this).attr('id', oldId + '_' + counter); // Append the counter to the id to make it unique
+//         }
+//         if ($(this).is('input[type="text"]') && oldId !== 'map_id') {
+//             $(this).val(''); // Clear text input, except for map_id
+//         }
+
+//         // Clear select fields
+//         if ($(this).is('select') && oldId !== 'joining_month') {
+//             $(this).val(''); // Clear select field except for "joining_month"
+//         }
+//     });
+
+//     // Increment the counter for the next clone
+//     counter++;
+
+//     // Append the new cloned row to the container
+//     $('#mapping-container').append(newRow);
+// });
+var counter = 1; // Initialize a counter for unique field IDs
+
+$('#add_btn').on('click', function (e) {
+    e.preventDefault();
+
+    // Check the total share percentage before adding a new row
+    var totalSharePercentage = 0;
+    $('.share_value').each(function () {
+        var chit_value = $('#chit_value').val().replace(/,/g, ''); // Get chit value
+        var share_value = parseFloat($(this).val().replace(/,/g, '')); // Get share value
+        if (!isNaN(share_value) && share_value > 0) {
+            var share_percent = (share_value / chit_value) * 100;
+            totalSharePercentage += share_percent; // Add the share percentage to the total
+        }
+    });
+
+    // Check if the total share percentage is >= 100
+    if (totalSharePercentage >= 100) {
+        swalError('Warning', 'Total share percentage is already 100%');
+        return; // Prevent row addition if total share percentage is 100%
+    }
+    var allRowFilled = true;
+    $('#mapping-row').each(function () {
+        var allFieldFilled = true;
+        $(this).find('input, select').each(function () {
+            if ($(this).val() === '') {
+                allFieldFilled = false; // If any field in the row is empty, set flag to false
+                return false; // Exit loop
+            }
+        });
+        if (!allFieldFilled) {
+            allRowFilled = false; // Mark the overall flag as false if any row is incomplete
+            return false; // Exit loop
+        }
+    });
+    // Validate all rows to make sure no row is empty
+    var allRowsFilled = true;
+    $('#mapping-container .row').each(function () {
+        var allFieldsFilled = true;
+        $(this).find('input, select').each(function () {
+            if ($(this).val() === '') {
+                allFieldsFilled = false; // If any field in the row is empty, set flag to false
+                return false; // Exit loop
+            }
+        });
+        if (!allFieldsFilled) {
+            allRowsFilled = false; // Mark the overall flag as false if any row is incomplete
+            return false; // Exit loop
+        }
+    });
+
+    // If any row is incomplete, show an error and stop
+    if (!allRowsFilled) {
+        swalError('Warning', 'Please fill all fields in all rows before adding a new row.');
+        return; // Prevent row addition
+    }
+    if (!allRowFilled) {
+        swalError('Warning', 'Please fill all fields in all rows before adding a new row.');
+        return; // Prevent row addition
+    }
+
+    // Disable all fields in the current (original) row before cloning it
+    $('#mapping-row input, #mapping-row select').prop('readonly', true).prop('disabled', true);
+
+    // Get the current row containing the "+" button
+    var currentRow = $(this).closest('.row');
+
+    // Clone the current row and remove the add button from the cloned row
+    var newRow = currentRow.clone();
+    newRow.find('#add_btn').parent().remove(); // Remove the button from the clone
+
+    // Make "Customer Name" and "Share Value" editable in the new row
+    newRow.find('input, select').each(function () {
+        var fieldId = $(this).attr('id');
+
+        // Only allow "Customer Name" and "Share Value" to be editable
+        if (fieldId !== 'cus_name' && fieldId !== 'share_value') {
+            $(this).prop('readonly', true).prop('disabled', true); // Disable all other fields
+        } else {
+            $(this).prop('readonly', false).prop('disabled', false); // Allow "Customer Name" and "Share Value" to be editable
+        }
+
+        // If the field is "Share Percentage", disable it and keep the same value as the first row
+        if (fieldId === 'share_percent') {
+            $(this).prop('readonly', true).prop('disabled', true); // Disable the Share Percentage field
+        }
+    });
+
+    // Copy the "Auction Start From" value from the first row to the new row
+    var firstRowAuctionStart = $('#joining_month').val(); // Get the value from the first row
+    newRow.find('#joining_month').val(firstRowAuctionStart); // Set the value in the new row
+
+    // Update the IDs of cloned fields to make them unique
+    newRow.find('input, select').each(function () {
+        var oldId = $(this).attr('id');
+        if (oldId) {
+            $(this).attr('id', oldId + '_' + counter); // Append the counter to the id to make it unique
+        }
+        if ($(this).is('input[type="text"]') && oldId !== 'map_id') {
+            $(this).val(''); // Clear text input, except for map_id
+        }
+
+        // Clear select fields
+        if ($(this).is('select') && oldId !== 'joining_month') {
+            $(this).val(''); // Clear select field except for "joining_month"
+        }
+    });
+
+    // Increment the counter for the next clone
+    counter++;
+
+    // Append the new cloned row to the container
+    $('#mapping-container').append(newRow);
+});
+
+// $('#add_btn').on('click', function (e) {
+//     e.preventDefault();
+
+//     // Check the total share percentage before adding a new row
+//     var totalSharePercentage = 0;
+//     $('.share_value').each(function () {
+//         var chit_value = $('#chit_value').val().replace(/,/g, ''); // Get chit value
+//         var share_value = parseFloat($(this).val().replace(/,/g, '')); // Get share value
+//         if (!isNaN(share_value) && share_value > 0) {
+//             var share_percent = (share_value / chit_value) * 100;
+//             totalSharePercentage += share_percent; // Add the share percentage to the total
+//         }
+//     });
+
+//     // Check if the total share percentage is >= 100
+//     if (totalSharePercentage >= 100) {
+//         swalError('Warning', 'Total share percentage is already 100%. Cannot add more rows.');
+//         return; // Prevent row addition if total share percentage is 100%
+//     }
+
+//     // Validate all rows to make sure no row is empty
+//     var allRowsFilled = true;
+//     $('#mapping-container .row').each(function () {
+//         var allFieldsFilled = true;
+//         $(this).find('input, select').each(function () {
+//             if ($(this).val() === '') {
+//                 allFieldsFilled = false; // If any field in the row is empty, set flag to false
+//                 return false; // Exit loop
+//             }
+//         });
+//         if (!allFieldsFilled) {
+//             allRowsFilled = false; // Mark the overall flag as false if any row is incomplete
+//             return false; // Exit loop
+//         }
+//     });
+
+//     // If any row is incomplete, show an error and stop
+//     if (!allRowsFilled) {
+//         swalError('Warning', 'Please fill all fields in all rows before adding a new row.');
+//         return; // Prevent row addition
+//     }
+
+//     // Iterate over all previous rows and make them readonly, including the first row
+//     $('#mapping-container .row').each(function () {
+//         $(this).find('input, select').each(function () {
+//             $(this).prop('readonly', true).prop('disabled', true); // Disable and set readonly for all previous rows
+//         });
+//     });
+
+//     // Get the current row containing the "+" button
+//     var currentRow = $(this).closest('.row');
+
+//     // Clone the current row and remove the add button from the cloned row
+//     var newRow = currentRow.clone();
+//     newRow.find('#add_btn').parent().remove(); // Remove the button from the clone
+
+//     // Update the ID of the cloned row to make it unique
+//     newRow.attr('id', 'mapping-row-' + counter); // Set a new unique ID for the cloned row
+
+//     // Make "Customer Name" and "Share Value" editable in the new row
+//     newRow.find('input, select').each(function () {
+//         var fieldId = $(this).attr('id');
+
+//         // Only allow "Customer Name" and "Share Value" to be editable
+//         if (fieldId !== 'cus_name' && fieldId !== 'share_value') {
+//             $(this).prop('readonly', true).prop('disabled', true); // Disable all other fields
+//         } else {
+//             $(this).prop('readonly', false).prop('disabled', false); // Allow "Customer Name" and "Share Value" to be editable
+//         }
+
+//         // If the field is "Share Percentage", disable it and keep the same value as the first row
+//         if (fieldId === 'share_percent') {
+//             $(this).prop('readonly', true).prop('disabled', true); // Disable the Share Percentage field
+//         }
+//     });
+
+//     // Copy the "Auction Start From" value from the first row to the new row
+//     var firstRowAuctionStart = $('#joining_month').val(); // Get the value from the first row
+//     newRow.find('#joining_month').val(firstRowAuctionStart); // Set the value in the new row
+
+//     // Update the IDs of cloned fields to make them unique
+//     newRow.find('input, select').each(function () {
+//         var oldId = $(this).attr('id');
+//         if (oldId) {
+//             $(this).attr('id', oldId + '_' + counter); // Append the counter to the id to make it unique
+//         }
+//         if ($(this).is('input[type="text"]') && oldId !== 'map_id') {
+//             $(this).val(''); // Clear text input, except for map_id
+//         }
+
+//         // Clear select fields
+//         if ($(this).is('select') && oldId !== 'joining_month') {
+//             $(this).val(''); // Clear select field except for "joining_month"
+//         }
+//     });
+
+//     // Increment the counter for the next clone
+//     counter++;
+
+//     // Append the new cloned row to the container
+//     $('#mapping-container').append(newRow);
+// });
+
+
+
+    $('#add_cus_map').on('click', function () {
+        let total_members = $('#total_members').val();
+        let chit_value = $('#chit_value').val().replace(/,/g, '');
+        let total_month = $('#total_month').val();
+        if (total_members === '' || chit_value === '' || total_month === '') {
+            swalError('Alert', 'Kindly Fill the Total Members,Chit Value and Total Month!')
+            return;
+        }else{
+        $('#add_cus_map_modal').show();
+        getAutoGenMappingId('');
+        $('#group_creation_content').hide();
         $('#joining_month').css('border', '1px solid #cecece');
         $('#cus_name').css('border', '1px solid #cecece');
+        // Call your existing functions
+        $('#back_to_list').show();
+        $('#back_btn').hide();
+        $('#mapping-container').empty();
+        $('#mapping-row input, #mapping-row select').prop('readonly', false).prop('disabled', false); 
+$('#mapping-row #map_id').prop('readonly', true); // Set the map_id field as readonly
+$('#mapping-row #share_percent').prop('readonly', true); // Set the map_id field as readonly
+        getCusMapTable();
+        getJoiningMonth();
+         }
+    });
+    $(document).on('click', '#back_to_list', function (event) {
+        event.preventDefault();
 
-    })
+        // Hide back button
+        $('#back_to_list').hide();
+        // Show auction details content and back button
+        $('.auction_detail_content, .back_btn').show();
+        $('#group_creation_content').show();
+        // Hide the modal
+        $('#add_cus_map_modal').hide();
+        $('#back_btn').show();
+
+    });
     $('#submit_cus_map').click(function (event) {
-        event.preventDefault(); // Prevent the default form submission
+        event.preventDefault(); // Prevent default form submission
     
-        let cus_name = $('#cus_name').val().trim(); // Trim to remove any extra spaces
-        let group_id = $('#group_id').val().trim();
-        let total_members = $('#total_members').val().trim();
-        let chit_value = $('#chit_value').val().replace(/,/g, '').trim();
-        let joining_month = $('#joining_month').val().trim();
-        
-        // Fields that are required for validation
+        // Initialize arrays for storing values
+        let cus_name = [];
+        let share_value = [];
+        let share_percent = [];
+    
+        let map_id = $('#map_id').val();
+        let group_id = $('#group_id').val();
+        let total_members = $('#total_members').val();
+        let chit_value = $('#chit_value').val().replace(/,/g, ''); // Removing commas
+        let joining_month = $('#joining_month').val();
+    
+        // Get values for each row in both sets of rows
+        // Loop through rows in #mapping-row
+        $('#mapping-row').each(function () {
+            let cus_id = $(this).find('.cus_name').val(); // Get customer ID
+            let share_value_row = $(this).find('.share_value').val();
+            let share_percent_row = $(this).find('.share_percent').val();
+    
+            // Log the values of each field for debugging
+            console.log("Row Data - Customer ID (mapping-row): ", cus_id);
+            console.log("Row Data - Share Value (mapping-row): ", share_value_row);
+            console.log("Row Data - Share Percent (mapping-row): ", share_percent_row);
+    
+            if (cus_id && share_value_row && share_percent_row) {
+                cus_name.push(cus_id); // Add customer ID to cus_name array
+                share_value.push(share_value_row); // Add share value to share_value array
+                share_percent.push(share_percent_row); // Add share percent to share_percent array
+            }
+        });
+    
+        // Loop through rows in #mapping-container .row
+        $('#mapping-container .row').each(function () {
+            let cus_id = $(this).find('.cus_name').val(); // Get customer ID
+            let share_value_row = $(this).find('.share_value').val();
+            let share_percent_row = $(this).find('.share_percent').val();
+    
+            // Log the values of each field for debugging
+            console.log("Row Data - Customer ID (mapping-container): ", cus_id);
+            console.log("Row Data - Share Value (mapping-container): ", share_value_row);
+            console.log("Row Data - Share Percent (mapping-container): ", share_percent_row);
+    
+            if (cus_id && share_value_row && share_percent_row) {
+                cus_name.push(cus_id); // Add customer ID to cus_name array
+                share_value.push(share_value_row); // Add share value to share_value array
+                share_percent.push(share_percent_row); // Add share percent to share_percent array
+            }
+        });
+    
+        // Log the arrays to check if they're populated correctly
+        console.log("Customer Names: ", cus_name);
+        console.log("Share Values: ", share_value);
+        console.log("Share Percentages: ", share_percent);
+    
+        // Validation
         var isValid = true;
-        
-        // Validate cus_name and joining_month explicitly
-        if (!cus_name) {
-            validateField(cus_name, 'cus_name'); // Assuming validateField sets a warning
-            isValid = false;
-        }
+    
         if (!joining_month) {
             validateField(joining_month, 'joining_month');
             isValid = false;
         }
     
-        // Submit only if both fields are valid
+        if (!cus_name.length) {
+            swalError('Error', 'Customer Name is required.');
+            isValid = false;
+        }
+    
+        if (!share_value.length || !share_percent.length) {
+            swalError('Error', 'Share Value and Share Percentage are required.');
+            isValid = false;
+        }
+    
+        // Submit if everything is valid
         if (isValid && group_id !== '') {
             $.post('api/group_creation_files/submit_cus_mapping.php', {
-                cus_name: cus_name,
+                cus_name: cus_name, // Send the cus_name array
+                map_id: map_id,
                 group_id: group_id,
                 total_members: total_members,
                 chit_value: chit_value,
-                joining_month: joining_month
+                joining_month: joining_month,
+                share_value: share_value,
+                share_percent: share_percent
             }, function (response) {
                 let result = response.result;
     
                 if (result === 1) {
-                    // Success
-                    getCusMapTable(); // Refresh the customer mapping table
-                    $('#cus_name').val(''); // Clear the input field
+                    getCusMapTable();
+                    $('#cus_name').val('');
                     $('#joining_month').val('');
-                    $('#joining_month').css('border', '1px solid #cecece');
-                    $('#cus_name').css('border', '1px solid #cecece');
+                    $('#share_value').val('');
+                    $('#share_percent').val('');
                 } else if (result === 2) {
-                    // Failure
-                    swalError('Error', 'An error occurred while processing the request.');
+                    swalError('Error', 'An error occurred.');
                 } else if (result === 3) {
-                    // Limit Exceeded
                     swalError('Warning', response.message);
                 }
             }, 'json');
         }
     });
+    
     
 
     $(document).on('click', '.cusMapDeleteBtn', function () {
@@ -261,7 +810,8 @@ $(document).ready(function () {
     $(document).on('click', '.edit-group-creation', function () {
         let id = $(this).attr('value');
         $('#groupid').val(id);
-
+        $('#add_cus_map_modal').hide();
+        $('#back_to_list').hide();
         swapTableAndCreation();
         editGroupCreation(id)
 
@@ -341,6 +891,11 @@ function getAutoGenGroupId(id) {
         $('#group_id').val(response);
     }, 'json');
 }
+function getAutoGenMappingId(id) {
+    $.post('api/group_creation_files/get_autoGen_mapping_id.php', { id }, function (response) {
+        $('#map_id').val(response);
+    }, 'json');
+}
 function callGrpFunctions() {
     getAutoGenGroupId('')
     // getDateDropDown()
@@ -370,7 +925,7 @@ function getCustomerList() {
         let cusOptn = '';
         cusOptn = '<option value="">Select Customer Name</option>';
         response.forEach(val => {
-            cusOptn += '<option value="' + val.id + '">' + val.first_name + ' ' + val.last_name + ' - ' + val.place +' - ' + val.cus_id + '</option>';
+            cusOptn += '<option value="' + val.id + '">' + val.first_name + ' ' + val.last_name + ' - ' + val.place + ' - ' + val.cus_id + '</option>';
         });
         $('#cus_name').empty().append(cusOptn);
     }, 'json');
@@ -398,13 +953,6 @@ function getJoiningMonth() {
 }
 
 function getCusMapTable() {
-    let total_members = $('#total_members').val();
-    let chit_value = $('#chit_value').val().replace(/,/g, '');
-    let total_month = $('#total_month').val();
-    if (total_members === '' || chit_value === '' || total_month === '') {
-        swalError('Alert', 'Kindly Fill the Total Members,Chit Value and Total Month!')
-        return;
-    }
     let group_id = $('#group_id').val();
     $.post('api/group_creation_files/get_cus_map_details.php', { group_id }, function (response) {
         let cusMapColumn = [
@@ -441,21 +989,6 @@ function getModalAttr() {
             .attr('data-target', '#add_auction_modal');
     } else {
         $('#auction_modal_btn')
-            .removeAttr('data-toggle')
-            .removeAttr('data-target');
-    }
-}
-
-function getCusModal() {
-    let total_members = $('#total_members').val();
-    let chit_value = $('#chit_value').val().replace(/,/g, '');
-    let total_month = $('#total_month').val();
-    if (total_members != '' && chit_value != '' && total_month != '') {
-        $('#add_cus_map')
-            .attr('data-toggle', 'modal')
-            .attr('data-target', '#add_cus_map_modal');
-    } else {
-        $('#add_cus_map')
             .removeAttr('data-toggle')
             .removeAttr('data-target');
     }
@@ -683,7 +1216,6 @@ function editGroupCreation(id) {
         }, 1000);
 
         getModalAttr();
-        getCusModal();
     }, 'json');
 }
 
@@ -700,7 +1232,6 @@ $('button[type="reset"],#back_btn').click(function (event) {
         $(this).val($(this).find('option:first').val());
 
     });
-
     $('#group_creation input').css('border', '1px solid #cecece');
     $('#group_creation select').css('border', '1px solid #cecece');
 

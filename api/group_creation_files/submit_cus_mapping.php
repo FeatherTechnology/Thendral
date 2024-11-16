@@ -3,75 +3,39 @@ require "../../ajaxconfig.php";
 @session_start();
 $user_id = $_SESSION['user_id'];
 $total_members = intval($_POST['total_members']);
-$group_id = $pdo->quote($_POST['group_id']); // Properly quote to prevent SQL injection
-$cus_id = intval($_POST['cus_name']); // Assuming cus_name is actually cus_id
-$chit_value = intval($_POST['chit_value']); // Chit value of the new group
-$joining_month=intval($_POST['joining_month']);
+$group_id = $pdo->quote($_POST['group_id']);
+$map_id = $pdo->quote($_POST['map_id']);
+$cus_name = isset($_POST['cus_name']) ? $_POST['cus_name'] : [];
+$chit_value = intval($_POST['chit_value']);
+$joining_month = intval($_POST['joining_month']);
+$share_value = isset($_POST['share_value']) ? $_POST['share_value'] : [];
+$share_percent = isset($_POST['share_percent']) ? $_POST['share_percent'] : [];
 
-// Initialize response
 $response = ['result' => 2]; // Default to failure
 
-// Get the customer's chit limit
-$cusStmt = $pdo->query("SELECT chit_limit FROM customer_creation WHERE id = $cus_id");
-$cusChitLimit = $cusStmt->fetchColumn();
 
-// Check how many times the customer is added to the same group
-$existingGroupsStmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE cus_id = $cus_id AND grp_creation_id = $group_id");
-$existingGroupsCount = $existingGroupsStmt->fetchColumn();
+    for ($i = 0; $i < count($cus_name); $i++) {
+        $cus_id = intval($cus_name[$i]);
+        $share_value_item = floatval($share_value[$i]);
+        $share_percent_item = floatval($share_percent[$i]);
 
-// Calculate the total chit value of all groups the customer is currently in
-$chitValueSum = 0;
-$existingGroupsStmt = $pdo->query("SELECT grp_creation_id FROM group_cus_mapping WHERE cus_id = $cus_id");
-$existingGroups = $existingGroupsStmt->fetchAll(PDO::FETCH_COLUMN);
+        // Insert into group_cus_mapping
+        $pdo->query("INSERT INTO group_cus_mapping (map_id, grp_creation_id, joining_month, insert_login_id, created_on) 
+                     VALUES ($map_id, $group_id, $joining_month, $user_id, NOW())");
 
-foreach ($existingGroups as $grp_id) {
-    $groupChitStmt = $pdo->query("SELECT chit_value FROM group_creation WHERE grp_id = '$grp_id'");
-    $grpChitValue = $groupChitStmt->fetchColumn();
-    $chitValueSum += $grpChitValue;
-}
+        $cus_mapping_id = $pdo->lastInsertId(); // Get the last inserted ID
 
-// Add the chit value of the new group, adjusted if the customer is already in the same group
-$chitValueSum += ($existingGroupsCount + 1) * $chit_value; // +1 because we're adding this new instance
+        if ($cus_mapping_id) {
+            // Insert into group_share table
+            $pdo->query("INSERT INTO group_share (cus_mapping_id, cus_id, grp_creation_id, share_value, share_percent, created_on, insert_login_id) 
+                         VALUES ($cus_mapping_id, $cus_id, $group_id, $share_value_item, $share_percent_item, NOW(), $user_id)");
 
-// Check if adding the new group will exceed the customer's chit limit
-if ($chitValueSum > $cusChitLimit) {
-    $response = ['result' => 3, 'message' => 'Adding this group would exceed the customer\'s chit limit.'];
-    echo json_encode($response);
-    exit();
-}
-
-// Check the current count of customer mappings for the group
-$stmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = $group_id");
-$current_count = $stmt->fetchColumn();
-
-// Add the new group to the mapping
-if ($current_count < $total_members) {
-    $qry = $pdo->query("INSERT INTO group_cus_mapping (grp_creation_id, cus_id,joining_month, insert_login_id, created_on) VALUES ($group_id, $cus_id,'$joining_month','$user_id', NOW())");
-    
-    if ($qry) {
-        // Check if count now equals total members
-        $stmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = $group_id");
-        $current_count = $stmt->fetchColumn();
-
-        if ($current_count == $total_members) {
-            // Update the status in the group_creation table
-            $update_stmt = $pdo->query("UPDATE group_creation SET status = '2' WHERE grp_id = $group_id");
-            if ($update_stmt) {
-                $response['result'] = 1; // Success
-            } else {
-                $response['result'] = 2; // Failure
-            }
+            $response['result'] = 1; // Success
         } else {
-            $response['result'] = 1; // Success, but not yet full
+            $response = ['result' => 3, 'message' => 'Customer Mapping Limit is Exceeded'];
+            break; // Exit loop if insertion fails
         }
-    } else {
-        // Failure during insertion
-        $response['result'] = 2;
     }
-} else {
-    // Customer mapping limit exceeded
-    $response = ['result' => 3, 'message' => 'Customer Mapping Limit is Exceeded'];
-}
 
 echo json_encode($response);
 ?>
