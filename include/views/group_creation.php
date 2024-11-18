@@ -196,7 +196,7 @@
                             <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
                                 <div class="form-group">
                                     <label for="cus_name">Customer Name<span class="text-danger">*</span></label>
-                                    <select class="form-control" id="cus_name" name="cus_name" tabindex="1">
+                                    <select class="form-control cus_name" id="cus_name" name="cus_name" tabindex="1">
                                         <option value="">Select Customer</option>
                                     </select>
                                 </div>
