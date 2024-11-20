@@ -67,7 +67,7 @@ if (isset($data['data']) && is_array($data['data'])) {
             echo json_encode(['success' => false, 'message' => 'Failed to update group_creation table.']);
             exit;
         }
-        $updateCusMappingQuery = "UPDATE group_cus_mapping SET coll_status = 'Payable' 
+        $updateCusMappingQuery = "UPDATE group_share SET coll_status = 'Payable' 
             WHERE grp_creation_id = '$group_id'";
         if (!$pdo->query($updateCusMappingQuery)) {
             echo json_encode(['success' => false, 'message' => 'Failed to update group_cus_mapping_table .']);

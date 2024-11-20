@@ -2,12 +2,14 @@
 require '../../ajaxconfig.php';
 
 $auction_id = $_POST['auction_id'];
+$cus_id = $_POST['cus_id'];
 
 $qry = $pdo->query("
-    SELECT balance_amount,settle_amount
-    FROM settlement_info
-    WHERE auction_id = '$auction_id'
-    ORDER BY id DESC
+    SELECT si.balance_amount,si.settle_amount
+    FROM settlement_info si
+     LEFT JOIN customer_creation cc ON si.cus_name = cc.id
+    WHERE si.auction_id = '$auction_id' AND cc.cus_id = '$cus_id'
+    ORDER BY si.id DESC
     LIMIT 1
 ");
 

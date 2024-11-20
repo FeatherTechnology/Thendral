@@ -11,44 +11,43 @@ try {
     // Format the date into 'Y-m-d'
     $date = date('Y-m-d', strtotime($date));
 
-    // Prepare the SQL statement with FIND_IN_SET and handling cus_name = -1 (Company)
-  
+    // Create the SQL query with FIND_IN_SET and handling cus_name = -1 (Company)
     $qry = "
-        SELECT 
-            cc.first_name, 
-            cc.last_name, 
-            al.value,
-            CASE 
-                WHEN al.cus_name = '-1' THEN 'Company' 
-                ELSE CONCAT(cc.first_name, ' ', cc.last_name) 
-            END AS customer_name
-        FROM 
-            auction_modal al
-        LEFT JOIN 
-            customer_creation cc 
-        ON 
-            FIND_IN_SET(cc.id, al.cus_name) > 0
-        WHERE 
-            al.group_id = :group_id
-            AND al.date = :date
-        ORDER BY 
-            al.id ,al.value ASC;";
+          SELECT 
+    al.value,
+    gs.cus_mapping_id,
+    GROUP_CONCAT(
+        CASE 
+            WHEN al.cus_name = '-1' THEN 'Company' 
+            ELSE cc.first_name
+        END 
+        ORDER BY cc.first_name ASC SEPARATOR ' - '
+    ) AS customer_name
+FROM 
+    auction_modal al
+LEFT JOIN 
+    group_share gs ON al.cus_name = gs.cus_mapping_id
+LEFT JOIN 
+    customer_creation cc ON FIND_IN_SET(cc.id, gs.cus_id) > 0
+WHERE 
+    al.group_id = '$group_id'
+    AND al.date = '$date'
+GROUP BY 
+    al.value, gs.cus_mapping_id
+ORDER BY 
+    al.id, al.value ASC;
+    ";
     
-    $stmt = $pdo->prepare($qry);
-    
-    // Bind and execute the SQL statement
-    $stmt->execute([
-        ':group_id' => $group_id,
-        ':date' => $date
-    ]);
-    
+    // Execute the SQL query
+    $result = $pdo->query($qry);
+
     // Fetch all results
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $data = $result->fetchAll(PDO::FETCH_ASSOC);
 
     // Check if results are found
-    if ($result) {
+    if ($data) {
         $response['status'] = 'success';
-        $response['data'] = $result;
+        $response['data'] = $data;
     } else {
         $response['status'] = 'error';
         $response['message'] = 'No data found for the specified group ID and date.';

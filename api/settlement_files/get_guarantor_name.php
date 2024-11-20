@@ -2,18 +2,21 @@
 require '../../ajaxconfig.php';
 
 $id = $_POST['id'];
+$auction_id = $_POST['auction_id'];
 $qry = $pdo->query("SELECT 
             gi.id,
             gi.guarantor_name,
             CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name
         FROM 
             auction_details ad
-        JOIN 
-            customer_creation cc ON ad.cus_name = cc.id 
+    LEFT JOIN group_share gs ON
+    ad.cus_name = gs.cus_mapping_id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
         LEFT JOIN 
             guarantor_info gi ON cc.cus_id = gi.cus_id
         WHERE 
-            ad.id = '$id'
+     cc.id = '$id' AND ad.id = '$auction_id' 
         GROUP BY 
             cc.id, gi.id");  // Group by customer ID and guarantor ID
 
@@ -45,4 +48,3 @@ if ($qry->rowCount() > 0) {
 
 $pdo = null; // Close connection
 echo json_encode($result);
-?>

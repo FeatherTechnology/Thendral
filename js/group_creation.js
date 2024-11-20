@@ -405,11 +405,11 @@ $(document).ready(function () {
             }
         });
         if (!allRowsFilled) {
-            swalError('Warning', 'Please fill all fields in all rows before adding a new row.');
+            swalError('Warning', 'Please fill all row entries before adding a new one.');
             return; // Prevent row addition
         }
         if (!allFieldsFilled) {
-            swalError('Warning', 'Please fill all fields in the current row before adding a new one.');
+            swalError('Warning', 'Please fill all row entries before adding a new one');
             return; // Prevent row addition if current row is incomplete
         }
     

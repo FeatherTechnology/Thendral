@@ -34,11 +34,12 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
   SELECT 
     gcm.id,
     cc.cus_id, 
-    GROUP_CONCAT(DISTINCT cc.first_name SEPARATOR ' - ') AS customer_names,
+    GROUP_CONCAT(DISTINCT cc.first_name SEPARATOR ' - ') AS cus_name,
+      pl.place,
     COUNT(DISTINCT CASE 
                     WHEN (SELECT COUNT(*) 
                           FROM group_share gs_check 
-                          WHERE gs_check.cus_mapping_id = gs.cus_mapping_id) = 1 
+                          WHERE gs_check.cus_mapping_id = gs.cus_mapping_id AND gs_check.share_percent = 100) = 1 
                     THEN gs.cus_mapping_id
                     ELSE NULL 
                   END) AS chit_count
@@ -46,11 +47,12 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
     group_share gs
   JOIN 
     customer_creation cc ON gs.cus_id = cc.id
+      JOIN place pl ON cc.place = pl.id 
   JOIN 
     group_cus_mapping gcm ON gs.cus_mapping_id = gcm.id
   WHERE 
     gs.grp_creation_id = '$group_id' 
-    AND gcm.joining_month <= '$auction_month'
+    AND gcm.joining_month <= '$auction_month' AND gs.share_percent = 100
   GROUP BY 
     cc.cus_id
   HAVING 
@@ -60,8 +62,9 @@ UNION ALL
 (
   SELECT 
     gcm.id,
-    NULL AS cus_id,  -- Null cus_id as it's grouped by gcm.id
-    GROUP_CONCAT(cc.first_name SEPARATOR ' - ') AS customer_names,
+   '' AS cus_id,  -- Empty string instead of NULL for cus_id
+    GROUP_CONCAT(cc.first_name SEPARATOR ' - ') AS cus_name,
+     '' AS place,
     (SELECT COUNT(*) 
      FROM group_share gs_sub
      WHERE gs_sub.cus_id = gs.cus_id AND gs_sub.grp_creation_id = '$group_id') AS chit_count

@@ -7,7 +7,11 @@ $(document).ready(function () {
         $('#settle_type').val('');
         $('#den_upload').val(''); // This won't work, see below for the workaround
         $('#den_upload_edit').val('');
+        $('#settlement_screen input').val('')
+        $('#settlement_screen select').val('');
         resetValidation()
+        getDocInfoTable('')
+        getCashAck('');
     });
 
     // Initial Hide of all optional fields
@@ -16,7 +20,7 @@ $(document).ready(function () {
     // Payment Type Change
     $('#payment_type').change(function () {
         let paymentType = $(this).val();
-        fetchSettlementData($('#groupid').val()); // Fetch data based on group ID
+        // fetchSettlementData($('#groupid').val()); // Fetch data based on group ID
         updateSettleAmount();
         $('#settle_type').val('');
         resetValidation()
@@ -193,19 +197,15 @@ $(document).ready(function () {
         let id = $(this).attr('value');
         $('#groupid').val(id);
         editGroupCreation(id)
-        editCustomerCreation(id)
-        getGuarantorRelationship(id)
-        fetchSettlementData(id)
+        getCustomerName(id)
         $('#groupid').val(id);
-        checkBalance()
-        setTimeout(function () {
-            getDocInfoTable();
-            getCashAck();
-          //  getDenomImage();
-        }, 1000);
         $('#add_grup')
             .removeAttr('data-toggle')
             .removeAttr('data-target');
+        const currentDate = new Date();
+        $('#settle_date').val(formatDate(currentDate));
+        getDocInfoTable('')
+        getCashAck('');
         $('#submit_settle_info').attr('disabled', false);
     })
 
@@ -222,6 +222,24 @@ $(document).ready(function () {
     //         $('#gua_relationship').val('');
     //     }
     // });
+    $('#customer_name').on('change', function () {
+        const customerId = $(this).val();
+        if (customerId && customerId !== 'null') {
+            // Fetch the guarantor relationship if a valid ID is selected
+            editCustomerCreation(customerId)
+            getGuarantorRelationship(customerId)
+            fetchSettlementData(customerId)
+            checkBalance()
+            setTimeout(function () {
+                getDocInfoTable();
+                getCashAck();
+                //  getDenomImage();
+            }, 1000);
+        } else {
+            // Set default relationship as 'Customer' if no valid ID is selected
+            $('#gua_relationship').val('Customer');
+        }
+    });
     $('#gua_name').on('change', function () {
         const guarantorId = $(this).val();
         if (guarantorId && guarantorId !== 'null') {
@@ -350,10 +368,10 @@ $(document).ready(function () {
 
     $('#submit_settle_info').click(function (event) {
         event.preventDefault();
-    
+
         // Create a FormData object to hold the form data
         let settleInfo = new FormData();
-    
+
         // Append all your form fields to the FormData object
         settleInfo.append('auction_id', $('#groupid').val());
         settleInfo.append('group_id', $('#group_id').val());
@@ -374,18 +392,18 @@ $(document).ready(function () {
         settleInfo.append('balance_amount', $('#balance_amount').val().replace(/,/g, ''));
         settleInfo.append('gua_name', $('#gua_name').val());
         settleInfo.append('gua_relationship', $('#gua_relationship').val());
-    
+
         // Append the file from the file input
         let fileInput = $('#den_upload')[0].files[0];
         if (fileInput) {
             settleInfo.append('den_upload', fileInput);
         }
-    
+
         settleInfo.append('den_upload_edit', $('#den_upload_edit').val());
-    
+
         // Get the settle type
         let settleType = $('#settle_type').val();
-    
+
         // Validation for the file upload based on settle_type
         let isUploadValid = true;
         if (settleType == '1') { // Assuming '1' means you want to validate den_upload
@@ -403,10 +421,10 @@ $(document).ready(function () {
             $('#den_upload').css('border', '1px solid #cecece');
             $('#den_upload_edit').css('border', '1px solid #cecece');
         }
-    
+
         // Validate the form data
         let isValid = isFormDataValid(settleInfo) && isUploadValid;
-    
+
         // Check if the form is valid before submission
         if (isValid) {
             $.ajax({
@@ -435,8 +453,8 @@ $(document).ready(function () {
             swalError('Warning', 'Please fill the all the fields.');
         }
     });
-    
-    
+
+
 
     ///////////////////////////////////////////////////////////////////Document info START ////////////////////////////////////////////////////////////////////////////
 
@@ -566,11 +584,11 @@ function groupData() {
     $('#auction_month').val(grp_month);
 }
 function editCustomerCreation(id) {
-    $.post('api/settlement_files/settle_customer_data.php', { id: id }, function (response) {
+    let auction_id = $('#groupid').val();
+    $.post('api/settlement_files/settle_customer_data.php', { id: id, auction_id: auction_id }, function (response) {
         if (response.length > 0) {
-            $('#groupid').val(id);
             $('#cus_id').val(response[0].cus_id);
-            $('#customer_name').val(response[0].cus_name); // Full name in a single field
+            $('#map_id').val(response[0].map_id);
             $('#place').val(response[0].place);
             $('#mobile1').val(response[0].mobile1);
             $('#occupation').val(response[0].occupations); // Assuming you have a field for occupations
@@ -620,7 +638,8 @@ function getDocrelationshipName(guarantorId) {
 }
 
 function getGuarantorRelationship(id) {
-    $.post('api/settlement_files/get_guarantor_name.php', { id: id }, function (response) {
+    let auction_id = $('#groupid').val();
+    $.post('api/settlement_files/get_guarantor_name.php', { id: id, auction_id: auction_id }, function (response) {
         let appendGuarantorOption = "<option value=''>Select Name</option>";
         $.each(response, function (index, val) {
             let selected = '';
@@ -681,37 +700,38 @@ function getBankName() {
         $('#bank_name').empty().append(appendBankOption);
     }, 'json');
 }
-function setSettlementFields(data) {
-    const { chit_value, auction_value } = data[0];
-    const settlementAmount = chit_value - auction_value;
+// function setSettlementFields(data) {
 
-    function formatDate(date) {
-        let day = date.getDate();
-        let month = date.getMonth() + 1; // Months are zero-based
-        let year = date.getFullYear();
+//     // Set Settlement Amount and Balance
+//     // $('#settle_amount').val(settlementAmount);
+//     $('#settle_amount').val(moneyFormatIndia(settlement_amount));
+//     checkBalance();
+//     // Update the UI based on payment and settlement types
+//     updateSettleAmount();
+// }
+function formatDate(date) {
+    let day = date.getDate();
+    let month = date.getMonth() + 1; // Months are zero-based
+    let year = date.getFullYear();
 
-        // Add leading zeros if day or month is less than 10
-        if (day < 10) day = '0' + day;
-        if (month < 10) month = '0' + month;
+    // Add leading zeros if day or month is less than 10
+    if (day < 10) day = '0' + day;
+    if (month < 10) month = '0' + month;
 
-        return day + '-' + month + '-' + year;
-    }
-
-    // Set Settlement Date to Current Date in dd-mm-yyyy format
-    const currentDate = new Date();
-    $('#settle_date').val(formatDate(currentDate));
-
-    // Set Settlement Amount and Balance
-    // $('#settle_amount').val(settlementAmount);
-    $('#settle_amount').val(moneyFormatIndia(settlementAmount));
-    checkBalance();
-    // Update the UI based on payment and settlement types
-    updateSettleAmount();
+    return day + '-' + month + '-' + year;
 }
+
+// Set Settlement Date to Current Date in dd-mm-yyyy format
+
 function fetchSettlementData(id) {
-    $.post('api/settlement_files/get_settlement_amount.php', { id: id }, function (response) {
+    let auction_id = $('#groupid').val();
+    $.post('api/settlement_files/get_settlement_amount.php', { id: id, auction_id: auction_id }, function (response) {
         if (response.length > 0) {
-            setSettlementFields(response);
+            // Assuming `response` is an array and we need the first object's `settlement_amount`
+            let settlement_amount = response[0].settlement_amount;
+            $('#settle_amount').val(moneyFormatIndia(settlement_amount));
+            checkBalance()
+
         } else {
             // Clear fields if no data found
             $('#settle_date').val('');
@@ -720,6 +740,7 @@ function fetchSettlementData(id) {
         }
     }, 'json');
 }
+
 function getDocCreationTable() {
     let cus_id = $('#cus_id').val();
     let auction_id = $('#groupid').val();
@@ -751,7 +772,6 @@ function getDocCreationTable() {
 function getDocInfoTable() {
     let cus_id = $('#cus_id').val();
     let auction_id = $('#groupid').val();
-    console.log(cus_id);
     $.post('api/settlement_files/doc_info_list.php', { cus_id, auction_id }, function (response) {
         let docColumn = [
             "sno",
@@ -962,10 +982,11 @@ function getCashAck() {
 
 function checkBalance() {
     let auction_id = $('#groupid').val();
+    let cus_id = $('#cus_id').val();
     $.ajax({
         url: 'api/settlement_files/get_balance_amount.php',
         type: 'POST',
-        data: { "auction_id": auction_id },
+        data: { "auction_id": auction_id, 'cus_id': cus_id },
         dataType: 'json',
         success: function (response) {
             if (response && response.balance_amount !== undefined) {
@@ -1107,7 +1128,7 @@ function printDenomination() {
         swalError('Warning', 'Please fill in the denomination values before printing.');
         return; // Exit the function if total amount is 0
     }
-    
+
     // Retrieve and format values from inputs
     const chitValue = $('#cht_value').val().replace(/,/g, '');
     const commission = $('#cht_com').val().replace(/,/g, '');
@@ -1183,21 +1204,21 @@ function printDenomination() {
         let amount = $(this).find('td:first').text(); // Amount
         let quantity = $(this).find('input[type="number"]').val(); // Quantity
         let totalValue = $(this).find('input[type="text"]').val(); // Total Value
-        
+
         // Check for undefined or empty values
         const formattedQuantity = quantity ? quantity : '';
         const formattedTotalValue = totalValue ? moneyFormatIndia(totalValue) : '';
-        
+
         // Check if this is the Total row
         if ($(this).find('td').eq(0).attr('colspan') === '2') {
-          content += `
+            content += `
             <tr>
               <td colspan="2" style="border: 1px solid black; padding: 10px; text-align: right;"><strong>Total</strong></td>
               <td style="border: 1px solid black; padding: 10px;">${moneyFormatIndia($('#totalAmount').val().replace(/,/g, ''))}</td>
             </tr>
           `;
         } else {
-          content += `
+            content += `
             <tr>
               <td style="border: 1px solid black; padding: 10px;">${amount}</td>
               <td style="border: 1px solid black; padding: 10px;">${formattedQuantity}</td>
@@ -1205,7 +1226,7 @@ function printDenomination() {
             </tr>
           `;
         }
-      });
+    });
 
     content += `
                 </tbody>
@@ -1234,16 +1255,16 @@ function printDenomination() {
 
     // Close the document and trigger the print
     setTimeout(() => {
-       
-    
-    printWindow.document.close();
-    printWindow.print();
 
-    // Close the print window after printing
-    printWindow.onafterprint = function () {
-        printWindow.close();
-    };
-}, 1000);
+
+        printWindow.document.close();
+        printWindow.print();
+
+        // Close the print window after printing
+        printWindow.onafterprint = function () {
+            printWindow.close();
+        };
+    }, 1000);
 }
 // function getDenomImage() {
 //     let auction_id = $('#groupid').val();
@@ -1259,3 +1280,19 @@ function printDenomination() {
 //     });
 // }
 
+function getCustomerName(id) {
+    $.post('api/settlement_files/get_settle_customer.php', { id: id }, function (response) {
+        let appendCusOption = '';
+        appendCusOption += "<option value=''>Select Customer Name</option>";
+        $.each(response, function (index, val) {
+            let selected = '';
+            let editGId = $('#custom_name_edit').val();
+            if (val.id == editGId) {
+                selected = 'selected';
+            }
+            appendCusOption += "<option value='" + val.id + "' " + selected + ">" + val.cus_name + "</option>";
+        });
+
+        $('#customer_name').empty().append(appendCusOption);
+    }, 'json');
+}

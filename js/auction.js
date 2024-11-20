@@ -313,7 +313,7 @@ $(document).ready(function () {
                         <td class="cus-name-column">Company</td>
                         <td class="value-column">
                             <div class="input-container">
-                                <input type="number" name="cus_value[]" class="form-control" value="${lowValue}" placeholder="Enter value" readonly>
+                                <input type="number" name="cus_value[]" class="form-control" value="" placeholder="Enter value">
                             </div>
                         </td>
                     </tr>
@@ -514,65 +514,71 @@ $(document).ready(function () {
         var submitBtn = $('#submit_cus_map');
         var lowValue = parseFloat(submitBtn.attr('data-low_value'));
         var highValue = parseFloat(submitBtn.attr('data-high_value')); // Use a high number if highValue is NaN
-
+    
         // Format lowValue and highValue using moneyFormatIndia
         var formattedLowValue = moneyFormatIndia(lowValue);
         var formattedHighValue = moneyFormatIndia(highValue);
-
+    
         // Check if the input value is within the specified range
         if (inputValue < lowValue || inputValue > highValue) {
             swalError('Warning', `Please enter a value between ${formattedLowValue} and ${formattedHighValue}.`);
             $(this).val(''); // Clear the invalid value
             return;
         }
-
+    
         var isValid = true;
         var isUnique = true; // Flag for uniqueness check
         var hasPreviousValues = false; // Flag to check if there are previous values
-
+    
+        // Skip validation if the row belongs to "Company"
+        var isCompanyRow = $(this).closest('tr').hasClass('company-row');
+        if (isCompanyRow) {
+            return; // Exit validation for "Company" row
+        }
+    
         // Validate against all previous input values in the table
         $('#cus_mapping_table tbody input[type="number"]').each(function () {
             var prevValue = parseFloat($(this).val());
-
-            // Skip the current input field value from comparison
-            if (this !== event.target && !isNaN(prevValue)) {
+    
+            // Skip the current input field value from comparison and also skip "Company" rows
+            if (this !== event.target && !isNaN(prevValue) && !$(this).closest('tr').hasClass('company-row')) {
                 hasPreviousValues = true; // Set flag since we found a previous value
-
+    
                 // Check for uniqueness
                 if (inputValue === prevValue) {
                     isUnique = false; // Found a duplicate value
                 }
-
+    
                 // Check if the current input value is less than or equal to any previous value
                 if (inputValue <= prevValue) {
                     isValid = false; // Input is not valid
                 }
             }
         });
-
+    
         // Show warning if the value must be greater than all previous values (only if previous values exist)
         if (hasPreviousValues && !isValid) {
             swalError('Warning', 'Please enter a higher bid value than the previous one.');
             $(this).val(''); // Clear the invalid value
             return;
         }
-
+    
         // Show warning if the value is not unique
         if (!isUnique) {
-            swalError('Warning', 'The bid value must be unique for each entry');
+            swalError('Warning', 'The bid value must be unique for each entry.');
             $(this).val(''); // Clear the invalid value
             return;
         }
-
+    
         // If all validations pass, make the input readonly
         $(this).prop('readonly', true);
-
+    
         // Call the function to highlight the highest value
         highlightHighestValue();
-
+    
         // Limit to two inputs per customer
         manageCustomerInputs($(this));
-    });
+    })
 
     // Function to highlight the highest value
     function highlightHighestValue() {
@@ -694,6 +700,10 @@ $(document).ready(function () {
             },
         });
     }
+    $(document).on('keyup', '#cus_mapping_table tbody input[type="number"]', function () {
+        // Call the function to reset round buttons when the value changes
+        resetRoundButtons();
+    });
     
     //////////////////////////////////////////////////////////Auction Modal End//////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////PostPone Modal Start//////////////////////////////////////////////////////////////
@@ -830,7 +840,7 @@ $(document).ready(function () {
         const content = `
         <div id="print_content" style="text-align: center;">
             <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                <img src="img/bg_none_eng_logo.png" style="margin-right: 10px;" class="img">
+                <img src="img/thendral_logo_icon.png" style="margin-right: 10px;" class="img">
                
             </h2>
             <table style="margin: 0 auto; border-collapse: collapse; width: 25%;">
@@ -1011,11 +1021,20 @@ function getCusName(groupId, auction_month) {
             selected: false
         }];
 
-        // Map the response to the desired format
+        // Map the response to the desired format, handling empty values
         response.forEach(function (val) {
+            let cusName = val.cus_name ? val.cus_name : ''; // Handle empty cus_name
+            let place = val.place ? ' - ' + val.place : ''; // Only add hyphen if place is not empty
+            let cusId = val.cus_id ? ' - ' + val.cus_id : ''; // Only add hyphen if cus_id is not empty
+
+            let label = cusName + place + cusId; // Concatenate the values
+
+            // Trim any trailing hyphens or extra spaces
+            label = label.replace(/\s*-\s*$/, '');
+
             items.push({
                 value: val.id,
-                label: val.cus_name + ' - ' + val.place +' - ' + val.cus_id,
+                label: label.trim(),
                 selected: false
             });
         });
@@ -1029,6 +1048,7 @@ function getCusName(groupId, auction_month) {
         cus_name.setChoices(items, 'value', 'label', true);
     }, 'json');
 }
+
 function populateDates() {
     var $grpDateSelect = $('#grp_date');
     var today = new Date();

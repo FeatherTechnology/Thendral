@@ -41,6 +41,8 @@ $date = DateTime::createFromFormat('d-m-Y', $settle_date);
 $settle_date_formatted = $date->format('Y-m-d');
 $qry1 = $pdo->query("SELECT id as cus_name FROM customer_creation WHERE cus_id='$cus_id'"); 
 $cus_name = $qry1->fetchColumn();
+$qry3 = $pdo->query("SELECT cus_name  as cus_mapping_id FROM auction_details WHERE id='$auction_id'"); 
+$cus_mapping_id = $qry3->fetchColumn();
 $qry = $pdo->query("INSERT INTO settlement_info (auction_id, settle_date,group_id,cus_name, settle_amount, settle_balance, payment_type, settle_type, bank_id, settle_cash, cheque_no, cheque_val, cheque_remark, transaction_id, transaction_val, transaction_remark, 
         balance_amount, guarantor_name, guarantor_relationship,den_upload, insert_login_id, created_on) VALUES ('$auction_id','$settle_date_formatted','$group_id','$cus_name', '$settle_amount', '$settle_balance', '$payment_type', '$settle_type', '$bank_name', '$settle_cash', '$cheque_no', '$cheque_val', '$cheque_remark', '$transaction_id', 
         '$transaction_val', '$transaction_remark', '$balance_amount', '$gua_name', '$gua_relationship','$picture','$user_id', NOW())");
@@ -53,12 +55,12 @@ if ($payment_type == "1") {
             WHERE id = '$auction_id'");
 
         // Update group_cus_mapping settle_status
-        $qry2 = $pdo->query("UPDATE `group_cus_mapping` 
-            SET `settle_status` = 'Yes' 
-            WHERE `grp_creation_id` = '$group_id' 
-            AND `cus_id` = '$cus_name' 
-            AND `settle_status` IS NULL 
-            LIMIT 1");
+        $qry2 = $pdo->query("UPDATE `group_share` 
+        SET `settle_status` = 'Yes' 
+        WHERE `grp_creation_id` = '$group_id' 
+        AND `cus_id` = '$cus_name' AND `cus_mapping_id`='$cus_mapping_id'
+        AND `settle_status` IS NULL 
+        LIMIT 1");
 
         if ($qry && $update_query && $qry2) {
             $result = 1;
@@ -75,10 +77,10 @@ if ($payment_type == "1") {
         WHERE id = '$auction_id'");
 
     // Update group_cus_mapping settle_status
-    $qry2 = $pdo->query("UPDATE `group_cus_mapping` 
+    $qry2 = $pdo->query("UPDATE `group_share` 
         SET `settle_status` = 'Yes' 
         WHERE `grp_creation_id` = '$group_id' 
-        AND `cus_id` = '$cus_name' 
+        AND `cus_id` = '$cus_name' AND `cus_mapping_id`='$cus_mapping_id'
         AND `settle_status` IS NULL 
         LIMIT 1");
 
