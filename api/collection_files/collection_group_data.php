@@ -140,8 +140,8 @@ foreach ($result as $row) {
     $sub_array[] = "<div class='dropdown'>
                         <button class='btn btn-outline-secondary'><i class='fa'>&#xf107;</i></button>
                         <div class='dropdown-content'>
-                            <a href='#' class='add_due' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['auction_month']}'>Due Chart</a>
-                            <a href='#' class='commitment_chart' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}'>Commitment Chart</a>
+                            <a href='#' class='add_due' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['auction_month']}_{$row['share_id']}'>Due Chart</a>
+                            <a href='#' class='commitment_chart' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['share_id']}'>Commitment Chart</a>
                         </div>
                     </div>";
 

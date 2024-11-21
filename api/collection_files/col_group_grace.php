@@ -18,33 +18,31 @@ class GraceperiodClass
         $current_date = date('Y-m-d');
 
         // Query to calculate unpaid amount
-        $qry1 = "  SELECT 
-    COALESCE(SUM(ad.chit_amount), 0) AS total_chit_amount,
-    COALESCE(
-        (SELECT SUM(c.collection_amount)
-         FROM collection c
-         WHERE c.share_id = '$share_id' 
-           AND c.group_id = '$group_id'
-           AND (c.collection_date <= NOW() OR c.collection_date IS NULL)
-        ), 0
-    ) AS total_collection_amount,
-    COALESCE(SUM(ad.chit_amount), 0) - COALESCE(
-        (SELECT SUM(c.collection_amount)
-         FROM collection c
-         WHERE c.share_id = '$share_id' 
-           AND c.group_id = '$group_id'
-           AND (c.collection_date <= NOW() OR c.collection_date IS NULL)
-        ), 0
+        $qry1 = "  SELECT
+   (COALESCE(SUM(ad.chit_amount),
+    0)* gs.share_percent / 100) - COALESCE(
+        (
+        SELECT
+            SUM(c.collection_amount)
+        FROM
+            collection c
+        WHERE
+            c.share_id = '$share_id' AND c.group_id = '$group_id' AND(
+                c.collection_date <= NOW() OR c.collection_date IS NULL)
+            ),
+            0
     ) AS unpaid_amount
-FROM 
+FROM
     auction_details ad
-WHERE 
-    ad.group_id = '$group_id'
-    AND ad.status IN (2, 3)
-    AND (
-        YEAR(ad.date) < YEAR(CURRENT_DATE) 
-        OR (YEAR(ad.date) = YEAR(CURRENT_DATE) AND MONTH(ad.date) < MONTH(CURRENT_DATE))
-    );";
+      JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+WHERE
+    ad.group_id = '$group_id' AND  gs.id = '$share_id' AND ad.status IN(2, 3) AND(
+        YEAR(ad.date) < YEAR(CURRENT_DATE) OR(
+            YEAR(ad.date) = YEAR(CURRENT_DATE) AND MONTH(ad.date) <MONTH(CURRENT_DATE)
+        )
+    );
+";
 
         $result = $this->pdo->query($qry1)->fetch(PDO::FETCH_ASSOC);
         $unpaid_amount = $result['unpaid_amount'] ?? 0;

@@ -2,10 +2,12 @@
 require '../../ajaxconfig.php';
 
 $property_list_arr = array();
+$share_id =$_POST['share_id'];
 $cusMappingID = $_POST['cus_mapping_id'];
 $groupId =$_POST['group_id'];
+
 $i = 0;
-$qry = $pdo->query("SELECT id, created_on, label,commitment_date, remark FROM commitment_info WHERE cus_mapping_id = '$cusMappingID' AND group_id='$groupId'");
+$qry = $pdo->query("SELECT id, created_on, label,commitment_date, remark FROM commitment_info WHERE cus_mapping_id = '$cusMappingID' AND group_id='$groupId' AND share_id='$share_id'");
 
 if ($qry->rowCount() > 0) {
     while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {

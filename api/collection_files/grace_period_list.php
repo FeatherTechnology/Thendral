@@ -1,4 +1,4 @@
-<?php 
+<?php
 require '../../ajaxconfig.php';
 @session_start();
 
@@ -53,22 +53,31 @@ LEFT JOIN customer_creation cc ON
                     $mapping_id = $mapping['map_id'];
 
                     // Query to fetch unpaid amounts (chit_amount - collection_amount)
-                    $qry1 = "SELECT 
-                                COALESCE(SUM(ad.chit_amount), 0) - COALESCE(
-                                    (SELECT SUM(c.collection_amount)
-                                     FROM collection c
-                                     WHERE c.share_id = '$mapping_id' 
-                                       AND c.group_id = '$group_id'
-                                       AND (c.collection_date <= NOW() OR c.collection_date IS NULL)
-                                    ), 0
-                                ) AS unpaid_amount
-                            FROM auction_details ad
-                            WHERE ad.group_id = '$group_id'
-                              AND ad.status IN (2, 3)
-                              AND (YEAR(ad.date) < YEAR(CURRENT_DATE) 
-                                   OR (YEAR(ad.date) = YEAR(CURRENT_DATE) 
-                                       AND MONTH(ad.date) < MONTH(CURRENT_DATE))
-                                  );";
+                    $qry1 = "SELECT
+   (COALESCE(SUM(ad.chit_amount),
+    0)* gs.share_percent / 100) - COALESCE(
+        (
+        SELECT
+            SUM(c.collection_amount)
+        FROM
+            collection c
+        WHERE
+            c.share_id = '$mapping_id' AND c.group_id = '$group_id' AND(
+                c.collection_date <= NOW() OR c.collection_date IS NULL)
+            ),
+            0
+    ) AS unpaid_amount
+FROM
+    auction_details ad
+      JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+WHERE
+    ad.group_id = '$group_id' AND  gs.id = '$mapping_id' AND ad.status IN(2, 3) AND(
+        YEAR(ad.date) < YEAR(CURRENT_DATE) OR(
+            YEAR(ad.date) = YEAR(CURRENT_DATE) AND MONTH(ad.date) < MONTH(CURRENT_DATE)
+        )
+    );
+";
 
                     $result = $this->pdo->query($qry1)->fetch(PDO::FETCH_ASSOC);
                     $unpaid_amount = $result['unpaid_amount'] ?? 0;
@@ -84,10 +93,10 @@ LEFT JOIN customer_creation cc ON
                     return 'red';
                 }
                 // Step 3: If no unpaid amount, check the grace period
-               
-        
-                    // Query to fetch grace period and auction date for the group
-                    $qry2 = "SELECT 
+
+
+                // Query to fetch grace period and auction date for the group
+                $qry2 = "SELECT 
                                 gc.grace_period, 
                                 ad.date 
                             FROM auction_details ad 
@@ -95,27 +104,25 @@ LEFT JOIN customer_creation cc ON
                             WHERE ad.group_id = '$group_id'
                               AND YEAR(ad.date) = '$currentYear'
                               AND MONTH(ad.date) = '$currentMonth'";
-        
-                    $mapped = $this->pdo->query($qry2)->fetchAll(PDO::FETCH_ASSOC);
-        
-                    // Check if there are any mappings; if not, skip the group
-                    if (count($mapped) > 0) {
-                        foreach ($mapped as $row) {
-                            $grace_period = $row['grace_period'] ?? 0;
-                            $date = $row['date'] ?? '';
-        
-                            if (!empty($date)) {
-                                $grace_end_date = date('Y-m-d', strtotime($date . ' + ' . $grace_period . ' days'));
-        
-                                // If the payment is missed after the grace period, return 'red'
-                                if ($grace_end_date < $current_date) {
-                                    return 'red';
-                                }
+
+                $mapped = $this->pdo->query($qry2)->fetchAll(PDO::FETCH_ASSOC);
+
+                // Check if there are any mappings; if not, skip the group
+                if (count($mapped) > 0) {
+                    foreach ($mapped as $row) {
+                        $grace_period = $row['grace_period'] ?? 0;
+                        $date = $row['date'] ?? '';
+
+                        if (!empty($date)) {
+                            $grace_end_date = date('Y-m-d', strtotime($date . ' + ' . $grace_period . ' days'));
+
+                            // If the payment is missed after the grace period, return 'red'
+                            if ($grace_end_date < $current_date) {
+                                return 'red';
                             }
                         }
                     }
-                
-            
+                }
             }
         }
 

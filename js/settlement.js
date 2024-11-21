@@ -1124,16 +1124,13 @@ function resetDenominationTable() {
 }
 
 function printDenomination() {
-    // Clone the denomination content
     let totalAmount = parseFloat($('#totalAmount').val().replace(/,/g, ''));
 
-    // Check if the total amount is 0 or not a number
     if (totalAmount === 0 || isNaN(totalAmount)) {
         swalError('Warning', 'Please fill in the denomination values before printing.');
-        return; // Exit the function if total amount is 0
+        return;
     }
 
-    // Retrieve and format values from inputs
     const chitValue = $('#cht_value').val().replace(/,/g, '');
     const commission = $('#cht_com').val().replace(/,/g, '');
     const auctionValue = $('#act_val').val().replace(/,/g, '');
@@ -1146,87 +1143,84 @@ function printDenomination() {
     const formattedTotalValue = moneyFormatIndia(totalValue);
     const formattedSetlValue = moneyFormatIndia(setVal);
 
-    // Create the HTML content for printing
     let content = ` 
         <div id="print_content" style="text-align: center;">
-            <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                <img src="img/thendral_logo_icon.png" class="img1" style=" height: 90px;">           
+            <h2 style="margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
+                <img src="img/thendral_logo_icon.png" class="img1" style=" height: 80px;">           
             </h2>
-            <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+            <h3 style="margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
                 Cash Denomination
-            </h2>
-            <table style="margin: 0 auto; border-collapse: collapse; width:55%;">
+            </h3>
+            <table style="margin: 0 auto; border-collapse: collapse; width:65%; font-size: 16px;">
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Group Name</strong></td>
-                    <td style="padding-bottom: 10px;">${$('#denon_name').val()}</td>
+                    <td style="padding-bottom: 7px;"><strong>Group Name</strong></td>
+                    <td style="padding-bottom: 7px;">${$('#denon_name').val()}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Auction Month</strong></td>
-                    <td style="padding-bottom: 10px;">${$('#auc_month').val()}</td>
+                    <td style="padding-bottom: 7px;"><strong>Auction Month</strong></td>
+                    <td style="padding-bottom: 7px;">${$('#auc_month').val()}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Date</strong></td>
-                    <td style="padding-bottom: 10px;">${$('#auct_date').val()}</td>
+                    <td style="padding-bottom: 7px;"><strong>Date</strong></td>
+                    <td style="padding-bottom: 7px;">${$('#auct_date').val()}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Chit Value</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedChitValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Chit Value</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedChitValue}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Auction Value</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedAuctionValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Auction Value</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedAuctionValue}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Commission</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedCommission}</td>
+                    <td style="padding-bottom: 7px;"><strong>Commission</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedCommission}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Total Amount</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedTotalValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Total Amount</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedTotalValue}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Settlement Amount</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedSetlValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Settlement Amount</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedSetlValue}</td>
                 </tr>
             </table>
         </div>
         <br />
         <div style="text-align: center;">
-            <h3>Denomination Table</h3>
-            <table style="margin: 0 auto; border-collapse: collapse; width: 85%;">
+            <h4>Denomination Table</h4>
+            <table style="margin: 0 auto; border-collapse: collapse; width: 85%; font-size: 16px;">
                 <thead>
                     <tr>
-                        <th style="border: 1px solid black; padding: 10px;">Amount</th>
-                        <th style="border: 1px solid black; padding: 10px;">Quantity</th>
-                        <th style="border: 1px solid black; padding: 10px;">Total Value</th>
+                        <th style="border: 1px solid black; padding: 7px;">Amount</th>
+                        <th style="border: 1px solid black; padding: 7px;">Quantity</th>
+                        <th style="border: 1px solid black; padding: 7px;">Total Value</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
     $('#denominationTableBody tr').each(function () {
-        let amount = $(this).find('td:first').text(); // Amount
-        let quantity = $(this).find('input[type="number"]').val(); // Quantity
-        let totalValue = $(this).find('input[type="text"]').val(); // Total Value
+        let amount = $(this).find('td:first').text();
+        let quantity = $(this).find('input[type="number"]').val();
+        let totalValue = $(this).find('input[type="text"]').val();
 
-        // Check for undefined or empty values
         const formattedQuantity = quantity ? quantity : '';
         const formattedTotalValue = totalValue ? moneyFormatIndia(totalValue) : '';
 
-        // Check if this is the Total row
         if ($(this).find('td').eq(0).attr('colspan') === '2') {
             content += `
             <tr>
-              <td colspan="2" style="border: 1px solid black; padding: 10px; text-align: right;"><strong>Total</strong></td>
-              <td style="border: 1px solid black; padding: 10px;">${moneyFormatIndia($('#totalAmount').val().replace(/,/g, ''))}</td>
+              <td colspan="2" style="border: 1px solid black; padding: 7px; text-align: right;"><strong>Total</strong></td>
+              <td style="border: 1px solid black; padding: 7px;">${moneyFormatIndia($('#totalAmount').val().replace(/,/g, ''))}</td>
             </tr>
           `;
         } else {
             content += `
             <tr>
-              <td style="border: 1px solid black; padding: 10px;">${amount}</td>
-              <td style="border: 1px solid black; padding: 10px;">${formattedQuantity}</td>
-              <td style="border: 1px solid black; padding: 10px;">${formattedTotalValue}</td>
+              <td style="border: 1px solid black; padding: 7px;">${amount}</td>
+              <td style="border: 1px solid black; padding: 7px;">${formattedQuantity}</td>
+              <td style="border: 1px solid black; padding: 7px;">${formattedTotalValue}</td>
             </tr>
           `;
         }
@@ -1237,39 +1231,34 @@ function printDenomination() {
             </table>
         </div>
         <br />
-        <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+        <div style="display: flex; justify-content: space-between; margin-top: 80px;">
             <div>
-                <h5>Manager's Signature</h5>
+                <h5 style="font-size: 16px;">Manager's Signature</h5>
             </div>
             <div>
-                <h5>Customer's Signature</h5>
+                <h5 style="font-size: 16px;">Customer's Signature</h5>
             </div>
         </div>
     `;
 
-    // Open a new window for printing
     const printWindow = window.open('', '_blank');
 
-    // Write the content into the new window
     printWindow.document.write('<html><head><title>Print Denomination</title>');
-    printWindow.document.write('<style>body{font-family: Arial, sans-serif; margin: 20px;} .table { width: 100%; border-collapse: collapse; } .table, .table th, .table td { border: 1px solid black; } .table th, .table td { padding: 10px; text-align: left; } .text-right { text-align: right; }</style>');
+    printWindow.document.write('<style>body{font-family: Arial, sans-serif; margin: 10px;} .table { width: 100%; border-collapse: collapse; } .table, .table th, .table td { border: 1px solid black; } .table th, .table td { padding: 7px; text-align: left; } .text-right { text-align: right; }</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write(content);
     printWindow.document.write('</body></html>');
 
-    // Close the document and trigger the print
     setTimeout(() => {
-
-
         printWindow.document.close();
         printWindow.print();
 
-        // Close the print window after printing
         printWindow.onafterprint = function () {
             printWindow.close();
         };
     }, 1000);
 }
+
 // function getDenomImage() {
 //     let auction_id = $('#groupid').val();
 //     let cus_id = $('#cus_id').val();
