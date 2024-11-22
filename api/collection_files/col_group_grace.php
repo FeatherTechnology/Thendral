@@ -39,7 +39,7 @@ FROM
 WHERE
     ad.group_id = '$group_id' AND  gs.id = '$share_id' AND ad.status IN(2, 3) AND(
         YEAR(ad.date) < YEAR(CURRENT_DATE) OR(
-            YEAR(ad.date) = YEAR(CURRENT_DATE) AND MONTH(ad.date) <MONTH(CURRENT_DATE)
+            YEAR(ad.date) = YEAR(CURRENT_DATE) AND MONTH(ad.date) < MONTH(CURRENT_DATE)
         )
     );
 ";

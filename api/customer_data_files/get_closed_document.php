@@ -30,6 +30,7 @@ ORDER BY
 
 if ($qry->rowCount() > 0) {
     while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {
+        $row['chit_value'] = moneyFormatIndia($row['chit_value']);
 
         $row['action'] = "<button class='btn btn-primary documentActionBtn' value='" . $row['cus_id'] . "_" . $row['grp_id'] ."'>&nbsp;NOC Summary</button>";
 
@@ -40,3 +41,25 @@ if ($qry->rowCount() > 0) {
 
 echo json_encode($property_list_arr);
 $pdo = null; // Close Connection
+function moneyFormatIndia($num) {
+    $explrestunits = "";
+    if(strlen($num) > 3) {
+        $lastthree = substr($num, strlen($num) - 3, strlen($num));
+        $restunits = substr($num, 0, strlen($num) - 3); // extracts the last three digits
+        $restunits = (strlen($restunits) % 2 == 1) ? "0" . $restunits : $restunits; 
+        $expunit = str_split($restunits, 2);
+        for($i = 0; $i < sizeof($expunit); $i++) {
+            // creates each of the 2 unit pairs, adds a comma
+            if($i == 0) {
+                $explrestunits .= (int)$expunit[$i] . ","; // if first value , convert into integer
+            } else {
+                $explrestunits .= $expunit[$i] . ",";
+            }
+        }
+        $thecash = $explrestunits . $lastthree;
+    } else {
+        $thecash = $num;
+    }
+    return $thecash;
+}
+?>

@@ -14,8 +14,6 @@ class CollectionStsClass
     public function updateCollectionStatus($share_id,$group_id)
     {
         $coll_status = 'Payable'; // Default status
-        $currentMonth = date('m');
-        $currentYear = date('Y');
 
         // Directly interpolating variables into the SQL query
         $query = "SELECT gs.coll_status

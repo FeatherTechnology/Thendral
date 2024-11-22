@@ -16,18 +16,23 @@ if (isset($_POST['group_id'])) {
                     ad.auction_month,
                     DATE_FORMAT(ad.date, '%d-%m-%Y') AS auction_date,
                     ad.auction_value,
-                    CASE 
-        WHEN ad.cus_name = '-1' THEN 'Company' -- Handle the case where cus_name is -1 (Company)
-        ELSE COALESCE(CONCAT(cc.first_name, ' ', cc.last_name), '') -- Concatenate first and last name
-    END AS cus_name,
+                    GROUP_CONCAT(
+    CASE 
+        WHEN ad.cus_name = '-1' THEN 'Company' 
+        ELSE COALESCE(cc.first_name, '') 
+    END 
+    SEPARATOR ' - '
+) AS cus_name,
                     ad.status as auction_status,
                     gc.status as grp_status,
                     gc.grp_id  
                 FROM auction_details ad
-                JOIN group_creation gc ON ad.group_id = gc.grp_id
-                LEFT JOIN customer_creation cc ON ad.cus_name = cc.id
+                 JOIN group_creation gc ON ad.group_id = gc.grp_id
+              LEFT JOIN group_share gs ON ad.cus_name = gs.cus_mapping_id 
+LEFT JOIN customer_creation cc ON gs.cus_id = cc.id 
                 WHERE ad.group_id = '$group_id' 
                 AND  ad.date <= CURDATE() AND ad.status IN (2, 3)
+                  GROUP BY ad.id, ad.group_id,gs.cus_mapping_id
                 ORDER BY ad.auction_month DESC";
 
         // Execute the query
@@ -37,9 +42,10 @@ if (isset($_POST['group_id'])) {
         if ($stmt->rowCount() > 0) {
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+         
             foreach ($data as &$row) {
                 // Fetch customer mapping IDs
-                $customer_mapping_query = "SELECT id FROM group_cus_mapping WHERE grp_creation_id = '{$group_id}'";
+                $customer_mapping_query = "SELECT id FROM group_share WHERE grp_creation_id = '{$group_id}'";
                 $customer_mapping_result = $pdo->query($customer_mapping_query);
                 $customer_ids = $customer_mapping_result->fetchAll(PDO::FETCH_COLUMN);
 
@@ -49,7 +55,7 @@ if (isset($_POST['group_id'])) {
                     $payment_status_query = "SELECT coll_status FROM collection 
                         WHERE group_id = '{$group_id}' 
                         AND auction_month = '{$row['auction_month']}' 
-                        AND cus_mapping_id = '{$cus_id}'
+                        AND share_id = '{$cus_id}'
                         ORDER BY created_on DESC LIMIT 1";
                     $payment_status_result = $pdo->query($payment_status_query);
                     $payment_status = $payment_status_result->fetchColumn();

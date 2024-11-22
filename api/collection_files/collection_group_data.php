@@ -29,6 +29,7 @@ $query = "SELECT
     gc.grp_name,
     gc.chit_value,
     ad.chit_amount,
+    (ad.chit_amount * gs.share_percent / 100) AS chit_share,
     ad.auction_month,
     ad.date AS due_date,
     gcm.id AS cus_mapping_id,
@@ -37,23 +38,22 @@ $query = "SELECT
     gc.grace_period,
     gs.settle_status -- Fetch settle_status directly for all months
 FROM
-    auction_details ad
-LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
+    group_creation gc
+LEFT JOIN auction_details ad ON ad.group_id = gc.grp_id 
+    AND YEAR(ad.date) = '$currentYear'
+    AND MONTH(ad.date) = '$currentMonth'
 LEFT JOIN group_share gs ON
     ad.group_id = gs.grp_creation_id
   LEFT JOIN group_cus_mapping gcm ON
     gs.cus_mapping_id = gcm.id
 LEFT JOIN customer_creation cc ON
     gs.cus_id = cc.id
-    JOIN 
-        branch_creation bc ON gc.branch = bc.id
-    JOIN 
-        users us ON FIND_IN_SET(gc.branch, us.branch) > 0
+JOIN branch_creation bc ON gc.branch = bc.id
+JOIN users us ON FIND_IN_SET(gc.branch, us.branch) > 0
 WHERE
-    gc.status BETWEEN 3 AND 4
+     gc.status IN (3, 4) -- Fetch only groups with status 4
     AND cc.id = '$id'
-    AND YEAR(ad.date) = '$currentYear'
-    AND MONTH(ad.date) = '$currentMonth' AND  us.id = '$user_id'";
+    AND us.id = '$user_id'";
 
 // Handle search filter
 if (isset($_POST['search']) && $_POST['search'] != "") {
@@ -95,9 +95,10 @@ foreach ($result as $row) {
     $sub_array[] = $row['grp_name'];
     $sub_array[] = moneyFormatIndia($row['chit_value']);
 
-    $chit_amount = isset($row['chit_amount']) && is_numeric($row['chit_amount']) ? $row['chit_amount'] : 0;
-    $roundedAmount = round($chit_amount);
-    $sub_array[] = moneyFormatIndia($roundedAmount);
+    $chit_share = isset($row['chit_share']) && is_numeric($row['chit_share']) ? floor($row['chit_share']) : 0;
+
+    $sub_array[] = moneyFormatIndia($chit_share);
+    
 
     // Get settle_status from the previously fetched settleStatuses array
     $settle_status = $settleStatuses[$row['share_id']] ?? ''; // Default to 'N/A' if not found

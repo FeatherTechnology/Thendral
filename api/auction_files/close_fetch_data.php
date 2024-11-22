@@ -46,7 +46,7 @@ if (isset($_POST['group_id']) && isset($_POST['date'])) {
             // Format the numbers
             $data['commission'] = formatNumber($data['commission']);
             $data['total_value'] = formatNumber($data['total_value']);
-            $data['chit_amount'] = formatNumber($data['chit_amount']);
+            $data['chit_amount'] = floor($data['chit_amount']);
 
             // Insert the chit_amount into auction_details table
             $insertQuery = "UPDATE auction_details 

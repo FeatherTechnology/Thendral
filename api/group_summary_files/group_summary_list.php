@@ -81,7 +81,7 @@ $sno = isset($_POST['start']) ? $_POST['start'] + 1 : 1;
 $data = [];
 foreach ($result as $row) {
     // Fetch all customer IDs mapped to the group
-    $customer_mapping_query = "SELECT id FROM group_cus_mapping 
+    $customer_mapping_query = "SELECT id FROM group_share 
                                WHERE grp_creation_id = :grp_creation_id";
     $customer_mapping_stmt = $pdo->prepare($customer_mapping_query);
     $customer_mapping_stmt->execute([':grp_creation_id' => $row['grp_id']]);
@@ -90,15 +90,13 @@ foreach ($result as $row) {
     // Check if all customers have Paid status
     $all_paid = true;
     foreach ($customer_ids as $cus_id) {
-        $payment_status_query = "SELECT coll_status FROM collection 
-                                 WHERE group_id = :group_id 
-                                 AND auction_month = :auction_month 
-                                 AND cus_mapping_id = :cus_mapping_id 
-                                 ORDER BY created_on DESC LIMIT 1";
+        $payment_status_query = "SELECT coll_status FROM group_share 
+                                 WHERE grp_creation_id = :group_id 
+                                 AND id = :cus_mapping_id 
+                                 ";
         $payment_status_stmt = $pdo->prepare($payment_status_query);
         $payment_status_stmt->execute([
             ':group_id' => $row['grp_id'],
-            ':auction_month' => $row['auction_month'],
             ':cus_mapping_id' => $cus_id
         ]);
         $payment_status = $payment_status_stmt->fetchColumn();

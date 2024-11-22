@@ -59,9 +59,7 @@ LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
     JOIN 
         users us ON FIND_IN_SET(gc.branch, us.branch) > 0
 WHERE
-    gc.status BETWEEN 3 AND 4 AND gs.coll_status !='Paid'
-    AND YEAR(ad.date) = '$currentYear'
-    AND MONTH(ad.date) = '$currentMonth'  AND us.id = '$user_id'";
+    gc.status BETWEEN 3 AND 4 AND gs.coll_status !='Paid' AND us.id = '$user_id'";
 // Add search condition
 if (isset($_POST['search']) && $_POST['search'] != "") {
     $search = $_POST['search'];
