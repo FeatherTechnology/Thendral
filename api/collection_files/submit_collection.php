@@ -48,15 +48,15 @@ if ($qry) {
         $totalMonths = $interval->y * 12 + $interval->m + 1;
 
         // Count paid customers for all months in the group
-        $paidCustomersCount = $pdo->query("SELECT COUNT(DISTINCT cus_id) as paid_count 
+        $paidCustomersCount = $pdo->query("SELECT COUNT(DISTINCT share_id) as paid_count 
                                            FROM collection 
                                            WHERE group_id = '$group_id' 
                                            AND coll_status = 'Paid' 
                                            AND auction_month BETWEEN 1 AND $totalMonths")->fetch(PDO::FETCH_ASSOC)['paid_count'];
 
         // Get the total number of customers in the group
-        $totalCustomersCount = $pdo->query("SELECT COUNT(DISTINCT cus_id) as total_count 
-                                            FROM group_cus_mapping 
+        $totalCustomersCount = $pdo->query("SELECT COUNT(DISTINCT id) as total_count 
+                                            FROM group_share 
                                             WHERE grp_creation_id = '$group_id'")->fetch(PDO::FETCH_ASSOC)['total_count'];
 
         if ($paidCustomersCount == $totalCustomersCount * $totalMonths) {
