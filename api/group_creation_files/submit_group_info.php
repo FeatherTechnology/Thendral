@@ -39,6 +39,13 @@ WHERE group_id = '$group_id'
 LIMIT 1");
 
 $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// Check if data was fetched successfully
+if (!$data) {
+    echo json_encode(['result' => 4, 'message' => 'Auction details not found']);
+    exit;
+}
+
 $first_date = $data['first_date'];
 $total = $data['total'];
 $auction_count = $data['auction_count'];
@@ -65,6 +72,14 @@ if ($id == '') {
     ) VALUES (
         '$group_id', '$group_name', '$chit_value', '$grp_date', '$commission', '$hours', '$minutes', '$ampm', '$total_members', '$total_month', '$start_month', '$end_month', '$branch', '$grace_period', '$user_id', NOW(), '1'
     )");
+
+    if ($qry) {
+        $result = 1; // Success
+        $last_id = $pdo->lastInsertId();
+    } else {
+        $result = 0; // Failure
+        $last_id = '';
+    }
 } else {
     // Update
     $qry = $pdo->query("UPDATE `group_creation` SET
@@ -85,11 +100,19 @@ if ($id == '') {
         `update_login_id` = '$user_id',
         `updated_on` = NOW()
     WHERE `id` = '$id'");
+
+    if ($qry) {
+        $result = 1; // Success
+        $last_id = $id;
+    } else {
+        $result = 0; // Failure
+        $last_id = '';
+    }
 }
 
 // Check if the query was successful
-if ($qry) {
-    // If insertion or update was successful, check if the customer mapping count is now equal to total members
+if ($result == 1) {
+    // Check customer mapping and update status
     $mappingCountStmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = '$group_id'");
     $current_mapping_count = $mappingCountStmt->fetchColumn();
 
@@ -105,8 +128,6 @@ if ($qry) {
     } else {
         $result = 1; // Success, but mapping count or auction count not yet full
     }
-
-    $last_id = $pdo->lastInsertId();
 } else {
     $result = 0; // Failure
     $last_id = '';

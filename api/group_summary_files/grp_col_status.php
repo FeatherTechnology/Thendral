@@ -11,7 +11,7 @@ class GroupStsClass
         $this->pdo = $pdo;
     }
 
-    public function updateGroupStatus($cus_mapping_id, $group_id, $cus_id, $auction_month)
+    public function updateGroupStatus($share_id,$cus_mapping_id, $group_id, $cus_id, $auction_month)
     {
         $coll_status = 'Unpaid';
  
@@ -23,7 +23,7 @@ class GroupStsClass
                     IFNULL(collection_amount, 0) AS amount_collected,
                     IFNULL(payable, 0) AS amount_payable
                   FROM collection 
-                  WHERE cus_mapping_id = '$cus_mapping_id' 
+                  WHERE share_id = '$share_id' AND cus_mapping_id = '$cus_mapping_id' 
                   AND group_id = '$group_id' 
                   AND cus_id = '$cus_id' 
                   AND auction_month ='$auction_month'

@@ -37,6 +37,7 @@
         <input type="hidden" id="hand_cash">
         <input type="hidden" id="bank_cash">
         <input type="hidden" id="auction_date">
+        <input type="hidden" id="set_amount">
         <!-- Row start -->
         <div class="row gutters">
             <div class="col-12">
@@ -110,39 +111,49 @@
                                 <div class="row">
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
                                         <div class="form-group">
+                                            <label for="customer_name">Customer Name</label><span class="text-danger">*</span>
+                                            <select class="form-control" id="customer_name" name="customer_name" tabindex="9">
+                                                <option value="">Select Customer Name</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                                        <div class="form-group">
+                                            <label for="map_id"> Mapping ID</label>
+                                            <input type="text" class="form-control " id="map_id" name="map_id" readonly tabindex="10">
+                                            <input type="hidden" id="map_id_upd" name="map_id_upd">
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                                        <div class="form-group">
                                             <label for="cus_id"> Customer ID</label>
-                                            <input type="text" class="form-control " id="cus_id" name="cus_id" readonly tabindex="9">
+                                            <input type="text" class="form-control " id="cus_id" name="cus_id" readonly tabindex="11">
                                             <input type="hidden" id="cus_id_upd" name="cus_id_upd">
                                         </div>
                                     </div>
-                                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-                                        <div class="form-group">
-                                            <label for="customer_name">Customer Name</label>
-                                            <input type="text" class="form-control " id="customer_name" name="customer_name" readonly tabindex="10">
-                                        </div>
-                                    </div>
+
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
                                         <div class="form-group">
                                             <label for="place">Place</label>
-                                            <input type="text" class="form-control " id="place" name="place" readonly tabindex="11">
+                                            <input type="text" class="form-control " id="place" name="place" readonly tabindex="12">
                                         </div>
                                     </div>
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
                                         <div class="form-group">
                                             <label for="mobile1">Mobile</label>
-                                            <input type="number" class="form-control" id="mobile1" name="mobile1" readonly onKeyPress="if(this.value.length==10) return false;" tabindex="12">
+                                            <input type="number" class="form-control" id="mobile1" name="mobile1" readonly onKeyPress="if(this.value.length==10) return false;" tabindex="13">
                                         </div>
                                     </div>
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
                                         <div class="form-group">
                                             <label for="occupation">Occupation</label>
-                                            <input type="text" class="form-control " id="occupation" name="occupation" readonly tabindex="13">
+                                            <input type="text" class="form-control " id="occupation" name="occupation" readonly tabindex="14">
                                         </div>
                                     </div>
                                     <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
                                         <div class="form-group">
                                             <label for="referred_by"> Referred By </label>
-                                            <input type="text" class="form-control " id="referred_by" name="referred_by" readonly tabindex="14">
+                                            <input type="text" class="form-control " id="referred_by" name="referred_by" readonly tabindex="15">
                                         </div>
                                     </div>
                                 </div>

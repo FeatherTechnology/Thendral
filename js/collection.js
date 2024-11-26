@@ -50,13 +50,15 @@ $(document).ready(function () {
         let auctionId = dataParts[2];
         let cusMappingID = dataParts[3]; // Extract cus_mapping_id from data attribute
         let cusId = dataParts[4];
+        let share_id = dataParts[5];
 
         $.ajax({
             url: 'api/collection_files/fetch_pay_details.php',
             type: 'POST',
             data: {
                 group_id: groupId,
-                cus_mapping_id: cusMappingID
+                cus_mapping_id: cusMappingID,
+                share_id:share_id
             },
             dataType: 'json',
             success: function (response) {
@@ -154,6 +156,7 @@ $(document).ready(function () {
                         cus_id: customerId,
                         auction_id: auctionId,
                         cus_mapping_id: cusMappingID, // Pass cus_mapping_id
+                        share_id: share_id, // Pass cus_mapping_id
                         auction_month: $('#auction_month').val(),
                         chit_value: chit_value,
                         chit_amount: chitAmount, // Use rounded chit amount
@@ -322,7 +325,8 @@ $(document).ready(function () {
         let dataParts = dataValue.split('_');
         let groupId = dataParts[0];
         let cusMappingID = dataParts[1];
-        getCommitmentInfoTable(cusMappingID, groupId);
+        let share_id = dataParts[2];
+        getCommitmentInfoTable(cusMappingID,groupId,share_id);
         commitDate();
         // Unbind any existing click event to prevent multiple submissions
         $('#add_commit').off('click').on('click', function (event) {
@@ -351,6 +355,7 @@ $(document).ready(function () {
                 $.post('api/collection_files/submit_commitement.php', {
                     group_id: groupId,
                     cus_mapping_id: cusMappingID, // Pass cus_mapping_id
+                    share_id:share_id, // Pass cus_mapping_id
                     label: label,
                     remark: remark,
                     commitment_date:commitment_date
@@ -360,7 +365,7 @@ $(document).ready(function () {
                         $('#label').val('');
                         $('#remark').val('');
                         $('#commitment_date').val('');
-                        getCommitmentInfoTable(cusMappingID, groupId);
+                        getCommitmentInfoTable(cusMappingID, groupId,share_id);
                     } else {
                         swalError('Warning', 'Commitment Not Added!');
                     }
@@ -371,7 +376,7 @@ $(document).ready(function () {
         $(document).on('click', '.commitDeleteBtn', function () {
             var id = $(this).attr('value');
             swalConfirm('Delete', 'Do you want to Delete the Commitment Details?', function () {
-                getCommitDelete(id, cusMappingID, groupId); // Pass cusMappingID to delete function
+                getCommitDelete(id, cusMappingID, groupId, share_id); // Pass cusMappingID to delete function
             });
         });
     });
@@ -387,7 +392,8 @@ $(document).ready(function () {
         let groupId = dataParts[0];
         let cusMappingID = dataParts[1];
         let auction_month = dataParts[2];
-        getDueChart(groupId, cusMappingID, auction_month);
+        let share_id = dataParts[3];
+        getDueChart(groupId, cusMappingID, auction_month,share_id);
 
         setTimeout(() => {
             $('.print_due_coll').click(function () {
@@ -497,7 +503,8 @@ $(document).ready(function () {
         let dataParts = dataValue.split('_');
         let groupId = dataParts[0];
         let cusMappingID = dataParts[1];
-        getCommitmentChartTable(cusMappingID, groupId)
+        let share_id = dataParts[2];
+        getCommitmentChartTable(groupId,cusMappingID,share_id)
 
     });
     ///////////////////////////////////////////////////////Commitement Chart End/////////////////////////////////////////////////
@@ -564,8 +571,8 @@ function commitDate() {
     var currentDate = day + '-' + month + '-' + year;
     $('#comm_date').val(currentDate);
 }
-function getCommitmentInfoTable(cusMappingID, groupId) {
-    $.post('api/collection_files/commitment_info_data.php', { cus_mapping_id: cusMappingID, group_id: groupId }, function (response) {
+function getCommitmentInfoTable(cusMappingID, groupId ,share_id) {
+    $.post('api/collection_files/commitment_info_data.php', { cus_mapping_id: cusMappingID, group_id: groupId,share_id:share_id }, function (response) {
         var columnMapping = [
             'sno',
             'created_on',
@@ -579,18 +586,19 @@ function getCommitmentInfoTable(cusMappingID, groupId) {
         setdtable('#commit_form_table');
     }, 'json')
 }
-function getCommitDelete(id, cusMappingID, groupId) {
+function getCommitDelete(id, cusMappingID, groupId, share_id) {
     $.post('api/collection_files/delete_commitment.php', { id: id }, function (response) {
         if (response === '1') {
             swalSuccess('Success', 'Commitment Info Deleted Successfully!');
-            getCommitmentInfoTable(cusMappingID, groupId)// Pass cusMappingID to refresh the table
+            getCommitmentInfoTable(cusMappingID, groupId, share_id); // Refresh the table after deletion
         } else {
             swalError('Error', 'Failed to Delete Commitment: ' + response);
         }
     }, 'json');
 }
-function getCommitmentChartTable(cusMappingID, groupId) {
-    $.post('api/collection_files/commitment_chart_data.php', { cus_mapping_id: cusMappingID, group_id: groupId }, function (response) {
+
+function getCommitmentChartTable(groupId ,cusMappingID,share_id) {
+    $.post('api/collection_files/commitment_chart_data.php', {group_id: groupId ,cus_mapping_id: cusMappingID,share_id:share_id}, function (response) {
         var columnMapping = [
             'sno',
             'created_on',
@@ -602,7 +610,7 @@ function getCommitmentChartTable(cusMappingID, groupId) {
         setdtable('#commitment_chart_table');
     }, 'json')
 }
-function getDueChart(groupId, cusMappingID, auction_month) {
+function getDueChart(groupId, cusMappingID, auction_month,share_id) {
     $.ajax({
         url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
         type: 'POST',
@@ -610,7 +618,8 @@ function getDueChart(groupId, cusMappingID, auction_month) {
         data: {
             group_id: groupId,
             cus_mapping_id: cusMappingID,
-            auction_month: auction_month
+            auction_month: auction_month,
+            share_id: share_id
         },
         success: function (response) {
             var tbody = $('#due_chart_table tbody');
@@ -624,7 +633,7 @@ function getDueChart(groupId, cusMappingID, auction_month) {
                 var auctionDate = item.auction_date;
 
                 // Format the values using moneyFormatIndia
-                var chitAmount = item.chit_amount ? moneyFormatIndia(Math.round(item.chit_amount)) : '';
+                var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
               //  var payable = item.payable ? moneyFormatIndia(item.payable) : '';
                 var collectionDate = item.collection_date ? item.collection_date : '';
                 var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';

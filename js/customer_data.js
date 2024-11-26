@@ -838,7 +838,8 @@ $(document).ready(function () {
         let groupId = dataParts[0];
         let cusMappingID = dataParts[1];
         let auction_month = dataParts[2];
-        getDueChart(groupId, cusMappingID, auction_month);
+        let share_id = dataParts[3];
+        getDueChart(groupId, cusMappingID, auction_month,share_id);
 
         setTimeout(() => {
             $('.print_due_coll').click(function () {
@@ -947,7 +948,8 @@ $(document).ready(function () {
         let dataParts = dataValue.split('_');
         let groupId = dataParts[0];
         let cusMappingID = dataParts[1];
-        getCommitmentChartTable(cusMappingID, groupId)
+        let share_id = dataParts[2];
+        getCommitmentChartTable(groupId,cusMappingID,share_id)
 
     });
     ///////////////////////////////////////////////////////Commitement Chart End/////////////////////////////////////////////////
@@ -1558,8 +1560,8 @@ function viewCustomerClosedDoc(id) {
         setdtable('#doc_cur_table');
     }, 'json');
 }
-function getCommitmentChartTable(cusMappingID, groupId) {
-    $.post('api/collection_files/commitment_chart_data.php', { cus_mapping_id: cusMappingID, group_id: groupId }, function (response) {
+function getCommitmentChartTable(groupId ,cusMappingID,share_id) {
+    $.post('api/collection_files/commitment_chart_data.php', {group_id: groupId ,cus_mapping_id: cusMappingID,share_id:share_id}, function (response) {
         var columnMapping = [
             'sno',
             'created_on',
@@ -1571,7 +1573,7 @@ function getCommitmentChartTable(cusMappingID, groupId) {
         setdtable('#commitment_chart_table');
     }, 'json')
 }
-function getDueChart(groupId, cusMappingID, auction_month) {
+function getDueChart(groupId, cusMappingID, auction_month,share_id) {
     $.ajax({
         url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
         type: 'POST',
@@ -1579,7 +1581,8 @@ function getDueChart(groupId, cusMappingID, auction_month) {
         data: {
             group_id: groupId,
             cus_mapping_id: cusMappingID,
-            auction_month: auction_month
+            auction_month: auction_month,
+            share_id: share_id
         },
         success: function (response) {
             var tbody = $('#due_chart_table tbody');
@@ -1593,20 +1596,20 @@ function getDueChart(groupId, cusMappingID, auction_month) {
                 var auctionDate = item.auction_date;
 
                 // Format the values using moneyFormatIndia
-                var chitAmount = item.chit_amount ? moneyFormatIndia(Math.round(item.chit_amount)) : '';
-                var payable = item.payable ? moneyFormatIndia(item.payable) : '';
+                var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
+              //  var payable = item.payable ? moneyFormatIndia(item.payable) : '';
                 var collectionDate = item.collection_date ? item.collection_date : '';
                 var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';
                 //  var pending = item.pending;
                 var pending = item.pending !== null && item.pending !== undefined ? moneyFormatIndia(item.pending) : '';
-
+              var initialPayableAmount = item.initial_payable_amount ? moneyFormatIndia(item.initial_payable_amount) : '';
                 var action = item.action ? item.action : '';
 
                 var row = '<tr>' +
                     '<td>' + auctionMonth + '</td>' +
                     '<td>' + auctionDate + '</td>' +
                     '<td>' + chitAmount + '</td>' +
-                    '<td>' + payable + '</td>' +
+                    '<td>' + initialPayableAmount + '</td>' +
                     '<td>' + collectionDate + '</td>' +
                     '<td>' + collectionAmount + '</td>' +
                     '<td>' + pending + '</td>' +

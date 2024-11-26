@@ -18,10 +18,10 @@ $statement = $pdo->query("SELECT
             cc.pic
         FROM 
             auction_details ad
-        LEFT JOIN 
-            group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-        LEFT JOIN 
-            customer_creation cc ON gcm.cus_id = cc.id 
+ LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id 
         LEFT JOIN 
             place pl ON cc.place = pl.id
         WHERE 

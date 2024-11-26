@@ -25,14 +25,20 @@ $query = "SELECT
             gc.total_members,
             gc.total_months,
             ad.auction_month,
-            CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
+         GROUP_CONCAT(
+    CASE 
+        WHEN ad.cus_name = '-1' THEN 'Company' 
+        ELSE COALESCE(cc.first_name, '') 
+    END 
+    SEPARATOR ' - '
+) AS cus_name, 
             ad.auction_value
         FROM 
             auction_details ad
         LEFT JOIN 
             group_creation gc ON ad.group_id = gc.grp_id
-        JOIN 
-            customer_creation cc ON ad.cus_name = cc.id
+      LEFT JOIN group_share gs ON ad.cus_name = gs.cus_mapping_id 
+LEFT JOIN customer_creation cc ON gs.cus_id = cc.id 
            JOIN 
         branch_creation bc ON gc.branch = bc.id
     JOIN 
@@ -83,7 +89,7 @@ foreach ($result as $row) {
     $sub_array[] = isset($row['total_months']) ? $row['total_months'] : '';
     $sub_array[] = isset($row['auction_month']) ? $row['auction_month'] : '';
     $sub_array[] = isset($row['cus_name']) ? $row['cus_name'] : '';
-    $sub_array[] = isset($row['auction_value']) ?moneyFormatIndia($row['auction_value']): '';
+    $sub_array[] = isset($row['auction_value']) ? moneyFormatIndia($row['auction_value']) : '';
     $action = "<button class='btn btn-primary settleListBtn' value='" . $row['id'] . "'>&nbsp;View</button>";
     $sub_array[] = $action;
     $data[] = $sub_array;
@@ -127,4 +133,3 @@ function moneyFormatIndia($num)
     }
     return $thecash;
 }
-?>

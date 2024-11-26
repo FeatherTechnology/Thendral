@@ -27,6 +27,8 @@ if (in_array($_FILES["excelFile"]["type"], $allowedFileType)) {
                 $data['grp_id'] = $grp_id;
                 $cust_id = $obj->getcustomerId($pdo,  $data['aadhar_number']);
                 $data['cust_id'] = $cust_id;
+                $map_id = $obj->MappingID($pdo,$data['mapping_id']);
+                $data['map_id'] = $map_id;
                 $data['bank_id'] = $obj->getBankId($pdo, $data['bank_name']);
                 $gur_id = $obj->guarantorName($pdo,$data['guarantor_aadhar']);
                 $data['gur_id'] = $gur_id;

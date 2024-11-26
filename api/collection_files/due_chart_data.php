@@ -4,19 +4,23 @@ require '../../ajaxconfig.php';
 $due_list_arr = array();
 $cusMappingID = $_POST['cus_mapping_id'];
 $groupId = $_POST['group_id'];
+$share_id = $_POST['share_id'];
 
 // Fetch auction details for the given group and customer mapping ID
 $qry1 = $pdo->query("SELECT 
     ad.auction_month, 
     ad.date AS auction_date,
-    ad.chit_amount
+    ad.chit_amount,
+    (ad.chit_amount * gs.share_percent / 100) AS chit_share
 FROM 
     auction_details ad
-JOIN 
-    group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
+ JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
 WHERE 
     ad.group_id = '$groupId'
-    AND gcm.id = '$cusMappingID'");
+    AND gs.cus_mapping_id = '$cusMappingID' AND gs.id ='$share_id'");
 
 $auctionData = $qry1->fetchAll(PDO::FETCH_ASSOC);
 
@@ -33,15 +37,20 @@ $auction_month_current = ($currentYear * 12 + $currentMonth) - (substr($start_mo
 $previous_auction_query = "SELECT
     ad.auction_month,
     ad.chit_amount,
+    (ad.chit_amount * gs.share_percent / 100) AS chit_share,
     COALESCE(SUM(cl.collection_amount), 0) AS collection_amount
 FROM
     auction_details ad
+    JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
 LEFT JOIN
     collection cl ON ad.group_id = cl.group_id
     AND ad.auction_month = cl.auction_month
-    AND cl.cus_mapping_id = '$cusMappingID'
+    AND cl.cus_mapping_id = '$cusMappingID' AND cl.share_id = '$share_id'
 WHERE
-    ad.group_id = '$groupId'
+    ad.group_id = '$groupId' AND gs.id = '$share_id'
     AND ad.auction_month < $auction_month_current AND ad.status IN (2, 3) 
 GROUP BY
     ad.auction_month
@@ -56,7 +65,7 @@ $pending_amount = 0;
 // Calculate pending amount
 while ($previous_row = $previous_statement->fetch(PDO::FETCH_ASSOC)) {
     $previous_collection_amount = (int)$previous_row['collection_amount'];
-    $previous_chit_amount = (int)$previous_row['chit_amount'];
+    $previous_chit_amount = (int)$previous_row['chit_share'];
     $pending_amount += max(0, $previous_chit_amount - $previous_collection_amount);
 }
 $lastAuctionMonth = null;
@@ -84,7 +93,7 @@ $previous_payable_amount = 0; // Initialize a variable to track previous month's
 foreach ($auctionData as $auctionDetails) {
     $auction_month = $auctionDetails['auction_month'];
     $auction_date = $auctionDetails['auction_date'];
-    $chit_amount = (int)$auctionDetails['chit_amount'];
+    $chit_share = (int)$auctionDetails['chit_share'];
 
     // Format the auction_date to dd-mm-yyyy
     if (!empty($auction_date)) {
@@ -94,8 +103,8 @@ foreach ($auctionData as $auctionDetails) {
 
     if ($auction_month == $auction_month_current) {
         // If chit amount > 0, add pending amount
-        if ($chit_amount > 0) {
-            $initial_payable_amount = $chit_amount + $pending_amount;
+        if ($chit_share > 0) {
+            $initial_payable_amount = $chit_share + $pending_amount;
            
         } 
         // If chit amount is 0 and pending amount > 0, use previous month's payable amount
@@ -108,13 +117,13 @@ foreach ($auctionData as $auctionDetails) {
         }
     } else {
         // For previous months, just use the chit amount and store it as the previous payable amount
-        $initial_payable_amount = $chit_amount;
+        $initial_payable_amount = $chit_share;
         $previous_payable_amount = $initial_payable_amount;  // Store this for future use
     }
 
     // Fetch collection details for the auction month
     $qry2 = $pdo->query("SELECT 
-        c.chit_amount,
+        c.chit_amount as chit_share,
         c.payable,
         c.collection_date, 
         c.collection_amount, 
@@ -124,10 +133,11 @@ foreach ($auctionData as $auctionDetails) {
     LEFT JOIN 
         collection c ON ad.group_id = c.group_id 
                      AND c.cus_mapping_id = '$cusMappingID'
+                     AND c.share_id ='$share_id'
                      AND ad.auction_month = c.auction_month
     WHERE 
         c.group_id = '$groupId' AND
-        c.cus_mapping_id = '$cusMappingID'
+        c.cus_mapping_id = '$cusMappingID' AND  c.share_id ='$share_id'
         AND c.auction_month = '$auction_month' ORDER BY c.id");
 
     if ($qry2->rowCount() > 0) {
@@ -160,7 +170,7 @@ foreach ($auctionData as $auctionDetails) {
         $due_list_arr[$i] = array(
             'auction_month' => !in_array($auction_month, $auctionMonthUsed) ? $auction_month : '',
             'auction_date' => $auction_date,
-            'chit_amount' => $chit_amount,
+            'chit_share' => $chit_share,
             'collection_date' => '',
             'collection_amount' => '',
             'initial_payable_amount' => $initial_payable_amount,
@@ -171,7 +181,7 @@ foreach ($auctionData as $auctionDetails) {
         $i++;
     }
 }
-$collectionDatesQuery = "SELECT collection_date FROM collection WHERE collection_date > '" . $lastAuctionDate->format('Y-m-d') . "' AND group_id ='$groupId' AND cus_mapping_id= '$cusMappingID'";
+$collectionDatesQuery = "SELECT collection_date FROM collection WHERE collection_date > '" . $lastAuctionDate->format('Y-m-d') . "' AND group_id ='$groupId' AND cus_mapping_id= '$cusMappingID' AND share_id = '$share_id'";
 $collectionDatesStmt = $pdo->query($collectionDatesQuery);
 $collectionDates = $collectionDatesStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -185,7 +195,7 @@ foreach ($collectionDates as $collectionDate) {
         $due_list_arr[] = array(
             'auction_month' => $auction_month_future,
             'auction_date' => $collectionDateFormatted,
-            'chit_amount' => '',
+            'chit_share' => '',
             'collection_date' => '',
             'payable' => '',
             'pending' => '',

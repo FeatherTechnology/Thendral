@@ -26,33 +26,17 @@ $month_paid .= "GROUP BY gc.grp_id";
 
 // Initialize the SQL for unpaid amount calculation
 $month_unpaid = "
-SELECT 
-    gc.grp_id,
-    gc.grp_name,
-    (ad.chit_amount * gc.total_members) AS total_chit_amount,
-    COALESCE(SUM(c.collection_amount), 0) AS total_paid_amount,
-    ((ad.chit_amount * gc.total_members) - COALESCE(SUM(c.collection_amount), 0)) AS unpaid_amount
-FROM 
+SELECT
+    ((ad.chit_amount * gc.total_members) - COALESCE(SUM(LEAST(c.collection_amount, ad.chit_amount)), 0)) AS unpaid_amount
+FROM
     group_creation gc
-LEFT JOIN 
-    auction_details ad 
-ON 
-    gc.grp_id = ad.group_id 
-AND 
-    MONTH(ad.date) = MONTH(CURDATE()) 
-AND 
-    YEAR(ad.date) = YEAR(CURDATE()) 
-AND 
-    ad.status IN(2,3)
-LEFT JOIN 
-    collection c 
-ON 
-    gc.grp_id = c.group_id 
-AND 
-    MONTH(c.collection_date) = MONTH(CURDATE()) 
-AND 
-    YEAR(c.collection_date) = YEAR(CURDATE())
-WHERE  
+    JOIN auction_details ad ON
+    gc.grp_id = ad.group_id
+ LEFT JOIN collection c ON
+    ad.id = c.auction_id 
+WHERE
+  MONTH(ad.date) = MONTH(CURDATE()) 
+    AND YEAR(ad.date) = YEAR(CURDATE()) AND ad.status IN (2, 3) AND
 ";
 
 // Add conditions based on branchId for unpaid amount
@@ -64,36 +48,29 @@ if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
 
 $month_unpaid .= "
 GROUP BY 
-    gc.grp_id, gc.grp_name";
+    gc.grp_id";
+    
     $prev_pen_amount  = "
-    SELECT 
-    gc.grp_id, 
-    gc.grp_name, 
-    (SELECT SUM(COALESCE(ad.chit_amount, 0) * gc.total_members)
-     FROM auction_details ad
-     WHERE ad.group_id = gc.grp_id
-       AND ad.date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
-       AND ad.status IN (2, 3)
-    ) AS total_chit_amount, 
-    (SELECT COALESCE(SUM(c.collection_amount), 0)
-     FROM collection c
-     WHERE c.group_id = gc.grp_id
-       AND c.collection_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
-    ) AS total_paid_amount,
-    ( (SELECT SUM(COALESCE(ad.chit_amount, 0) * gc.total_members)
-       FROM auction_details ad
-       WHERE ad.group_id = gc.grp_id
-         AND ad.date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
-         AND ad.status IN (2, 3)
-      ) - 
-      (SELECT COALESCE(SUM(c.collection_amount), 0)
-       FROM collection c
-       WHERE c.group_id = gc.grp_id
-         AND c.collection_date < DATE_FORMAT(CURDATE(), '%Y-%m-01')
-      )
+    SELECT  
+    (
+        (SELECT SUM(COALESCE(ad.chit_amount, 0) * gc_sub.total_members)
+         FROM auction_details ad
+         JOIN group_creation gc_sub ON ad.group_id = gc_sub.grp_id
+         WHERE ad.group_id = gc.grp_id
+           AND (YEAR(ad.date) < YEAR(CURRENT_DATE) 
+            OR (YEAR(ad.date) = YEAR(CURRENT_DATE) 
+                AND MONTH(ad.date) < MONTH(CURRENT_DATE)))
+           AND ad.status IN (2, 3)
+        ) - 
+        (SELECT COALESCE(SUM(c.collection_amount), 0)
+         FROM collection c
+         LEFT JOIN auction_details ad ON c.auction_id = ad.id
+         WHERE c.group_id = gc.grp_id
+           AND c.auction_month = ad.auction_month AND ad.status IN (2, 3)
+        )
     ) AS pending_amount
 FROM 
-    group_creation gc; 
+    group_creation gc
     WHERE  
     ";
     
@@ -103,7 +80,7 @@ FROM
     } else {
         $prev_pen_amount .= " gc.insert_login_id = '$user_id' ";
     }
-    
+   
 try {
     // Query for total paid
     $qry = $pdo->query($month_paid);

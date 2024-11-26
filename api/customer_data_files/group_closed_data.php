@@ -18,20 +18,23 @@ $query = "SELECT
     ad.auction_month,
     ad.date AS due_date,
     gcm.id AS cus_mapping_id,
-   gcm.settle_status,
+    gs.id AS share_id,
+   gs.settle_status,
     cc.cus_id,
     gc.grace_period
 FROM
     auction_details ad
 LEFT JOIN group_creation gc ON
     ad.group_id = gc.grp_id
-LEFT JOIN group_cus_mapping gcm ON
-    ad.group_id = gcm.grp_creation_id
+LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+  LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
 LEFT JOIN customer_creation cc ON
-    gcm.cus_id = cc.id
+    gs.cus_id = cc.id
 WHERE
      gc.status BETWEEN 4 AND 5
-    AND cc.id = '$id' GROUP BY gcm.id";
+    AND cc.id = '$id' GROUP BY gs.id";
 
 $result = [];
 $statement = $pdo->prepare($query); // Use query instead of prepare + execute
@@ -45,22 +48,20 @@ if ($statement->rowCount() > 0) {
         // Grace Period Calculation
         $chit_amount = $row['chit_amount'] ?? 0;
         $auction_month = $row['auction_month'] ?? 0;
-        $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'], $row['auction_id'], $row['grp_id'], $row['cus_id'], $row['auction_month'], $row['chit_amount']);
+        $status = $collectionSts->updateCollectionStatus($row['share_id'], $row['grp_id']);
         $sub_array['status'] = $status;
 
         // Check payment status for all customers in the group
-        $customer_mapping_query = "SELECT id FROM group_cus_mapping 
+        $customer_mapping_query = "SELECT id FROM group_share 
                                    WHERE grp_creation_id = '{$row['grp_id']}'";
         $customer_mapping_stmt = $pdo->query($customer_mapping_query);
         $customer_ids = $customer_mapping_stmt->fetchAll(PDO::FETCH_COLUMN);
 
         $all_paid = true;
         foreach ($customer_ids as $cus_id) {
-            $payment_status_query = "SELECT coll_status FROM collection 
-                                     WHERE group_id = '{$row['grp_id']}'
-                                     AND auction_month = '{$row['auction_month']}'
-                                     AND cus_mapping_id = '$cus_id'
-                                     ORDER BY created_on DESC LIMIT 1";
+            $payment_status_query = "SELECT coll_status FROM  group_share
+                                     WHERE grp_creation_id = '{$row['grp_id']}'
+                                     AND id = '$cus_id'";
             $payment_status_stmt = $pdo->query($payment_status_query);
             $payment_status = $payment_status_stmt->fetchColumn();
             if ($payment_status !== 'Paid') {
@@ -88,8 +89,8 @@ if ($statement->rowCount() > 0) {
         $sub_array['charts'] = "<div class='dropdown'>
                                     <button class='btn btn-outline-secondary'><i class='fa'>&#xf107;</i></button>
                                     <div class='dropdown-content'>
-                                        <a href='#' class='add_due' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['auction_month']}'>Due Chart</a>
-                                        <a href='#' class='commitment_chart' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}'>Commitment Chart</a>
+                                        <a href='#' class='add_due' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['auction_month']}_{$row['share_id']}'>Due Chart</a>
+                                        <a href='#' class='commitment_chart' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['share_id']}'>Commitment Chart</a>
                                     </div>
                                 </div>";
 

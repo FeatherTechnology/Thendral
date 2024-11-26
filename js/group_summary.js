@@ -61,6 +61,18 @@ $(document).on('click', '.settle_chart', function (event) {
 
 });
 //////////////////////////////////////////////////////////////////////////////settlement Chart End//////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////Chit Advance Chart///////////////////////////////////
+$(document).on('click', '.advance_chart', function (event) {
+    event.preventDefault();
+    $('#advance_chart_model').modal('show');
+    let dataValue = $(this).data('value');
+    let dataParts = dataValue.split('_');
+    let groupId = dataParts[0];
+    let auction_month = dataParts[1];
+    getAdvanceChart(groupId,auction_month)
+
+});
+////////////////////////////////////////////////////////////Chit advance Chart End////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////Collection Chart Start//////////////////////////////////////////////////
 $(document).on('click', '.collectionActionBtn', function (event) {
     event.preventDefault();
@@ -80,6 +92,7 @@ function closeChartsModal() {
     $('#auction_chart_model').modal('hide');
     $('#settlement_chart_model').modal('hide');
     $('#collection_chart_model').modal('hide');
+    $('#advance_chart_model').modal('hide');
 }
 $(function () {
     getGroupCreationTable();
@@ -184,6 +197,64 @@ function getSettleChart(groupId, auction_id) {
         }
     });
 }
+function getAdvanceChart(groupId, auction_month) {
+    $.ajax({
+        url: 'api/group_summary_files/advance_chart_data.php',
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            group_id: groupId,
+            auction_id: auction_month,
+        },
+        success: function (response) {
+            var tbody = $('#advance_chart_table tbody');
+            tbody.empty(); // Clear existing rows
+
+            var hasRows = false;
+            var serialNo = 1; // Initialize serial number
+
+            $.each(response, function (index, item) {
+                var auctionMonth = item.auction_month || '';
+                var trans_cat = item.trans_cat || '';
+                var group_id = item.group_id || '';
+                var cus_name = item.cus_name || '';
+                var type = item.type || '';
+                var bank_namecash = item.bank_namecash || '';
+                var ref_id = item.ref_id || '';
+                var trans_id = item.trans_id || '';
+                var amount = item.amount ? moneyFormatIndia(item.amount) : '';
+                var remark = item.remark || '';
+
+                // Create table row with serial number
+                var row = '<tr>' +
+                    '<td>' + serialNo + '</td>' + // Add serial number
+                    '<td>' + trans_cat + '</td>' +
+                    '<td>' + group_id + '</td>' +
+                    '<td>' + cus_name + '</td>' +
+                    '<td>' + type + '</td>' +
+                    '<td>' + bank_namecash + '</td>' +
+                    '<td>' + ref_id + '</td>' +
+                    '<td>' + trans_id + '</td>' +
+                    '<td>' + auctionMonth + '</td>' +
+                    '<td>' + amount + '</td>' +
+                    '<td>' + remark + '</td>' +
+                    '</tr>';
+
+                tbody.append(row);
+                serialNo++; // Increment serial number for the next row
+                hasRows = true;
+            });
+
+            if (!hasRows) {
+                tbody.append('<tr><td colspan="11">No data available</td></tr>'); // Adjust colspan to match total columns
+            }
+        },
+        error: function (xhr, status, error) {
+            console.error('AJAX Error: ' + status + error);
+        }
+    });
+}
+
 
 function auctionList(group_id) {
     $.ajax({

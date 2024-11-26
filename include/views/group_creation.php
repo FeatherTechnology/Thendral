@@ -3,6 +3,9 @@
         <div class="col-12 mt-3 text-right">
             <button class="btn btn-primary" id="add_group"><span class="icon-add"></span> Add Group Creation</button>
             <button class="btn btn-primary" id="back_btn" style="display: none;"><span class="icon-arrow-left"></span> Back</button>
+        </div>
+        <div class="col-12 text-right back_to_list" style="margin-bottom:10px">
+            <button class="btn btn-primary back_to_loan_list" id="back_to_list" style="display: none;"><span class="icon-arrow-left"></span> Back</button>
         </div></br>
         <!----------------------------- CARD START GROUP CREATION TABLE------------------------------>
         <div class="card wow group_table_content">
@@ -44,7 +47,7 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                            <div class="card-title">Group Info <span class="text-danger">(If any of these values-Date, Total Month, or Start Month have changed, please fill in the Auction Details.)</span></div>
+                                <div class="card-title">Group Info <span class="text-danger">(If any of these values-Date, Total Month, or Start Month have changed, please fill in the Auction Details.)</span></div>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -131,9 +134,9 @@
                                     </div>
                                     <div class="col-4 col-sm-4 col-md-4	col-lg-4 col-xl-4">
                                         <div class="form-group">
-                                            <label for="branch">Branch</label><span class="text-danger">*</span> 
-                                             <input type="hidden" id="branch_name_edit">
-                                            <select class="form-control" id="branch" name="branch" tabindex="13">   
+                                            <label for="branch">Branch</label><span class="text-danger">*</span>
+                                            <input type="hidden" id="branch_name_edit">
+                                            <select class="form-control" id="branch" name="branch" tabindex="13">
                                                 <option value="">Select Branch</option>
                                             </select>
                                         </div>
@@ -151,7 +154,7 @@
                                     </div>
                                     <div class="col-4 col-sm-4 col-md-4	col-lg-2 col-xl-2">
                                         <div class="form-group">
-                                            <button type="button" class="btn btn-primary" id="add_cus_map" name="add_cus_map" onclick="getCusMapTable();getJoiningMonth()" tabindex='16'><span class="icon-add"></span>&nbsp;Add Customer Mapping</button>
+                                            <button type="button" class="btn btn-primary" id="add_cus_map" name="add_cus_map" tabindex='16'><span class="icon-add"></span>&nbsp;Add Customer Mapping</button>
                                         </div>
                                     </div>
                                 </div>
@@ -162,7 +165,7 @@
                 </div>
                 <div class="col-12 mt-3 text-right">
                     <button name="submit_group_info" id="submit_group_info" class="btn btn-primary" tabindex="19"><span class="icon-check"></span>&nbsp;Submit</button>
-                    <button type="reset"id="reset_clear" class="btn btn-outline-secondary" tabindex="20">Clear</button>
+                    <button type="reset" id="reset_clear" class="btn btn-outline-secondary" tabindex="20">Clear</button>
                 </div>
             </form>
         </div>
@@ -170,6 +173,98 @@
 
     </div>
 </div>
+
+
+<!-------------------Customer Mapping start-------------------------------------->
+<div id="add_cus_map_modal" style="display:none;">
+    <form id="mapping_form" name="mapping_form" action="" method="post" enctype="multipart/form-data">
+        <div class="row gutters">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Add Customer Mapping</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" id="mapping-row">
+                            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
+                                <div class="form-group">
+                                    <label for="map_id">Mapping ID</label>
+                                    <input type="text" class="form-control" id="map_id" name="map_id" readonly tabindex="1">
+                                </div>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
+                                <div class="form-group">
+                                    <label for="cus_name">Customer Name<span class="text-danger">*</span></label>
+                                    <select class="form-control cus_name" id="cus_name" name="cus_name" tabindex="1">
+                                        <option value="">Select Customer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
+                                <div class="form-group">
+                                    <label for="joining_month">Auction Start From<span class="text-danger">*</span></label>
+                                    <select class="form-control" id="joining_month" name="joining_month" tabindex="1">
+                                        <option value="">Select Auction Start From</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
+                                <div class="form-group">
+                                    <label for="share_value">Share Value</label><span class="text-danger">*</span>
+                                    <input type="text" class="form-control share_value" id="share_value" name="share_value" placeholder="Enter Share Value" tabindex="1">
+                                </div>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12">
+                                <div class="form-group">
+                                    <label for="share_percent">Share Percentage</label>
+                                    <input type="text" class="form-control share_percent" name="share_percent" id ="share_percent" readonly tabindex="1">
+                                </div>
+                            </div>
+
+                            <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1 col-12" style="margin-top: 18px;">
+                                <div class="form-group">
+                                    <button class="btn btn-primary" id="add_btn" style="width:55px;">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="mapping-container"></div>
+                        <div class="col-12 mt-3 text-right">
+                            <div class="form-group">
+                                <button name="submit_cus_map" id="submit_cus_map" class="btn btn-primary" tabindex="1"><span class="icon-check"></span>&nbsp;Add</button>
+                            </div>
+                        </div>
+                        <div class="row"></div>
+                        <div class="row">
+                            <div class="col-12">
+                                <table id="cus_mapping_table" class="table custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="20">S.No.</th>
+                                            <th>Mapping ID</th>
+                                            <th>Customer ID</th>
+                                            <th>Name</th>
+                                            <th>Place</th>
+                                            <th>Occupation</th>
+                                            <th>Auction Start</th>
+                                            <th>Share Value</th>
+                                            <th>Share Percentage</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<!-------------------------Customer mapping End ----------------------------------->
 <!--- -------------------------------------- Group Details START ------------------------------- -->
 <div class="modal fade" id="add_auction_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document">
@@ -199,7 +294,7 @@
                     </div>
                     <div class="col-12 mt-3 text-right">
                         <button name="submit_group_details" id="submit_group_details" class="btn btn-primary" tabindex="19"><span class="icon-check"></span>&nbsp;Submit</button>
-                        <button type="reset" id="group_clear"class="btn btn-outline-secondary" tabindex="20">Clear</button>
+                        <button type="reset" id="group_clear" class="btn btn-outline-secondary" tabindex="20">Clear</button>
                     </div>
                 </div>
             </div>
@@ -210,7 +305,7 @@
     </div>
 </div>
 <!--- -------------------------------------- Group Details END ------------------------------- -->
-<!--- -------------------------------------- Customer Mapping START ------------------------------- -->
+<!-- - -------------------------------------- Customer Mapping START -------------------------------
 <div class="modal fade" id="add_cus_map_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document">
         <div class="modal-content" style="background-color: white">
@@ -223,12 +318,18 @@
             <div class="modal-body">
                 <div class="container-fluid">
                     <form id="mapping_form">
-                        <div class="row justify-content-center">
+                        <div class="row">
                             <input type="hidden" name="mapping_id" id="mapping_id">
+                            <div class="col-4 col-sm-4 col-md-4	col-lg-4 col-xl-4">
+                                <div class="form-group">
+                                    <label for="map_id">Mapping ID</label>
+                                    <input type="text" class="form-control" id="map_id" name="map_id" readonly tabindex="1">
+                                </div>
+                            </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="cus_name">Customer Name<span class="text-danger">*</span></label>
-                                    <select class="form-control" id="cus_name" name="cus_name" tabindex="17">
+                                    <select class="form-control" id="cus_name" name="cus_name" tabindex="1">
                                         <option value="">Select Customer</option>
                                     </select>
                                 </div>
@@ -236,14 +337,31 @@
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="joining_month">Auction Start From<span class="text-danger">*</span></label>
-                                    <select class="form-control" id="joining_month" name="joining_month" tabindex="18">
+                                    <select class="form-control" id="joining_month" name="joining_month" tabindex="1">
                                         <option value="">Select Auction Start From</option>
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-4 col-sm-4 col-md-4	col-lg-4 col-xl-4">
+                                <div class="form-group">
+                                    <label for="share_vale">Share Value</label><span class="text-danger">*</span>
+                                    <input type="text" class="form-control" id="share_vale" name="share_vale" placeholder="Enter Share Vaue" tabindex="1">
+                                </div>
+                            </div>
+                            <div class="col-4 col-sm-4 col-md-4	col-lg-4 col-xl-4">
+                                <div class="form-group">
+                                    <label for="share_percent">Share Percentage</label>
+                                    <input type="text" class="form-control" id="share_percent" name="share_percent" readonly tabindex="1">
+                                </div>
+                            </div>
                             <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12 align-self-end">
                                 <div class="form-group">
-                                    <input type="button" class="btn btn-primary modalBtnCss" id="submit_cus_map" name="submit_cus_map" value="Add" tabindex="19">
+                                    <input type="button" class="btn btn-primary modalBtnCss" id="add_btn" name="add_btn" value="+" tabindex="1">
+                                </div>
+                            </div>
+                            <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 col-12 align-self-end">
+                                <div class="form-group">
+                                    <input type="button" class="btn btn-primary modalBtnCss" id="submit_cus_map" name="submit_cus_map" value="Add" tabindex="1">
                                 </div>
                             </div>
                         </div>
@@ -273,5 +391,5 @@
             </div>
         </div>
     </div>
-</div>
+</div> -->
 <!--- -------------------------------------- Customer Mapping END ------------------------------- -->

@@ -2,9 +2,10 @@
 require "../../ajaxconfig.php";
 
 $id = $_POST['id'];
+$cus_map_id = $_POST['cus_map_id'];
 
 // Get group_id for the record to be deleted
-$groupIdQuery = $pdo->query("SELECT grp_creation_id FROM `group_cus_mapping` WHERE id = '$id'");
+$groupIdQuery = $pdo->query("SELECT grp_creation_id FROM `group_cus_mapping` WHERE id = '$cus_map_id'");
 $groupIdResult = $groupIdQuery->fetch(PDO::FETCH_ASSOC);
 
 if ($groupIdResult) {
@@ -27,40 +28,52 @@ if ($groupIdResult) {
 
 // If the status is not found or the status is not 3, proceed with deletion
 
-// Delete customer mapping
-$qry = $pdo->query("DELETE FROM `group_cus_mapping` WHERE `id` = '$id'");
+// Delete customer mapping from group_share table
+$qry2 = $pdo->query("DELETE FROM `group_share` WHERE `id` = '$id'");
 
-if ($qry) {
-    if ($groupIdResult) {
-        // Get the count of customer mappings for the group
-        $mappingCountStmt = $pdo->query("SELECT COUNT(*) FROM `group_cus_mapping` WHERE grp_creation_id = '$group_id'");
-        $current_mapping_count = $mappingCountStmt->fetchColumn();
+// Check if any row exists in group_share with the given cus_map_id
 
-        // Get the total number of members for the group
-        $totalMembersStmt = $pdo->query("SELECT total_members FROM `group_creation` WHERE grp_id = '$group_id'");
-        $total_members = $totalMembersStmt->fetchColumn();
+$qry1 = $pdo->query("SELECT cus_mapping_id FROM `group_share` WHERE `cus_mapping_id` = '$cus_map_id'");
+$existingMapping = $qry1->fetchColumn(); // Get the cus_mapping_id
 
-        // Update status based on the count
-        if ($current_mapping_count >= $total_members) {
-            // Update status to 2 if count matches or exceeds
-            $statusUpdateStmt = $pdo->query("UPDATE `group_creation` SET status = '2' WHERE grp_id = '$group_id'");
+if (!$existingMapping) {
+    $qry = $pdo->query("DELETE FROM `group_cus_mapping` WHERE `id` = '$cus_map_id'");
+
+
+    // Check if the deletion was successful
+    if ($qry) {
+        if ($groupIdResult) {
+            // Get the count of customer mappings for the group
+            $mappingCountStmt = $pdo->query("SELECT COUNT(*) FROM `group_cus_mapping` WHERE grp_creation_id = '$group_id'");
+            $current_mapping_count = $mappingCountStmt->fetchColumn();
+
+            // Get the total number of members for the group
+            $totalMembersStmt = $pdo->query("SELECT total_members FROM `group_creation` WHERE grp_id = '$group_id'");
+            $total_members = $totalMembersStmt->fetchColumn();
+
+            // Update status based on the count
+            if ($current_mapping_count >= $total_members) {
+                // Update status to 2 if count matches or exceeds
+                $statusUpdateStmt = $pdo->query("UPDATE `group_creation` SET status = '2' WHERE grp_id = '$group_id'");
+            } else {
+                // Update status to 1 if count does not match
+                $statusUpdateStmt = $pdo->query("UPDATE `group_creation` SET status = '1' WHERE grp_id = '$group_id'");
+            }
+
+            // Check if status update was successful
+            if ($statusUpdateStmt) {
+                $result = 1; // Success
+            } else {
+                $result = 2; // Failure to update status
+            }
         } else {
-            // Update status to 1 if count does not match
-            $statusUpdateStmt = $pdo->query("UPDATE `group_creation` SET status = '1' WHERE grp_id = '$group_id'");
-        }
-
-        // Check if status update was successful
-        if ($statusUpdateStmt) {
-            $result = 1; // Success
-        } else {
-            $result = 2; // Failure to update status
+            $result = 1; // Success (status not found, deletion allowed)
         }
     } else {
-        $result = 1; // Success (status not found, deletion allowed)
+        $result = 2; // Failure to delete mapping or group share
     }
-} else {
-    $result = 2; // Failure to delete mapping
+}else {
+    $result = 1; // Success (status not found, deletion allowed)
 }
 
 echo json_encode($result);
-?>

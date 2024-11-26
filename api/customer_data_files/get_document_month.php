@@ -12,12 +12,12 @@ $qry = $pdo->query("SELECT
         auction_details ad
     LEFT JOIN 
         group_creation gc ON ad.group_id = gc.grp_id
-    LEFT JOIN 
-        group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-    LEFT JOIN 
-        customer_creation cc ON gcm.cus_id = cc.id
+   LEFT JOIN group_share gs ON
+    ad.cus_name = gs.cus_mapping_id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
 WHERE
-    cc.cus_id = '$cus_id' AND ad.cus_name=cc.id AND ad.group_id='$grp_id' Group BY ad.id");
+    cc.cus_id = '$cus_id' AND  ad.cus_name = gs.cus_mapping_id AND ad.group_id='$grp_id' Group BY ad.id");
 if ($qry->rowCount() > 0) {
     $response = $qry->fetchAll(PDO::FETCH_ASSOC);
 }

@@ -170,9 +170,9 @@ if (isset($_POST['order'])) {
    
 }
 $query1 = '';
-// if (isset($_POST['length']) && $_POST['length'] != -1) {
-//     $query1 = ' LIMIT ' . intval($_POST['start']) . ', ' . intval($_POST['length']);
-// }
+if (isset($_POST['length']) && $_POST['length'] != -1) {
+    $query1 = ' LIMIT ' . intval($_POST['start']) . ', ' . intval($_POST['length']);
+}
 
 $stmt = $pdo->prepare($query);
 $stmt->execute();

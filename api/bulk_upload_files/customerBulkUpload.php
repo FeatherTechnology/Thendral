@@ -52,6 +52,9 @@ if (in_array($_FILES["excelFile"]["type"], $allowedFileType)) {
                     $obj->guarantorTable($pdo, $data);
                     $obj->sourceTable($pdo, $data);
                     $obj->cusMappingTable($pdo, $data);
+                    $map_id = $obj->MappingID($pdo,$data['mapping_id']);
+                    $data['map_id'] = $map_id;
+                    $obj->cusShareTable($pdo, $data);
                 }
                  else {
                     $errtxt = "Please Check the input given in Serial No: " . ($rowChange) . " on below. <br><br>";

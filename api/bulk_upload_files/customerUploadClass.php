@@ -43,6 +43,10 @@ class customerUploadClass
             'guarantor_aadhar' => isset($Row[16]) ? $Row[16] : "",
             'grp_name' => isset($Row[17]) ? $Row[17] : "",
             'joining_month' => isset($Row[18]) ? $Row[18] : "",
+            'mapping_id' => isset($Row[19]) ? $Row[19] : "",
+            'share_value' => isset($Row[20]) ? $Row[20] : "",
+            'share_percent' => isset($Row[21]) ? $Row[21] : "",
+            
         );
 
         $dataArray['guarantor_aadhar'] = strlen($dataArray['guarantor_aadhar']) == 12 ? $dataArray['guarantor_aadhar'] : 'Invalid';
@@ -120,7 +124,20 @@ class customerUploadClass
 
         return $grp_id;
     }
+    function MappingID($pdo, $mapping_id)
+    {
+        // Use a direct query (ensure $grp_name is properly sanitized before using)
+        $stmt = $pdo->query("SELECT id FROM group_cus_mapping WHERE map_id = '$mapping_id'");
 
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $map_id = $row['id']; // Fetch the 'grp_id' column
+        } else {
+            $map_id = 'Not Found'; // Return null if no result is found
+        }
+
+        return $map_id;
+    }
     function getCustomerId($pdo,$aadhar_number)
     {
         $stmt = $pdo->query("SELECT id FROM  customer_creation WHERE aadhar_number = '$aadhar_number'");
@@ -355,50 +372,70 @@ class customerUploadClass
         }
     }
     function cusMappingTable($pdo, $data)
-{
-    $user_id = $_SESSION['user_id'];
-
-    // Fetch current customer count in the group
-    $stmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = '" . $data['grp_id'] . "'");
-    $current_count = $stmt->fetchColumn();
-
-    // Fetch total members allowed in the group
-    $smt2 = $pdo->query("SELECT total_members FROM group_creation WHERE grp_id = '" . $data['grp_id'] . "'");
-    $total_members = $smt2->fetchColumn();
-
-    // Initialize a response message variable
-    $responseMessage = '';
-
-    // Add the new customer to the group mapping
-    if ($current_count < $total_members) {
-        $insert_query5 = "INSERT INTO group_cus_mapping (grp_creation_id, cus_id, joining_month, insert_login_id, created_on) 
-                          VALUES ('" . strip_tags($data['grp_id']) . "', '" . strip_tags($data['cust_id']) . "', '" . strip_tags($data['joining_month']) . "', '$user_id', NOW())";
-
-        $pdo->query($insert_query5);
-
-        if ($pdo->lastInsertId()) {
-            // Check if the count now equals the total members allowed
-            $stmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = '" . $data['grp_id'] . "'");
-            $current_count = $stmt->fetchColumn();
-
-            if ($current_count == $total_members) {
-                // Update the status in the group_creation table to indicate the group is full
-                $pdo->query("UPDATE group_creation SET status = '2',update_login_id = '$user_id', updated_on = NOW() WHERE grp_id = '" . $data['grp_id'] . "'");
-                $responseMessage = "Customer successfully added. The group is now full.";
+    {
+        $user_id = $_SESSION['user_id'];
+    
+        // Fetch current customer count in the group
+        $stmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = '" . $data['grp_id'] . "'");
+        $current_count = $stmt->fetchColumn();
+    
+        // Fetch total members allowed in the group
+        $stmt2 = $pdo->query("SELECT total_members FROM group_creation WHERE grp_id = '" . $data['grp_id'] . "'");
+        $total_members = $stmt2->fetchColumn();
+    
+        // Initialize a response message variable
+        $responseMessage = '';
+    
+        // Check if the map_id already exists
+        $check_query = "SELECT map_id FROM group_cus_mapping WHERE map_id = '" . $data['mapping_id'] . "'";
+        $resultCheck = $pdo->query($check_query);
+    
+        // If the map_id does not exist, insert it
+        if ($resultCheck->rowCount() == 0) {
+            // Check if the current group count is less than the total allowed members
+            if ($current_count < $total_members) {
+               $insert_query = "INSERT INTO group_cus_mapping (map_id, grp_creation_id, joining_month, insert_login_id, created_on) 
+                                 VALUES ('" . strip_tags($data['mapping_id']) . "', '" . strip_tags($data['grp_id']) . "', '" . strip_tags($data['joining_month']) . "', '$user_id', NOW())";
+                
+                $pdo->query($insert_query);
+    
+                if ($pdo->lastInsertId()) {
+                    // Check if the count now equals the total members allowed
+                    $stmt = $pdo->query("SELECT COUNT(*) FROM group_cus_mapping WHERE grp_creation_id = '" . $data['grp_id'] . "'");
+                         $current_count = $stmt->fetchColumn();
+    
+                    if ($current_count == $total_members) {
+                        // Update the status in the group_creation table to indicate the group is full
+                        $pdo->query("UPDATE group_creation SET status = '2', update_login_id = '$user_id', updated_on = NOW() WHERE grp_id = '" . $data['grp_id'] . "'");
+                        $responseMessage = "Customer successfully added. The group is now full.";
+                    } else {
+                        $responseMessage = "Customer successfully added.";
+                    }
+                } else {
+                    $responseMessage = "Error inserting new customer to group.";
+                }
             } else {
-                $responseMessage = "Customer successfully added.";
+                $responseMessage = "Customer Mapping Limit is Exceeded"; // Show error if the count exceeds the limit
             }
         } else {
-            $responseMessage = "Error inserting new customer to group.";
+            $responseMessage = "Mapping ID already exists.";
         }
-    } else {
-        $responseMessage = "Customer Mapping Limit is Exceeded"; // Show error if the count exceeds the limit
+    
+        // Return response message
+        return $responseMessage;
     }
+    
+function cusShareTable($pdo, $data)
+{
+    $user_id = $_SESSION['user_id'];
+      
+    // Add the new customer to the group mapping
 
-    // Return response message
-    return $responseMessage;
+        $insert_query6 = "INSERT INTO group_share (cus_mapping_id,cus_id,grp_creation_id, share_value,share_percent, insert_login_id, created_on) 
+                          VALUES ('" . strip_tags($data['map_id']) . "','" . strip_tags($data['cust_id']) . "', '" . strip_tags($data['grp_id']) . "', '" . strip_tags($data['share_value']) . "','" . strip_tags($data['share_percent']) . "', '$user_id', NOW())";
+
+        $pdo->query($insert_query6);
 }
-
     
     function handleError($data)
     {
@@ -408,9 +445,7 @@ class customerUploadClass
         if ($data['first_name'] == '') {
             $errcolumns[] = 'First Name';
         }
-        if ($data['last_name'] == '') {
-            $errcolumns[] = 'Last Name';
-        }
+    
         if ($data['address'] == '') {
             $errcolumns[] = 'Address';
         }
@@ -463,6 +498,15 @@ class customerUploadClass
         }
         if ($data['fam_relationship'] == 'Not Found') {
             $errcolumns[] = 'Relationship';
+        }
+        if ($data['share_value'] == '') {
+            $errcolumns[] = 'Share Value';
+        }
+        if ($data['share_percent'] == '') {
+            $errcolumns[] = 'Share Percent';
+        }
+        if ($data['mapping_id'] == '') {
+            $errcolumns[] = 'Mapping ID';
         }
         return $errcolumns;
     }

@@ -7,7 +7,11 @@ $(document).ready(function () {
         $('#settle_type').val('');
         $('#den_upload').val(''); // This won't work, see below for the workaround
         $('#den_upload_edit').val('');
+        $('#settlement_screen input').val('')
+        $('#settlement_screen select').val('');
         resetValidation()
+        getDocInfoTable('')
+        getCashAck('');
     });
 
     // Initial Hide of all optional fields
@@ -16,7 +20,7 @@ $(document).ready(function () {
     // Payment Type Change
     $('#payment_type').change(function () {
         let paymentType = $(this).val();
-        fetchSettlementData($('#groupid').val()); // Fetch data based on group ID
+        // fetchSettlementData($('#groupid').val()); // Fetch data based on group ID
         updateSettleAmount();
         $('#settle_type').val('');
         resetValidation()
@@ -193,19 +197,15 @@ $(document).ready(function () {
         let id = $(this).attr('value');
         $('#groupid').val(id);
         editGroupCreation(id)
-        editCustomerCreation(id)
-        getGuarantorRelationship(id)
-        fetchSettlementData(id)
+        getCustomerName(id)
         $('#groupid').val(id);
-        checkBalance()
-        setTimeout(function () {
-            getDocInfoTable();
-            getCashAck();
-          //  getDenomImage();
-        }, 1000);
         $('#add_grup')
             .removeAttr('data-toggle')
             .removeAttr('data-target');
+        const currentDate = new Date();
+        $('#settle_date').val(formatDate(currentDate));
+        getDocInfoTable('')
+        getCashAck('');
         $('#submit_settle_info').attr('disabled', false);
     })
 
@@ -222,6 +222,25 @@ $(document).ready(function () {
     //         $('#gua_relationship').val('');
     //     }
     // });
+    $('#customer_name').on('change', function () {
+        const customerId = $(this).val();
+        if (customerId && customerId !== 'null') {
+            // Fetch the guarantor relationship if a valid ID is selected
+            editCustomerCreation(customerId)
+            getGuarantorRelationship(customerId)
+            fetchSettlementData(customerId)
+            //checkBalance()
+            setTimeout(function () {
+                getDocInfoTable();
+                getCashAck();
+                fetchSettlementData(customerId)
+                //  getDenomImage();
+            }, 1000);
+        } else {
+            // Set default relationship as 'Customer' if no valid ID is selected
+            $('#gua_relationship').val('Customer');
+        }
+    });
     $('#gua_name').on('change', function () {
         const guarantorId = $(this).val();
         if (guarantorId && guarantorId !== 'null') {
@@ -350,16 +369,17 @@ $(document).ready(function () {
 
     $('#submit_settle_info').click(function (event) {
         event.preventDefault();
-    
+
         // Create a FormData object to hold the form data
         let settleInfo = new FormData();
-    
+
         // Append all your form fields to the FormData object
         settleInfo.append('auction_id', $('#groupid').val());
         settleInfo.append('group_id', $('#group_id').val());
         settleInfo.append('cus_id', $('#cus_id').val());
         settleInfo.append('settle_date', $('#settle_date').val());
         settleInfo.append('settle_amount', $('#settle_amount').val().replace(/,/g, ''));
+        settleInfo.append('set_amount', $('#set_amount').val());
         settleInfo.append('settle_balance', parseFloat($('#settle_balance').val().replace(/,/g, '')) || 0);
         settleInfo.append('payment_type', $('#payment_type').val());
         settleInfo.append('settle_type', $('#settle_type').val());
@@ -374,18 +394,18 @@ $(document).ready(function () {
         settleInfo.append('balance_amount', $('#balance_amount').val().replace(/,/g, ''));
         settleInfo.append('gua_name', $('#gua_name').val());
         settleInfo.append('gua_relationship', $('#gua_relationship').val());
-    
+
         // Append the file from the file input
         let fileInput = $('#den_upload')[0].files[0];
         if (fileInput) {
             settleInfo.append('den_upload', fileInput);
         }
-    
+
         settleInfo.append('den_upload_edit', $('#den_upload_edit').val());
-    
+
         // Get the settle type
         let settleType = $('#settle_type').val();
-    
+
         // Validation for the file upload based on settle_type
         let isUploadValid = true;
         if (settleType == '1') { // Assuming '1' means you want to validate den_upload
@@ -403,10 +423,10 @@ $(document).ready(function () {
             $('#den_upload').css('border', '1px solid #cecece');
             $('#den_upload_edit').css('border', '1px solid #cecece');
         }
-    
+
         // Validate the form data
         let isValid = isFormDataValid(settleInfo) && isUploadValid;
-    
+
         // Check if the form is valid before submission
         if (isValid) {
             $.ajax({
@@ -435,8 +455,8 @@ $(document).ready(function () {
             swalError('Warning', 'Please fill the all the fields.');
         }
     });
-    
-    
+
+
 
     ///////////////////////////////////////////////////////////////////Document info START ////////////////////////////////////////////////////////////////////////////
 
@@ -566,11 +586,11 @@ function groupData() {
     $('#auction_month').val(grp_month);
 }
 function editCustomerCreation(id) {
-    $.post('api/settlement_files/settle_customer_data.php', { id: id }, function (response) {
+    let auction_id = $('#groupid').val();
+    $.post('api/settlement_files/settle_customer_data.php', { id: id, auction_id: auction_id }, function (response) {
         if (response.length > 0) {
-            $('#groupid').val(id);
             $('#cus_id').val(response[0].cus_id);
-            $('#customer_name').val(response[0].cus_name); // Full name in a single field
+            $('#map_id').val(response[0].map_id);
             $('#place').val(response[0].place);
             $('#mobile1').val(response[0].mobile1);
             $('#occupation').val(response[0].occupations); // Assuming you have a field for occupations
@@ -620,7 +640,8 @@ function getDocrelationshipName(guarantorId) {
 }
 
 function getGuarantorRelationship(id) {
-    $.post('api/settlement_files/get_guarantor_name.php', { id: id }, function (response) {
+    let auction_id = $('#groupid').val();
+    $.post('api/settlement_files/get_guarantor_name.php', { id: id, auction_id: auction_id }, function (response) {
         let appendGuarantorOption = "<option value=''>Select Name</option>";
         $.each(response, function (index, val) {
             let selected = '';
@@ -681,37 +702,40 @@ function getBankName() {
         $('#bank_name').empty().append(appendBankOption);
     }, 'json');
 }
-function setSettlementFields(data) {
-    const { chit_value, auction_value } = data[0];
-    const settlementAmount = chit_value - auction_value;
+// function setSettlementFields(data) {
 
-    function formatDate(date) {
-        let day = date.getDate();
-        let month = date.getMonth() + 1; // Months are zero-based
-        let year = date.getFullYear();
+//     // Set Settlement Amount and Balance
+//     // $('#settle_amount').val(settlementAmount);
+//     $('#settle_amount').val(moneyFormatIndia(settlement_amount));
+//     checkBalance();
+//     // Update the UI based on payment and settlement types
+//     updateSettleAmount();
+// }
+function formatDate(date) {
+    let day = date.getDate();
+    let month = date.getMonth() + 1; // Months are zero-based
+    let year = date.getFullYear();
 
-        // Add leading zeros if day or month is less than 10
-        if (day < 10) day = '0' + day;
-        if (month < 10) month = '0' + month;
+    // Add leading zeros if day or month is less than 10
+    if (day < 10) day = '0' + day;
+    if (month < 10) month = '0' + month;
 
-        return day + '-' + month + '-' + year;
-    }
-
-    // Set Settlement Date to Current Date in dd-mm-yyyy format
-    const currentDate = new Date();
-    $('#settle_date').val(formatDate(currentDate));
-
-    // Set Settlement Amount and Balance
-    // $('#settle_amount').val(settlementAmount);
-    $('#settle_amount').val(moneyFormatIndia(settlementAmount));
-    checkBalance();
-    // Update the UI based on payment and settlement types
-    updateSettleAmount();
+    return day + '-' + month + '-' + year;
 }
+
+// Set Settlement Date to Current Date in dd-mm-yyyy format
+
 function fetchSettlementData(id) {
-    $.post('api/settlement_files/get_settlement_amount.php', { id: id }, function (response) {
+    let auction_id = $('#groupid').val();
+    $.post('api/settlement_files/get_settlement_amount.php', { id: id, auction_id: auction_id }, function (response) {
         if (response.length > 0) {
-            setSettlementFields(response);
+            // Assuming `response` is an array and we need the first object's `settlement_amount`
+            let settlement_amount = response[0].settlement_amount;
+            let set_amount = response[0].settle_amount;
+            $('#settle_amount').val(moneyFormatIndia(settlement_amount));
+            $('#set_amount').val(set_amount);
+            checkBalance()
+
         } else {
             // Clear fields if no data found
             $('#settle_date').val('');
@@ -720,6 +744,7 @@ function fetchSettlementData(id) {
         }
     }, 'json');
 }
+
 function getDocCreationTable() {
     let cus_id = $('#cus_id').val();
     let auction_id = $('#groupid').val();
@@ -751,7 +776,6 @@ function getDocCreationTable() {
 function getDocInfoTable() {
     let cus_id = $('#cus_id').val();
     let auction_id = $('#groupid').val();
-    console.log(cus_id);
     $.post('api/settlement_files/doc_info_list.php', { cus_id, auction_id }, function (response) {
         let docColumn = [
             "sno",
@@ -962,16 +986,17 @@ function getCashAck() {
 
 function checkBalance() {
     let auction_id = $('#groupid').val();
+    let cus_id = $('#cus_id').val();
     $.ajax({
         url: 'api/settlement_files/get_balance_amount.php',
         type: 'POST',
-        data: { "auction_id": auction_id },
+        data: { "auction_id": auction_id, 'cus_id': cus_id },
         dataType: 'json',
         success: function (response) {
             if (response && response.balance_amount !== undefined) {
                 // Check if balance amount is zero
                 let balanceAmount = response.balance_amount;
-                if (balanceAmount === '0' || balanceAmount === 0) {
+                if (balanceAmount === 'null' || balanceAmount === null) {
                     // Set balance to settlement amount if balance is zero
                     $('#settle_balance').val($('#settle_amount').val());
                 } else {
@@ -1099,16 +1124,13 @@ function resetDenominationTable() {
 }
 
 function printDenomination() {
-    // Clone the denomination content
     let totalAmount = parseFloat($('#totalAmount').val().replace(/,/g, ''));
 
-    // Check if the total amount is 0 or not a number
     if (totalAmount === 0 || isNaN(totalAmount)) {
         swalError('Warning', 'Please fill in the denomination values before printing.');
-        return; // Exit the function if total amount is 0
+        return;
     }
-    
-    // Retrieve and format values from inputs
+
     const chitValue = $('#cht_value').val().replace(/,/g, '');
     const commission = $('#cht_com').val().replace(/,/g, '');
     const auctionValue = $('#act_val').val().replace(/,/g, '');
@@ -1121,130 +1143,122 @@ function printDenomination() {
     const formattedTotalValue = moneyFormatIndia(totalValue);
     const formattedSetlValue = moneyFormatIndia(setVal);
 
-    // Create the HTML content for printing
     let content = ` 
         <div id="print_content" style="text-align: center;">
-            <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                <img src="img/thendral_logo_icon.png" class="img1" style=" height: 90px;">           
+            <h2 style="margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
+                <img src="img/thendral_logo_icon.png" class="img1" style=" height: 80px;">           
             </h2>
-            <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+            <h3 style="margin-bottom: 10px; display: flex; align-items: center; justify-content: center;">
                 Cash Denomination
-            </h2>
-            <table style="margin: 0 auto; border-collapse: collapse; width:55%;">
+            </h3>
+            <table style="margin: 0 auto; border-collapse: collapse; width:65%; font-size: 16px;">
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Group Name</strong></td>
-                    <td style="padding-bottom: 10px;">${$('#denon_name').val()}</td>
+                    <td style="padding-bottom: 7px;"><strong>Group Name</strong></td>
+                    <td style="padding-bottom: 7px;">${$('#denon_name').val()}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Auction Month</strong></td>
-                    <td style="padding-bottom: 10px;">${$('#auc_month').val()}</td>
+                    <td style="padding-bottom: 7px;"><strong>Auction Month</strong></td>
+                    <td style="padding-bottom: 7px;">${$('#auc_month').val()}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Date</strong></td>
-                    <td style="padding-bottom: 10px;">${$('#auct_date').val()}</td>
+                    <td style="padding-bottom: 7px;"><strong>Date</strong></td>
+                    <td style="padding-bottom: 7px;">${$('#auct_date').val()}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Chit Value</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedChitValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Chit Value</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedChitValue}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Auction Value</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedAuctionValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Auction Value</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedAuctionValue}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Commission</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedCommission}</td>
+                    <td style="padding-bottom: 7px;"><strong>Commission</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedCommission}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Total Amount</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedTotalValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Total Amount</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedTotalValue}</td>
                 </tr>
                 <tr>
-                    <td style="padding-bottom: 10px;"><strong>Settlement Amount</strong></td>
-                    <td style="padding-bottom: 10px;">${formattedSetlValue}</td>
+                    <td style="padding-bottom: 7px;"><strong>Settlement Amount</strong></td>
+                    <td style="padding-bottom: 7px;">${formattedSetlValue}</td>
                 </tr>
             </table>
         </div>
         <br />
         <div style="text-align: center;">
-            <h3>Denomination Table</h3>
-            <table style="margin: 0 auto; border-collapse: collapse; width: 85%;">
+            <h4>Denomination Table</h4>
+            <table style="margin: 0 auto; border-collapse: collapse; width: 85%; font-size: 16px;">
                 <thead>
                     <tr>
-                        <th style="border: 1px solid black; padding: 10px;">Amount</th>
-                        <th style="border: 1px solid black; padding: 10px;">Quantity</th>
-                        <th style="border: 1px solid black; padding: 10px;">Total Value</th>
+                        <th style="border: 1px solid black; padding: 7px;">Amount</th>
+                        <th style="border: 1px solid black; padding: 7px;">Quantity</th>
+                        <th style="border: 1px solid black; padding: 7px;">Total Value</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
 
     $('#denominationTableBody tr').each(function () {
-        let amount = $(this).find('td:first').text(); // Amount
-        let quantity = $(this).find('input[type="number"]').val(); // Quantity
-        let totalValue = $(this).find('input[type="text"]').val(); // Total Value
-        
-        // Check for undefined or empty values
+        let amount = $(this).find('td:first').text();
+        let quantity = $(this).find('input[type="number"]').val();
+        let totalValue = $(this).find('input[type="text"]').val();
+
         const formattedQuantity = quantity ? quantity : '';
         const formattedTotalValue = totalValue ? moneyFormatIndia(totalValue) : '';
-        
-        // Check if this is the Total row
+
         if ($(this).find('td').eq(0).attr('colspan') === '2') {
-          content += `
+            content += `
             <tr>
-              <td colspan="2" style="border: 1px solid black; padding: 10px; text-align: right;"><strong>Total</strong></td>
-              <td style="border: 1px solid black; padding: 10px;">${moneyFormatIndia($('#totalAmount').val().replace(/,/g, ''))}</td>
+              <td colspan="2" style="border: 1px solid black; padding: 7px; text-align: right;"><strong>Total</strong></td>
+              <td style="border: 1px solid black; padding: 7px;">${moneyFormatIndia($('#totalAmount').val().replace(/,/g, ''))}</td>
             </tr>
           `;
         } else {
-          content += `
+            content += `
             <tr>
-              <td style="border: 1px solid black; padding: 10px;">${amount}</td>
-              <td style="border: 1px solid black; padding: 10px;">${formattedQuantity}</td>
-              <td style="border: 1px solid black; padding: 10px;">${formattedTotalValue}</td>
+              <td style="border: 1px solid black; padding: 7px;">${amount}</td>
+              <td style="border: 1px solid black; padding: 7px;">${formattedQuantity}</td>
+              <td style="border: 1px solid black; padding: 7px;">${formattedTotalValue}</td>
             </tr>
           `;
         }
-      });
+    });
 
     content += `
                 </tbody>
             </table>
         </div>
         <br />
-        <div style="display: flex; justify-content: space-between; margin-top: 50px;">
+        <div style="display: flex; justify-content: space-between; margin-top: 80px;">
             <div>
-                <h5>Manager's Signature</h5>
+                <h5 style="font-size: 16px;">Manager's Signature</h5>
             </div>
             <div>
-                <h5>Customer's Signature</h5>
+                <h5 style="font-size: 16px;">Customer's Signature</h5>
             </div>
         </div>
     `;
 
-    // Open a new window for printing
     const printWindow = window.open('', '_blank');
 
-    // Write the content into the new window
     printWindow.document.write('<html><head><title>Print Denomination</title>');
-    printWindow.document.write('<style>body{font-family: Arial, sans-serif; margin: 20px;} .table { width: 100%; border-collapse: collapse; } .table, .table th, .table td { border: 1px solid black; } .table th, .table td { padding: 10px; text-align: left; } .text-right { text-align: right; }</style>');
+    printWindow.document.write('<style>body{font-family: Arial, sans-serif; margin: 10px;} .table { width: 100%; border-collapse: collapse; } .table, .table th, .table td { border: 1px solid black; } .table th, .table td { padding: 7px; text-align: left; } .text-right { text-align: right; }</style>');
     printWindow.document.write('</head><body>');
     printWindow.document.write(content);
     printWindow.document.write('</body></html>');
 
-    // Close the document and trigger the print
     setTimeout(() => {
-       
-    
-    printWindow.document.close();
-    printWindow.print();
+        printWindow.document.close();
+        printWindow.print();
 
-    // Close the print window after printing
-    printWindow.onafterprint = function () {
-        printWindow.close();
-    };
-}, 1000);
+        printWindow.onafterprint = function () {
+            printWindow.close();
+        };
+    }, 1000);
 }
+
 // function getDenomImage() {
 //     let auction_id = $('#groupid').val();
 //     let cus_id = $('#cus_id').val();
@@ -1258,4 +1272,46 @@ function printDenomination() {
 //         }
 //     });
 // }
+
+function getCustomerName(id) {
+    $.post('api/settlement_files/get_settle_customer.php', { id: id }, function (response) {
+        let appendCusOption = '';
+        appendCusOption += "<option value=''>Select Customer Name</option>";
+        let isSharePercent100 = false; // Flag for share percent check
+        let selectedCusName = ''; // Store customer name if share percent is 100
+        let selectedCusId = ''; // Store customer ID if share percent is 100
+
+        $.each(response, function (index, val) {
+            let editGId = $('#custom_name_edit').val();
+            if (val.share_percent == 100) {
+                isSharePercent100 = true;
+                selectedCusName = val.cus_name;
+                selectedCusId = val.id;
+            } else {
+                let selected = (val.id == editGId) ? 'selected' : '';
+                appendCusOption += "<option value='" + val.id + "' " + selected + ">" + val.cus_name + "</option>";
+            }
+        });
+
+        // If share percent is 100, disable the dropdown and show the customer name
+        if (isSharePercent100) {
+            $('#customer_name').attr('disabled', true).html("<option value=''>" + selectedCusName + "</option>");
+
+            // Manually trigger the onchange functions with the selected customer ID
+            if (selectedCusId) {
+                editCustomerCreation(selectedCusId);
+                getGuarantorRelationship(selectedCusId);
+                fetchSettlementData(selectedCusId);
+
+                setTimeout(function () {
+                    getDocInfoTable();
+                    getCashAck();
+                    fetchSettlementData(selectedCusId);
+                }, 1000);
+            }
+        } else {
+            $('#customer_name').attr('disabled', false).empty().append(appendCusOption);
+        }
+    }, 'json');
+}
 

@@ -22,7 +22,8 @@ $qry = $pdo->query("
     LEFT JOIN group_creation gc ON a.group_id = gc.grp_id 
     LEFT JOIN users d ON a.user_name = d.id 
     LEFT JOIN bank_creation e ON a.bank_id = e.id 
-    LEFT JOIN customer_creation cc ON a.group_mem = cc.id 
+    LEFT JOIN group_share gs ON a.group_mem = gs.cus_mapping_id
+    LEFT JOIN customer_creation cc ON gs.cus_id = cc.id 
     WHERE a.insert_login_id = '$user_id' 
     AND DATE(a.created_on) = CURDATE() 
 ");

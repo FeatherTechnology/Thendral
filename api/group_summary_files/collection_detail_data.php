@@ -26,19 +26,24 @@ if (isset($_POST['group_id']) && isset($_POST['auction_month'])) {
                 WHERE sc.cus_id = cc.cus_id
             ) AS occupations,
             gcm.id AS cus_mapping_id,
-            gcm.settle_status,
+            gs.id AS share_id,
+            gs.settle_status,
             ad.auction_month
         FROM
             auction_details ad
-        LEFT JOIN group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-        LEFT JOIN customer_creation cc ON gcm.cus_id = cc.id
+      LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
         LEFT JOIN place pl ON cc.place = pl.id
         LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
         JOIN users us ON FIND_IN_SET(gc.branch, us.branch)
         WHERE
             gc.grp_id = :group_id 
             AND ad.auction_month = :auction_month  
-        GROUP BY gcm.id
+        GROUP BY gs.id
         ORDER BY cc.cus_id";
 
         // Execute the main query
@@ -51,12 +56,14 @@ if (isset($_POST['group_id']) && isset($_POST['auction_month'])) {
 
             // Query to fetch settle status
             $settleStatusQuery = "SELECT
-                ad.cus_name AS customer_id
+                gs.cus_id AS customer_id
             FROM
                 auction_details ad
+LEFT JOIN group_share gs ON ad.cus_name = gs.cus_mapping_id 
+LEFT JOIN customer_creation cc ON gs.cus_id = cc.id 
             WHERE
                 ad.auction_month <= :auction_month 
-                AND ad.group_id = :group_id AND ad.status = 3";
+                AND ad.group_id = :group_id AND gs.settle_status ='Yes'";
 
             // Execute the settleStatusQuery
             $settleStmt = $pdo->prepare($settleStatusQuery);
@@ -65,15 +72,15 @@ if (isset($_POST['group_id']) && isset($_POST['auction_month'])) {
 
             // Count occurrences of cus_name from settle query result
             $cusNameCounts = array_count_values(array_column($settleData, 'customer_id'));
-           
+
             // Loop through the original $data and update the settle_status based on cus_name counts
             foreach ($data as &$row) {
                 // Safely handle undefined array keys with null coalescing operator
-                $cus_id = $row['cus_id'] ?? ''; 
+                $cus_id = $row['cus_id'] ?? '';
                 $cus_mapping_id = $row['cus_mapping_id'] ?? '';
 
                 // Update group status
-                $status = $collectionSts->updateGroupStatus($cus_mapping_id, $row['group_id'], $cus_id, $row['auction_month']);
+                $status = $collectionSts->updateGroupStatus($row['share_id'], $cus_mapping_id,$row['group_id'],$cus_id,$row['auction_month']);
                 $row['action'] = $status;
 
                 // Handle settle_status based on the count of cus_name occurrences
@@ -120,12 +127,10 @@ if (isset($_POST['group_id']) && isset($_POST['auction_month'])) {
         } else {
             echo json_encode([]); // No data found
         }
-
     } catch (PDOException $e) {
         // Return any errors encountered
         echo json_encode(['error' => $e->getMessage()]);
     }
-
 } else {
     // If POST data is missing
     echo json_encode(['error' => 'Missing group_id or auction_month']);
@@ -133,4 +138,3 @@ if (isset($_POST['group_id']) && isset($_POST['auction_month'])) {
 
 // Close the PDO connection
 $pdo = null;
-?>

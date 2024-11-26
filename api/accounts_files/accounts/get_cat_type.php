@@ -8,15 +8,15 @@ $group_id = $_POST['group_id'];  // Get group member ID from the request
 
 $qry = "
        SELECT 
-    gcm.cus_id, 
-    gcm.grp_creation_id, 
-    COUNT(gcm.cus_id) AS chit_count,
-    (SELECT COUNT(*) FROM other_transaction WHERE group_mem = gcm.cus_id AND group_id='$group_id' ) AS transaction_count
+    gs.cus_mapping_id, 
+    gs.grp_creation_id, 
+    COUNT(gs.cus_mapping_id) AS chit_count,
+    (SELECT COUNT(*) FROM other_transaction WHERE group_mem = gs.cus_mapping_id AND group_id='$group_id' ) AS transaction_count
 FROM 
-    group_cus_mapping gcm 
+    group_share gs 
 WHERE 
-    gcm.grp_creation_id = '$group_id' 
-    AND gcm.cus_id = '$group_mem_id'
+    gs.grp_creation_id = '$group_id' 
+    AND gs.cus_mapping_id = '$group_mem_id'
 ";
 
 $result = $pdo->query($qry)->fetch(PDO::FETCH_ASSOC);
