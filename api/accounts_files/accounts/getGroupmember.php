@@ -44,36 +44,61 @@ if (isset($group_id) && !empty($group_id)) {
     }
 
     // Main query to fetch customers along with their chit count and auction month
-    $qry = "
-        SELECT
-            cc.first_name,
-            cc.last_name,
-            cc.id,
-            gcm.id,
-            CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
-            gcm.joining_month,
-            (
-                SELECT COUNT(*) 
-                FROM group_cus_mapping 
-                WHERE cus_id = gcm.cus_id AND grp_creation_id = '$group_id'
-            ) AS chit_count
-        FROM
-            group_cus_mapping gcm
-        JOIN customer_creation cc ON gcm.cus_id = cc.id
-        JOIN auction_details ad ON gcm.grp_creation_id = ad.group_id
-        WHERE
-            gcm.grp_creation_id = '$group_id'
-            AND gcm.joining_month <= ad.auction_month
-            AND MONTH(ad.date) = MONTH(CURDATE()) 
-            AND YEAR(ad.date) = YEAR(CURDATE())
-        GROUP BY 
-            cc.id
-    ";
+ 
+ $qry = "SELECT
+    cc.id AS customer_id,
+    ad.group_id,
+    cc.cus_id,
+    CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
+    cc.mobile1,
+    pl.place,
+    (
+    SELECT
+        GROUP_CONCAT(sc.occupation SEPARATOR ', ')
+    FROM SOURCE
+        sc
+    WHERE
+        sc.cus_id = cc.cus_id
+) AS occupations,
+gcm.id AS cus_mapping_id,
+gs.id AS share_id,
+gs.settle_status,
+ad.auction_month,
+COUNT(
+    DISTINCT CASE WHEN(
+    SELECT
+        COUNT(*)
+    FROM
+        group_share gs_check
+    WHERE
+        gs_check.cus_mapping_id = gs.cus_mapping_id
+)  THEN gs.cus_mapping_id ELSE 1
+END
+) AS chit_count
+FROM
+    auction_details ad
+LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
+LEFT JOIN place pl ON
+    cc.place = pl.id
+LEFT JOIN group_creation gc ON
+    ad.group_id = gc.grp_id
+JOIN users us ON
+    FIND_IN_SET(gc.branch, us.branch)
+WHERE
+    gc.grp_id = 'G-111'
+GROUP BY
+    cc.cus_id
+ORDER BY cc.cus_id";
     $customers = $pdo->query($qry)->fetchAll(PDO::FETCH_ASSOC);
 
     // Filter customers based on their chit count, auction participation, and transactions in other_transaction
     foreach ($customers as $customer) {
-        $customer_id = $customer['id'];
+        $customer_id = $customer['cus_mapping_id'];
         $chit_count = $customer['chit_count'];
 
         // Count how many times this customer has taken part in auctions

@@ -63,10 +63,12 @@ while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {
 
 
     // Fetch chit amount and auction date for the specific auction ID
+ 
     $auctionQry = $pdo->query("
         SELECT 
             ad.date AS auction_date,
             ad.chit_amount,
+            gs.share_percent,
              (ad.chit_amount * gs.share_percent / 100) AS chit_share,
              gs.share_percent
         FROM 
@@ -122,7 +124,7 @@ while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {
     // Now safely perform subtraction
     $difference = $collection_amount - $total_chit; // Subtract after casting
 
-   //  echo "Group ID: $group_id, Cus Mapping ID: $cus_mapping_id, Collection Amount: $collection_amount, Total Chit: $total_chit, Commission Value: $commision_percent, Difference: $difference";
+   // echo "Group ID: $group_id, Cus Mapping ID: $cus_mapping_id, Collection Amount: $collection_amount, Total Chit: $total_chit, individual_commision: $individual_commision , Commission Value: $commision_percent, Difference: $difference";
 
     if ($total_chit >= $collection_amount) {
         // Add current auction ID to the excluded customers list along with the group_id

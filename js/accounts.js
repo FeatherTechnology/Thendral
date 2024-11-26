@@ -639,7 +639,7 @@ function getgroupMember(group_id) {
         let appenderOption = '';
         appenderOption += "<option value=''>Select Group Member</option>";
         $.each(response, function (index, val) {
-            appenderOption += "<option value='" + val.id + "'>" + val.cus_name + "</option>";
+            appenderOption += "<option value='" + val.cus_mapping_id + "'>" + val.cus_name + "</option>";
         });
         $('#group_mem').empty().append(appenderOption);
     }, 'json');

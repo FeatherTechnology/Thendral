@@ -43,7 +43,7 @@ LEFT JOIN auction_details ad ON ad.group_id = gc.grp_id
     AND YEAR(ad.date) = '$currentYear'
     AND MONTH(ad.date) = '$currentMonth'
 LEFT JOIN group_share gs ON
-    ad.group_id = gs.grp_creation_id
+    gc.grp_id = gs.grp_creation_id
   LEFT JOIN group_cus_mapping gcm ON
     gs.cus_mapping_id = gcm.id
 LEFT JOIN customer_creation cc ON
@@ -62,6 +62,7 @@ if (isset($_POST['search']) && $_POST['search'] != "") {
 }
 
 $query .= " ORDER BY gc.grp_id";
+
 // Prepare the statement for the main query
 $statement = $pdo->prepare($query);
 $statement->execute();

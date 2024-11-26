@@ -26,24 +26,26 @@ class auctionUploadClass
     {
         $dataArray = array(
             'grp_name' => isset($Row[1]) ? $Row[1] : "",
-            'date' => isset($Row[2]) ? $Row[2] : "",
-            'auction_month' => isset($Row[3]) ? $Row[3] : "",
-            'low_value' => isset($Row[4]) ? $Row[4] : "",
-            'high_value' => isset($Row[5]) ? $Row[5] : "",
-            'cus_name' => isset($Row[6]) ? $Row[6] : "",
-            'aadhar_number' => isset($Row[7]) ? $Row[7] : "",
-            'auction_value' => isset($Row[8]) ? $Row[8] : "",
-            'settle_date' => isset($Row[9]) ? $Row[9] : "",
-            'payment_type' => isset($Row[10]) ? $Row[10] : "",
-            'settle_type' => isset($Row[11]) ? $Row[11] : "",
-            'settle_cash' => isset($Row[12]) ? $Row[12] : "",
-            'bank_name' => isset($Row[13]) ? $Row[13] : "",
-            'cheque_no' => isset($Row[14]) ? $Row[14] : "",
-            'cheque_val' => isset($Row[15]) ? $Row[15] : "",
-            'transaction_id' => isset($Row[16]) ? $Row[16] : "",
-            'transaction_val' => isset($Row[17]) ? $Row[17] : "",
-            'guarantor_aadhar' => isset($Row[18]) ? $Row[18] : "",
-            'relationship' => isset($Row[19]) ? $Row[19] : "",
+            'mapping_id' => isset($Row[2]) ? $Row[2] : "",
+            'date' => isset($Row[3]) ? $Row[3] : "",
+            'auction_month' => isset($Row[4]) ? $Row[4] : "",
+            'low_value' => isset($Row[5]) ? $Row[5] : "",
+            'high_value' => isset($Row[6]) ? $Row[6] : "",
+            'cus_name' => isset($Row[7]) ? $Row[7] : "",
+            'aadhar_number' => isset($Row[8]) ? $Row[8] : "",
+            'auction_value' => isset($Row[9]) ? $Row[9] : "",
+            'settle_date' => isset($Row[10]) ? $Row[10] : "",
+            'settle_amount' => isset($Row[11]) ? $Row[11] : "",
+            'payment_type' => isset($Row[12]) ? $Row[12] : "",
+            'settle_type' => isset($Row[13]) ? $Row[13] : "",
+            'settle_cash' => isset($Row[14]) ? $Row[14] : "",
+            'bank_name' => isset($Row[15]) ? $Row[15] : "",
+            'cheque_no' => isset($Row[16]) ? $Row[16] : "",
+            'cheque_val' => isset($Row[17]) ? $Row[17] : "",
+            'transaction_id' => isset($Row[18]) ? $Row[18] : "",
+            'transaction_val' => isset($Row[19]) ? $Row[19] : "",
+            'guarantor_aadhar' => isset($Row[20]) ? $Row[20] : "",
+            'relationship' => isset($Row[21]) ? $Row[21] : "",
         );
 
         // Only check if the value is not empty
@@ -147,6 +149,20 @@ class auctionUploadClass
 
         return $auction_id;
     }
+    function MappingID($pdo, $mapping_id)
+    {
+        // Use a direct query (ensure $grp_name is properly sanitized before using)
+        $stmt = $pdo->query("SELECT id FROM group_cus_mapping WHERE map_id = '$mapping_id'");
+
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $map_id = $row['id']; // Fetch the 'grp_id' column
+        } else {
+            $map_id = 'Not Found'; // Return null if no result is found
+        }
+
+        return $map_id;
+    }
     function guarantorName($pdo, $guarantor_aadhar)
     {
         // Query to fetch family info using guarantor's Aadhar number
@@ -194,79 +210,87 @@ class auctionUploadClass
     function AuctionTable($pdo, $data)
     {
         // Fetch chit_value, total_members, and commission from group_creation table
-        $smt2 = $pdo->query("SELECT chit_value, total_members, commission, end_month FROM group_creation WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
-        $groupData = $smt2->fetch(PDO::FETCH_ASSOC);
+        $check_query = "SELECT id FROM auction_details WHERE group_id = '" . $data['grp_id'] . "' AND date = '" . $data['date'] . "'";
+        $resultCheck = $pdo->query($check_query);
 
-        // Check if the query returned valid data
-        if ($groupData) {
-            // Extract values
-            $chit_value = $groupData['chit_value'];
-            $total_members = $groupData['total_members'];
-            $commission = $groupData['commission'];
-            $end_month = $groupData['end_month'];
-            $auction_value = floatval(strip_tags($data['auction_value']));
+        // If the record does not exist, insert it
+        if ($resultCheck->rowCount() == 0) {
+            // Fetch relevant group details
+            $smt2 = $pdo->query("SELECT chit_value, total_members, commission, end_month FROM group_creation WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
+            $groupData = $smt2->fetch(PDO::FETCH_ASSOC);
 
-            if (!empty($auction_value) && $auction_value > 0) {
-                // Calculate chit_amount only if auction_value is provided and greater than zero
-                $chit_amount = ($chit_value + ($chit_value * ($commission / 100)) - $auction_value) / $total_members;
-            } else {
-                // If auction_value is empty or zero, skip calculation or handle it accordingly
-                $chit_amount = null; // Or set to a default value if needed
-            }
-            if (!empty($auction_value) && $auction_value > 0) {
-            $customer_id = !empty($data['aadhar_number']) ? strip_tags($data['cust_id']) : -1;
-            }
-            // Get the user ID from the session
-            $user_id = $_SESSION['user_id'];
+            // Check if the query returned valid data
+            if ($groupData) {
+                // Extract values
+                $chit_value = $groupData['chit_value'];
+                $total_members = $groupData['total_members'];
+                $commission = $groupData['commission'];
+                $end_month = $groupData['end_month'];
+                $auction_value = floatval(strip_tags($data['auction_value']));
 
-            // Prepare and execute the insert query
-            $insert_query1 = "INSERT INTO auction_details (group_id, date, auction_month, low_value, high_value, status, cus_name, auction_value, chit_amount, insert_login_id, created_on) 
-                          VALUES (
-                              '" . strip_tags($data['grp_id']) . "',
-                              '" . strip_tags($data['date']) . "',
-                              '" . strip_tags($data['auction_month']) . "',
-                              '" . strip_tags($data['low_value']) . "',
-                              '" . strip_tags($data['high_value']) . "',
-                              1,
-                              '" . $customer_id. "',
-                              '" . $auction_value . "',
-                              '" . $chit_amount . "',
-                              '" . $user_id . "',
-                              NOW()
-                          )";
+                // Calculate chit_amount if auction_value is provided and greater than zero
+                if ($auction_value > 0) {
+                    $chit_amount = ($chit_value + ($chit_value * ($commission / 100)) - $auction_value) / $total_members;
+                } else {
+                    $chit_amount = null; // Set to null or handle accordingly
+                }
 
-            // Execute the insert query
-            $pdo->query($insert_query1);
+                // Determine customer ID based on aadhar_number
+                $customer_id = !empty($data['aadhar_number']) ? strip_tags($data['map_id']) : -1;
 
-            // Check if the insert was successful by verifying the last insert ID
-            if ($pdo->lastInsertId()) {
-                // Update the status in the group_creation table to indicate the group is full
-                $pdo->query("UPDATE group_creation SET status = '3', update_login_id = '$user_id', updated_on = NOW() WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
+                // Get the user ID from the session
+                $user_id = $_SESSION['user_id'];
 
-                // Check if auction_value is not empty before proceeding
-                if (!empty($data['auction_value'])) {
-                    // Extract year and month from the date provided in $data
-                    $auction_updated = $pdo->query("
-                    UPDATE auction_details 
-                    SET status = '2', update_login_id = '$user_id', updated_on = NOW() 
-                    WHERE group_id = '" . strip_tags($data['grp_id']) . "' 
-                    AND date = '" . strip_tags($data['date']) . "'
-                ");
-                    $auction_date = DateTime::createFromFormat('Y-m-d', strip_tags($data['date']));
-                    $auction_year_month = $auction_date->format('Y-m'); // Get yyyy-mm
+                // Prepare and execute the insert query
+                $insert_query1 = "INSERT INTO auction_details (group_id, date, auction_month, low_value, high_value, status, cus_name, auction_value, chit_amount, insert_login_id, created_on) 
+                                  VALUES (
+                                      '" . strip_tags($data['grp_id']) . "',
+                                      '" . strip_tags($data['date']) . "',
+                                      '" . strip_tags($data['auction_month']) . "',
+                                      '" . strip_tags($data['low_value']) . "',
+                                      '" . strip_tags($data['high_value']) . "',
+                                      1,
+                                      '" . $customer_id . "',
+                                      '" . $auction_value . "',
+                                      '" . $chit_amount . "',
+                                      '" . $user_id . "',
+                                      NOW()
+                                  )";
 
-                    // Compare auction_date (yyyy-mm) with end_month
-                    if ($auction_year_month == $end_month) {
-                        // Update the status in the group_creation table to indicate the group is completed
-                        $pdo->query("UPDATE group_creation SET status = '4', update_login_id = '$user_id', updated_on = NOW() WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
+                // Execute the insert query
+                $pdo->query($insert_query1);
+
+                // Check if the insert was successful
+                if ($pdo->lastInsertId()) {
+                    // Update the status in the group_creation table to indicate the group is in auction (status 3)
+                    $pdo->query("UPDATE group_creation SET status = '3', update_login_id = '$user_id', updated_on = NOW() WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
+
+                    // Check if auction_value is not empty before proceeding
+                    if (!empty($auction_value)) {
+                        // Update the status in auction_details to '2'
+                        $pdo->query("UPDATE auction_details 
+                                     SET status = '2', update_login_id = '$user_id', updated_on = NOW() 
+                                     WHERE group_id = '" . strip_tags($data['grp_id']) . "' 
+                                     AND date = '" . strip_tags($data['date']) . "'");
+
+                        // Extract year and month from the date provided in $data
+                        $auction_date = DateTime::createFromFormat('Y-m-d', strip_tags($data['date']));
+                        $auction_year_month = $auction_date->format('Y-m'); // Get yyyy-mm format
+
+                        // Compare auction_date (yyyy-mm) with end_month
+                        if ($auction_year_month == $end_month) {
+                            // Update the status in the group_creation table to indicate the group is completed (status 4)
+                            $pdo->query("UPDATE group_creation SET status = '4', update_login_id = '$user_id', updated_on = NOW() WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
+                        }
                     }
                 }
+            } else {
+                // Handle case where group data is not found
+                echo "Error: Group not found or invalid group ID.";
             }
-        } else {
-            // Handle case where group data is not found
-            echo "Error: Group not found or invalid group ID.";
         }
     }
+
 
 
     function auctionviewTable($pdo, $data)
@@ -274,11 +298,15 @@ class auctionUploadClass
         $user_id = $_SESSION['user_id']; // Retrieve the user ID from session
 
         // Corrected insert query with proper syntax and variable names
-        
-        $auction_value = floatval(strip_tags($data['auction_value']));
-        if (!empty($auction_value) && $auction_value > 0) {
-            $customer_id = !empty($data['aadhar_number']) ? strip_tags($data['cust_id']) : -1;
-            $insert_query2 = "INSERT INTO auction_modal 
+        $check_query1 = "SELECT id FROM auction_modal WHERE group_id = '" . $data['grp_id'] . "' AND date = '" . $data['date'] . "'";
+        $resultCheck1 = $pdo->query($check_query1);
+
+        // If the record does not exist, insert it
+        if ($resultCheck1->rowCount() == 0) {
+            $auction_value = floatval(strip_tags($data['auction_value']));
+            if (!empty($auction_value) && $auction_value > 0) {
+                $customer_id = !empty($data['aadhar_number']) ? strip_tags($data['map_id']) : -1;
+                $insert_query2 = "INSERT INTO auction_modal 
                       (auction_id, group_id, date, cus_name, value, inserted_login_id, created_on) 
                       VALUES (
                           '" . strip_tags($data['auction_id']) . "',
@@ -290,96 +318,92 @@ class auctionUploadClass
                           NOW()
                       )";
 
-            // Execute the query
-            $pdo->query($insert_query2);
+                // Execute the query
+                $pdo->query($insert_query2);
+            }
         }
     }
-
-
-
     function settlementTable($pdo, $data)
     {
         // Fetch chit_value from group_creation table
-        $smt2 = $pdo->query("SELECT chit_value FROM group_creation WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
-        $groupData = $smt2->fetch(PDO::FETCH_ASSOC);
-
-        // Check if the query returned valid data
-        if ($groupData) {
-            // Extract values
-            $chit_value = $groupData['chit_value'];
-            $auction_value = floatval(strip_tags($data['auction_value']));
-
-            if (!empty($auction_value) && $auction_value > 0) {
-                // Calculate chit_amount only if auction_value is provided and greater than zero
-                $settle_amount = $chit_value - $auction_value;
-            } else {
-                // If auction_value is empty or zero, skip calculation or handle it accordingly
-                $settle_amount = null; // Or set to a default value if needed
-            }
-
-            // Get user ID from session
-            $user_id = $_SESSION['user_id'];
-            if (!empty($auction_value) && $auction_value > 0 && !empty($data['settle_date'])) {
-                // Prepare the insert query for settlement_info table
-                $insert_query2 = "INSERT INTO settlement_info 
-            (auction_id, settle_date, group_id, cus_name, settle_amount, settle_balance, payment_type, settle_type, bank_id, settle_cash, cheque_no, cheque_val, transaction_id, transaction_val, guarantor_name, guarantor_relationship, insert_login_id, created_on) 
-            VALUES (
-                '" . strip_tags($data['auction_id']) . "',
-                '" . strip_tags($data['settle_date']) . "',
-                '" . strip_tags($data['grp_id']) . "',
-                '" . strip_tags($data['cust_id']) . "',
-                '" . $settle_amount . "',
-                 '" . $settle_amount . "',
-                '" . strip_tags($data['payment_type']) . "',
-                '" . strip_tags($data['settle_type']) . "',
-                '" . strip_tags($data['bank_id']) . "',
-                '" . strip_tags($data['settle_cash']) . "',
-                '" . strip_tags($data['cheque_no']) . "',
-                '" . strip_tags($data['cheque_val']) . "',
-                '" . strip_tags($data['transaction_id']) . "',
-                '" . strip_tags($data['transaction_val']) . "',
-                '" . strip_tags($data['gur_id']) . "',
-                '" . strip_tags($data['relationship']) . "',
-                '" . $user_id . "',
-                  '" . strip_tags($data['settle_date']) . "'
-            )";
-
-                // Execute the insert query for settlement_info
+        // Get user ID from session
+        $user_id = $_SESSION['user_id'];
+    
+        // Assign auction_value earlier to avoid undefined variable
+        $auction_value = floatval(strip_tags($data['auction_value']));
+    
+        // Ensure auction_value, settle_date, and settle_amount are valid
+        if ($auction_value > 0 && !empty($data['settle_date']) && !empty($data['settle_amount'])) {
+            // Prepare the insert query for settlement_info table
+            $insert_query2 = "
+                INSERT INTO settlement_info 
+                (auction_id, settle_date, group_id, cus_name, settle_amount, settle_balance, payment_type, settle_type, bank_id, settle_cash, cheque_no, cheque_val, transaction_id, transaction_val, guarantor_name, guarantor_relationship, insert_login_id, created_on) 
+                VALUES (
+                    '" . strip_tags($data['auction_id']) . "',
+                    '" . strip_tags($data['settle_date']) . "',
+                    '" . strip_tags($data['grp_id']) . "',
+                    '" . strip_tags($data['cust_id']) . "',
+                    '" . strip_tags($data['settle_amount']) . "',
+                    '" . strip_tags($data['settle_amount']) . "', -- Settle balance same as settle amount
+                    '" . strip_tags($data['payment_type']) . "',
+                    '" . strip_tags($data['settle_type']) . "',
+                    '" . strip_tags($data['bank_id']) . "',
+                    '" . strip_tags($data['settle_cash']) . "',
+                    '" . strip_tags($data['cheque_no']) . "',
+                    '" . strip_tags($data['cheque_val']) . "',
+                    '" . strip_tags($data['transaction_id']) . "',
+                    '" . strip_tags($data['transaction_val']) . "',
+                    '" . strip_tags($data['gur_id']) . "', -- Guarantor ID
+                    '" . strip_tags($data['relationship']) . "',
+                    '" . $user_id . "',
+                    NOW() -- Use current timestamp for created_on
+                )";
+    
+            // Execute the insert query for settlement_info and handle errors
+            try {
                 $pdo->query($insert_query2);
+            } catch (PDOException $e) {
+                echo "Error inserting settlement info: " . $e->getMessage();
             }
-            $auction_value = floatval(strip_tags($data['auction_value']));
-
-            if (!empty($auction_value) && $auction_value > 0) {
+        }
+    
+        // Update auction_details only if auction_value is valid
+        if ($auction_value > 0) {
+            try {
                 // Prepare and execute the auction_details update query
-                $auction_update = $pdo->query("
+                $auction_update = "
                     UPDATE auction_details 
                     SET status = '3', update_login_id = '$user_id', updated_on = NOW() 
                     WHERE group_id = '" . strip_tags($data['grp_id']) . "' 
                     AND date = '" . strip_tags($data['date']) . "'
-                ");
-
-                // Prepare and execute the group_cus_mapping update query
-                if (!empty($data['settle_date'])) {
-                    $group_update = "
-                    UPDATE group_cus_mapping 
-                    SET settle_status = 'Yes' 
-                    WHERE grp_creation_id = '" . strip_tags($data['grp_id']) . "' 
-                    AND cus_id = '" . strip_tags($data['cust_id']) . "' 
-                    AND settle_status IS NULL 
-                    LIMIT 1
                 ";
-
+                $pdo->query($auction_update);
+            } catch (PDOException $e) {
+                echo "Error updating auction details: " . $e->getMessage();
+            }
+    
+            // Update group_share settle_status if settle_date is provided
+            if (!empty($data['settle_date'])) {
+                try {
+                    $group_update = "
+                        UPDATE group_share 
+                        SET settle_status = 'Yes' 
+                        WHERE grp_creation_id = '" . strip_tags($data['grp_id']) . "' 
+                        AND cus_id = '" . strip_tags($data['cust_id']) . "' 
+                        AND cus_mapping_id = '" . strip_tags($data['map_id']) . "'  
+                        LIMIT 1
+                    ";
                     $pdo->query($group_update);
+                } catch (PDOException $e) {
+                    echo "Error updating group share: " . $e->getMessage();
                 }
-            } else {
-                // Skip execution if auction_value is empty or zero
-                // You can log or handle this case as needed
             }
         } else {
-            // Handle case where group data is not found
-            echo "Group not found or invalid group ID.";
+            // Log or handle case where auction_value is invalid
+            echo "Auction value is zero or invalid.";
         }
     }
+    
 
 
     function handleError($data)
@@ -390,6 +414,11 @@ class auctionUploadClass
         }
         if ($data['date'] == 'Invalid Date') {
             $errcolumns[] = 'Auction Date';
+        }
+        if (!empty($data['mapping_id'])) {
+            if ($data['mapping_id'] == '') {
+                $errcolumns[] = 'Mapping ID';
+            }
         }
         if (!empty($data['settle_date'])) {
             if ($data['settle_date'] == 'Invalid Date') {
