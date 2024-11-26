@@ -356,7 +356,7 @@ class auctionUploadClass
                     '" . strip_tags($data['gur_id']) . "', -- Guarantor ID
                     '" . strip_tags($data['relationship']) . "',
                     '" . $user_id . "',
-                    NOW() -- Use current timestamp for created_on
+                   '" . strip_tags($data['settle_date']) . "'
                 )";
     
             // Execute the insert query for settlement_info and handle errors

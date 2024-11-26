@@ -48,7 +48,7 @@ if ($qry) {
         $totalMonths = $interval->y * 12 + $interval->m + 1;
 
         // Count paid customers for all months in the group
-        $paidCustomersCount = $pdo->query("SELECT COUNT(DISTINCT share_id) as paid_count 
+        $paidCustomersCount = $pdo->query("SELECT COUNT(share_id) as paid_count 
                                            FROM collection 
                                            WHERE group_id = '$group_id' 
                                            AND coll_status = 'Paid' 
