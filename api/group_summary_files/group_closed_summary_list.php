@@ -128,7 +128,7 @@ foreach ($result as $row) {
         </div>
     </div>";
     // Action button
-    $sub_array[] = "<button class='btn btn-primary customerActionBtn' value='" . $row['grp_id'] . "'>&nbsp;View</button>";
+    // $sub_array[] = "<button class='btn btn-primary customerActionBtn' value='" . $row['grp_id'] . "'>&nbsp;View</button>";
 
   
 

@@ -67,7 +67,7 @@ function moneyFormatIndia($num1)
                             <th>Group Status</th>
                             <th>Collection Status</th>
                             <th>Charts</th>
-                            <th>Action</th>
+                            <!-- <th>Action</th> -->
                         </tr>
                     </thead>
                     <tbody> </tbody>
@@ -175,7 +175,7 @@ function moneyFormatIndia($num1)
     </div>
 </div>
 <!-- /////////////////////////////////////////////////////////////////// Settlement Chart Modal END ////////////////////////////////////////////////////////////////////// -->
-<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
+<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal Start ////////////////////////////////////////////////////////////////// -->
 <div class="modal fade bd-example-modal-lg" id="advance_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
         <div class="modal-content" style="background-color: white">
@@ -213,8 +213,8 @@ function moneyFormatIndia($num1)
         </div>
     </div>
 </div>
-<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal END ////////////////////////////////////////////////////////////////////// -->
-<!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
+<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal END ////////////////////////////////////////////////////////////////// -->
+<!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal Start /////////////////////////////////////////////////////////////// -->
 <div class="modal fade bd-example-modal-lg" id="collection_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
         <div class="modal-content" style="background-color: white">
@@ -251,4 +251,43 @@ function moneyFormatIndia($num1)
             </div>
         </div>
     </div>
-    <!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal END ////////////////////////////////////////////////////////////////////// -->
+    <!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal END ////////////////////////////////////////////////////////////// -->
+
+<!-- /////////////////////////////////////////////////////////////////// Ledger View Modal Start /////////////////////////////////////////////////////////////// -->
+<div class="modal fade bd-example-modal-lg" id="collection_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
+        <div class="modal-content" style="background-color: white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dueChartTitle">Collection Chart - Paid : <span id="paidValue">0</span> UnPaid : <span id="unpaidValue">0</span> Pending : <span id="pendingValue">0</span></h5>
+                <button type="button" class="close" data-dismiss="modal" tabindex="1" aria-label="Close" onclick="closeChartsModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="month_paid">
+                <input type="hidden" id="month_unpaid">
+                <input type="hidden" id="month_pending">
+                <div class="container-fluid" id="collect_chart_table_div">
+                    <table id="collect_chart_table" class="table custom-table">
+                        <thead>
+                            <th>SI.NO</th>
+                            <th>Cus ID</th>
+                            <th>Cus Name</th>
+                            <th>Place</th>
+                            <th>Occupation</th>
+                            <th>Mobile</th>
+                            <th>Action</th>
+                            <th>Settlement</th>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic table data will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-dismiss="modal" onclick="closeChartsModal()" tabindex="4">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /////////////////////////////////////////////////////////////////// Ledger View Modal END ////////////////////////////////////////////////////////////// -->
