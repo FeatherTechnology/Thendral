@@ -236,8 +236,9 @@ class auctionUploadClass
                 }
 
                 // Determine customer ID based on aadhar_number
+                if (!empty($auction_value) && $auction_value > 0) {
                 $customer_id = !empty($data['aadhar_number']) ? strip_tags($data['map_id']) : -1;
-
+                }
                 // Get the user ID from the session
                 $user_id = $_SESSION['user_id'];
 

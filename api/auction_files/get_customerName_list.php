@@ -20,12 +20,12 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
 
     // Get the list of customer names already in other_transaction for this group
 
-    $transaction_qry = "
-        SELECT group_mem 
-        FROM other_transaction 
-        WHERE group_id = '$group_id' GROUP BY group_mem;
-    ";
-    $transaction_customers = $pdo->query($transaction_qry)->fetchAll(PDO::FETCH_COLUMN);
+    // $transaction_qry = "
+    //     SELECT group_mem 
+    //     FROM other_transaction 
+    //     WHERE group_id = '$group_id' GROUP BY group_mem;
+    // ";
+    // $transaction_customers = $pdo->query($transaction_qry)->fetchAll(PDO::FETCH_COLUMN);
 
     // Get eligible customers for the current auction month
 
@@ -95,10 +95,10 @@ UNION ALL
         $auction_taken_count = count(array_filter($taken_customers, fn($id) => $id == $customer_id));
 
         // Count how many transactions this customer has in other_transaction
-        $transaction_taken_count = count(array_filter($transaction_customers, fn($id) => $id == $customer_id));
+//        $transaction_taken_count = count(array_filter($transaction_customers, fn($id) => $id == $customer_id));
 
         // Check eligibility: customer can participate if their combined auction and transaction counts are less than or equal to their chit count
-        if (($auction_taken_count + $transaction_taken_count) < $chit_count) {
+        if (($auction_taken_count) < $chit_count) {
             $customer_list_arr[] = $customer;
         }
     }
