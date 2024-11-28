@@ -125,6 +125,7 @@ foreach ($result as $row) {
             <a href='#' class='auction_chart' data-value='{$row['grp_id']}_{$row['auction_month']}'>Auction Chart</a>
             <a href='#' class='settle_chart' data-value='{$row['grp_id']}_{$row['auction_id']}'>Settlement Chart</a>
             <a href='#' class='advance_chart' data-value='{$row['grp_id']}_{$row['auction_month']}'>Chit Advance Chart</a>
+            <a href='#' class='ledger_view_chart' data-value='{$row['grp_id']}'>Ledger View Chart</a>
         </div>
     </div>";
     // Action button
