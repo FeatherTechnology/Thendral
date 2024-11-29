@@ -5,6 +5,7 @@ $(document).ready(function () {
         $('#back_btn').hide();
         $('#curr_closed').show();
         $('.auction_detail_content').hide();
+        $('.ledger_view_chart_model').hide();
     });
 
     $('input[name=customer_data_type]').click(function () {
@@ -73,6 +74,18 @@ $(document).on('click', '.advance_chart', function (event) {
 
 });
 ////////////////////////////////////////////////////////////Chit advance Chart End////////////////////////////////
+////////////////////////////////////////////////////////////////Chit Advance Chart///////////////////////////////////
+$(document).on('click', '.ledger_view_chart', function (event) {
+    event.preventDefault();
+    $('.ledger_view_chart_model').show();
+    $('#back_btn').show();
+    $('.group_table_content').hide();
+    $('#curr_closed').hide();
+    // $('#ledger_view_chart_model').modal('show');
+    let groupId = $(this).data('value');
+    getLedgerViewChart(groupId);
+});
+////////////////////////////////////////////////////////////Chit advance Chart End////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////Collection Chart Start//////////////////////////////////////////////////
 $(document).on('click', '.collectionActionBtn', function (event) {
     event.preventDefault();
@@ -87,13 +100,128 @@ $(document).on('click', '.collectionActionBtn', function (event) {
 });
 
 ////////////////////////////////////////////////////////////////////////Collection Chart End/////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////Due Start/////////////////////////////////////////////
+    $(document).on('click', '#due_chart', function (event) {
+        event.preventDefault();
+        $('#due_chart_model').modal('show');
+        const dataValue = JSON.parse($(this).attr('data-value'));
+        let groupId = dataValue.group_id;
+        let cusMappingID = dataValue.cus_mapping_id;
+        let share_id = dataValue.share_id;
+        getDueChart(dataValue);
+
+        setTimeout(() => {
+            $('.print_due_coll').click(function () {
+                // Fetch the data from the server and create a table with it
+                const coll_id = $(this).attr('id');
+                $.ajax({
+                    url: 'api/collection_files/print_collection.php', // Update with the correct path to your PHP script
+                    type: 'POST',
+                    data: {
+                        coll_id: coll_id,
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        // Create the HTML content with formatted values
+                        let rows = response.map(row => `
+                            <tr>
+                                <td><strong>Group ID</strong></td>
+                                <td>${row.group_id}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Group Name</strong></td>
+                                <td>${row.group_name}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Customer Name</strong></td>
+                                <td>${row.cus_name}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Auction Month</strong></td>
+                                <td>${row.auction_month}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chit Amount</strong></td>
+                                <td>${moneyFormatIndia(row.chit_amount)}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Payable</strong></td>
+                                <td>${moneyFormatIndia(row.payable)}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Collection Date</strong></td>
+                                <td>${row.collection_date}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Collection Amount</strong></td>
+                                <td>${moneyFormatIndia(row.collection_amount)}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Pending</strong></td>
+                                <td>${moneyFormatIndia(row.pending)}</td>
+                            </tr>
+                        `).join('');
+
+                        const content = `
+                            <div id="print_content" style="text-align: center;">
+                                <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                                   <img src="img/thendral_logo_icon.png" style=" height: 100px;">
+                                    
+                                </h2>
+                                <table style="margin: 0 auto; border-collapse: collapse; width: 50%; border: none;">
+                                    ${rows}
+                                </table>
+                            </div>
+                        `;
+
+                        // Create a temporary iframe to hold the content for printing
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                            <html>
+                            <head>
+                                <title>Print Collection Details</title>
+                                <style>
+                                    body { font-family: Arial, sans-serif; text-align: center; }
+                                    table { margin: 0 auto; border-collapse: collapse; width: 50%; border: none; }
+                                    td { padding: 8px; }
+                                    strong { font-weight: bold; }
+                                </style>
+                            </head>
+                            <body>
+                                ${content}
+                            </body>
+                            </html>
+                        `);
+                        printWindow.document.close();
+
+                        // Trigger the print dialog
+                        setTimeout(() => {
+                            printWindow.focus();
+                            printWindow.print(); 
+                            printWindow.close();  
+                        }, 1000);
+                    },
+                });
+            });
+
+        }, 1000);
+    });
+    ////////////////////////////////////////////////////////Due End////////////////////////////////////////////////////////////
+
+
 });
 function closeChartsModal() {
     $('#auction_chart_model').modal('hide');
     $('#settlement_chart_model').modal('hide');
     $('#collection_chart_model').modal('hide');
     $('#advance_chart_model').modal('hide');
+    $('#ledger_view_chart_model').modal('hide');
 }
+function closeDueChartModal(){
+    $('#due_chart_model').modal('hide');
+}
+
 $(function () {
     getGroupCreationTable();
 });
@@ -395,4 +523,62 @@ function getCollection(group_id, auction_month) {
         }, 
         'json'
     );
+}
+
+function getLedgerViewChart(groupId){
+    $.post('api/group_summary_files/ledger_view_data.php', {groupId:groupId}, function(response){
+        $('#ledger_view_table_div').empty();
+        $('#ledger_view_table_div').html(response);
+
+    });
+}
+
+function getDueChart(dataValue) {
+    $.ajax({
+        url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            group_id: dataValue.group_id,
+            cus_mapping_id: dataValue.cus_mapping_id,
+            share_id: dataValue.share_id
+        },
+        success: function (response) {
+            $('#due_cus_info').empty().html(`Customer ID: ${ dataValue.cus_id} | Mapping ID: ${ dataValue.mapping_id} | Customer Name:  ${ dataValue.cus_name} | Settlement: ${ dataValue.settle_sts}`);
+            var tbody = $('#due_chart_table tbody');
+            tbody.empty(); // Clear existing rows
+
+            $.each(response, function (index, item) {
+                var auctionMonth = item.auction_month;
+                var auctionDate = item.auction_date;
+
+                // Format the values using moneyFormatIndia
+                var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
+              //  var payable = item.payable ? moneyFormatIndia(item.payable) : '';
+                var collectionDate = item.collection_date ? item.collection_date : '';
+                var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';
+                //  var pending = item.pending;
+                var pending = item.pending !== null && item.pending !== undefined ? moneyFormatIndia(item.pending) : '';
+              var initialPayableAmount = item.initial_payable_amount ? moneyFormatIndia(item.initial_payable_amount) : '';
+                var action = item.action ? item.action : '';
+
+                var row = '<tr>' +
+                    '<td>' + auctionMonth + '</td>' +
+                    '<td>' + auctionDate + '</td>' +
+                    '<td>' + chitAmount + '</td>' +
+                    '<td>' + initialPayableAmount + '</td>' +
+                    '<td>' + collectionDate + '</td>' +
+                    '<td>' + collectionAmount + '</td>' +
+                    '<td>' + pending + '</td>' +
+                    '<td>' + action + '</td>' +
+                    '</tr>';
+
+                tbody.append(row);
+            });
+
+        },
+        error: function (xhr, status, error) {
+            console.error('AJAX Error: ' + status + error);
+        }
+    });
 }

@@ -67,7 +67,7 @@ function moneyFormatIndia($num1)
                             <th>Group Status</th>
                             <th>Collection Status</th>
                             <th>Charts</th>
-                            <th>Action</th>
+                            <!-- <th>Action</th> -->
                         </tr>
                     </thead>
                     <tbody> </tbody>
@@ -106,6 +106,22 @@ function moneyFormatIndia($num1)
     </div>
 </div>
 <!-----------------------------CARD END - Auction Detail TABLE --------------------------------->
+
+<!----------------------------- CARD Start- Ledger View Chart ------------------------------>
+<div class="card ledger_view_chart_model" style="display: none;">
+    <div class="card-header">
+        <div class="card-title">Ledger View</div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-12" id="ledger_view_table_div" style="overflow: auto;">
+                
+            </div>
+        </div>
+    </div>
+</div>
+<!-----------------------------CARD END - Ledger View Chart --------------------------------->
+
 <!-- /////////////////////////////////////////////////////////////////// Auction Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
 <div class="modal fade bd-example-modal-lg" id="auction_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
@@ -175,7 +191,7 @@ function moneyFormatIndia($num1)
     </div>
 </div>
 <!-- /////////////////////////////////////////////////////////////////// Settlement Chart Modal END ////////////////////////////////////////////////////////////////////// -->
-<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
+<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal Start ////////////////////////////////////////////////////////////////// -->
 <div class="modal fade bd-example-modal-lg" id="advance_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
         <div class="modal-content" style="background-color: white">
@@ -213,8 +229,8 @@ function moneyFormatIndia($num1)
         </div>
     </div>
 </div>
-<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal END ////////////////////////////////////////////////////////////////////// -->
-<!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
+<!-- /////////////////////////////////////////////////////////////////// Chit advance Chart Modal END ////////////////////////////////////////////////////////////////// -->
+<!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal Start /////////////////////////////////////////////////////////////// -->
 <div class="modal fade bd-example-modal-lg" id="collection_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
         <div class="modal-content" style="background-color: white">
@@ -251,4 +267,65 @@ function moneyFormatIndia($num1)
             </div>
         </div>
     </div>
-    <!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal END ////////////////////////////////////////////////////////////////////// -->
+</div>
+    <!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal END ////////////////////////////////////////////////////////////// -->
+
+<!-- /////////////////////////////////////////////////////////////////// Ledger View Modal Start /////////////////////////////////////////////////////////////// -->
+<!-- <div class="modal fade bd-example-modal-lg" id="ledger_view_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
+        <div class="modal-content" style="background-color: white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dueChartTitle">Ledger View Chart </h5>
+                <button type="button" class="close" tabindex="1" onclick="closeChartsModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid" id="ledger_view_table_div" style="overflow: scroll;">
+                    
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="closeChartsModal()" tabindex="4">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> -->
+    <!-- /////////////////////////////////////////////////////////////////// Ledger View Modal END ////////////////////////////////////////////////////////////// -->
+
+    <!-- /////////////////////////////////////////////////////////////////// Due Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
+<div class="modal fade bd-example-modal-lg" id="due_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
+        <div class="modal-content" style="background-color: white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dueChartTitle">Due Chart - <span id="due_cus_info"> </span> </h5>
+                <button type="button" class="close" data-dismiss="modal" tabindex="1" aria-label="Close" onclick="closeDueChartModal()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid" id="due_chart_table_div">
+                    <table id="due_chart_table" class="table custom-table">
+                        <thead>
+                            <th>Auction Month</th>
+                            <th>Date</th>
+                            <th>Chit Amount</th>
+                            <th>Payable</th>
+                            <th>Collection Date</th>
+                            <th>Collection Amount</th>
+                            <th>Pending</th>
+                            <th>Action</th>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal" onclick="closeDueChartModal()" tabindex="4">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /////////////////////////////////////////////////////////////////// Due Chart Modal END ////////////////////////////////////////////////////////////////////// -->
