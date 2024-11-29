@@ -209,12 +209,7 @@ class auctionUploadClass
 
     function AuctionTable($pdo, $data)
     {
-        // Fetch chit_value, total_members, and commission from group_creation table
-        $check_query = "SELECT id FROM auction_details WHERE group_id = '" . $data['grp_id'] . "' AND date = '" . $data['date'] . "'";
-        $resultCheck = $pdo->query($check_query);
 
-        // If the record does not exist, insert it
-        if ($resultCheck->rowCount() == 0) {
             // Fetch relevant group details
             $smt2 = $pdo->query("SELECT chit_value, total_members, commission, end_month FROM group_creation WHERE grp_id = '" . strip_tags($data['grp_id']) . "'");
             $groupData = $smt2->fetch(PDO::FETCH_ASSOC);
@@ -242,6 +237,13 @@ class auctionUploadClass
                 // Get the user ID from the session
                 $user_id = $_SESSION['user_id'];
 
+                // Fetch chit_value, total_members, and commission from group_creation table
+                $check_query = "SELECT id FROM auction_details WHERE group_id = '" . $data['grp_id'] . "' AND date = '" . $data['date'] . "'";
+                $resultCheck = $pdo->query($check_query);
+
+                // If the record does not exist, insert it
+                if ($resultCheck->rowCount() == 0) {
+
                 // Prepare and execute the insert query
                 $insert_query1 = "INSERT INTO auction_details (group_id, date, auction_month, low_value, high_value, status, cus_name, auction_value, chit_amount, insert_login_id, created_on) 
                                   VALUES (
@@ -255,9 +257,11 @@ class auctionUploadClass
                                       '" . $auction_value . "',
                                       '" . $chit_amount . "',
                                       '" . $user_id . "',
-                                      NOW()
+                                      '" . strip_tags($data['date']) . "'
                                   )";
-
+                }else{
+                  $insert_query1 = "UPDATE `auction_details` SET `cus_name` = '$customer_id',`auction_value` = '$auction_value',`chit_amount` = '$chit_amount',`update_login_id` = '$user_id',`updated_on` = '" . strip_tags($data['date']) . "' WHERE group_id = '" . strip_tags($data['grp_id']) . "' AND date = '" . strip_tags($data['date']) . "' "; 
+                }
                 // Execute the insert query
                 $pdo->query($insert_query1);
 
@@ -289,7 +293,6 @@ class auctionUploadClass
                 // Handle case where group data is not found
                 echo "Error: Group not found or invalid group ID.";
             }
-        }
     }
 
 

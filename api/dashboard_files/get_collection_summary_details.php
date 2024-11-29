@@ -66,7 +66,10 @@ GROUP BY
          FROM collection c
          LEFT JOIN auction_details ad ON c.auction_id = ad.id
          WHERE c.group_id = gc.grp_id
-           AND c.auction_month = ad.auction_month AND ad.status IN (2, 3)
+           AND (YEAR(ad.date) < YEAR(CURRENT_DATE) 
+            OR (YEAR(ad.date) = YEAR(CURRENT_DATE) 
+                AND MONTH(ad.date) < MONTH(CURRENT_DATE)))
+            AND ad.status IN (2, 3)
         )
     ) AS pending_amount
 FROM 
