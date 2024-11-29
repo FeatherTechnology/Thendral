@@ -9,14 +9,18 @@ if (isset($group_id) && !empty($group_id)) {
 
     // Query to fetch auction details for customers who participated in past auctions
     $taken_auction_qry = "
-        SELECT
-            ad.cus_name
-        FROM
-            auction_details ad
-        WHERE
-            group_id = '$group_id'
-            AND MONTH(ad.date) <= MONTH(CURDATE()) 
-            AND YEAR(ad.date) = YEAR(CURDATE())
+      SELECT
+  gs.cus_id
+FROM
+  auction_details ad
+             LEFT JOIN group_share gs ON
+    ad.cus_name = gs.cus_mapping_id
+WHERE
+  group_id = '$group_id' AND gs.settle_status ='Yes'
+  AND (
+    (MONTH(ad.date) <= MONTH(CURDATE()) AND YEAR(ad.date) = YEAR(CURDATE()))  
+    OR YEAR(ad.date) = YEAR(CURDATE()) - 1  
+  );
     ";
     $taken_customers = $pdo->query($taken_auction_qry)->fetchAll(PDO::FETCH_COLUMN);
 
@@ -46,7 +50,7 @@ if (isset($group_id) && !empty($group_id)) {
     // Main query to fetch customers along with their chit count and auction month
  
  $qry = "SELECT
-    cc.id AS customer_id,
+    cc.id,
     ad.group_id,
     cc.cus_id,
     CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
@@ -90,7 +94,7 @@ LEFT JOIN group_creation gc ON
 JOIN users us ON
     FIND_IN_SET(gc.branch, us.branch)
 WHERE
-    gc.grp_id = 'G-111'
+    gc.grp_id = '$group_id'
 GROUP BY
     cc.cus_id
 ORDER BY cc.cus_id";
@@ -98,7 +102,7 @@ ORDER BY cc.cus_id";
 
     // Filter customers based on their chit count, auction participation, and transactions in other_transaction
     foreach ($customers as $customer) {
-        $customer_id = $customer['cus_mapping_id'];
+        $customer_id = $customer['id'];
         $chit_count = $customer['chit_count'];
 
         // Count how many times this customer has taken part in auctions

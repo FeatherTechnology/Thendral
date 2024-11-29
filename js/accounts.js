@@ -626,13 +626,15 @@ function getCreditAuctionMonth(group_id, category_type, group_mem_id) {
     });
 }
 function settleAmount(group_id) {
-    $.post('api/accounts_files/accounts/getSettleAccounts.php', { group_id: group_id }, function (response) {
+    let cus_id = $('#group_mem').val();
+    $.post('api/accounts_files/accounts/getSettleAccounts.php', { group_id: group_id ,cus_id:cus_id }, function (response) {
         // Check if the response has any data
         if (response.length > 0) {
             let settle_amount = moneyFormatIndia(response[0].settlement_amount)
             $('#other_amnt').val(settle_amount);
         } else {
-            $('#other_amnt').val(''); // Clear the field if no data is returned
+            $('#other_amnt').val(0); // Clear the field if no data is returned
+            swalError('Warning','The auction for this month is not yet completed')
         }
     }, 'json').fail(function () {
         $('#other_amnt').val(''); // Clear the field if there's an error
