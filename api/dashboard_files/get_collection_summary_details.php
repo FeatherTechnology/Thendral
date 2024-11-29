@@ -49,7 +49,7 @@ if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
 $month_unpaid .= "
 GROUP BY 
     gc.grp_id";
-    
+
     $prev_pen_amount  = "
     SELECT  
     (
@@ -80,7 +80,7 @@ FROM
     } else {
         $prev_pen_amount .= " gc.insert_login_id = '$user_id' ";
     }
-   
+
 try {
     // Query for total paid
     $qry = $pdo->query($month_paid);
