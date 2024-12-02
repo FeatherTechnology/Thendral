@@ -537,6 +537,14 @@ function updateDeleteIcon() {
         // }
         var $inputContainer = $(this).closest('.input-container'); // Find the closest input container
         var $row = $(this).closest('tr'); // Find the row for the clicked delete icon
+        var cusId = $row.attr('data-cus-id');
+        var groupId = $('#group_id').val();
+        // Update the groupCustomerData array by removing the customer
+        if (groupCustomerData[groupId]) {
+            groupCustomerData[groupId] = groupCustomerData[groupId].filter(
+                (customer) => customer.cusId !== cusId
+            );
+        }
 
         // Remove the specific input container
         $inputContainer.remove();

@@ -103,7 +103,7 @@ $(document).ready(function () {
 
         $('#submit_collection').unbind('click').click(function (event) {
             event.preventDefault();
-
+            $(this).attr('disabled', true);
             let collectionDate = $('#collection_date').val();
             let collectionAmount = $('#collection_amount').val(); // Parse as float for numerical comparison
             let coll_mode = $('#coll_mode').val();
@@ -169,6 +169,8 @@ $(document).ready(function () {
                         bank_name: bank_name,
                     },
                     success: function (response) {
+                        $('#submit_collection').attr('disabled', false);
+
                         response = JSON.parse(response);
                         if (response.result == 1) {
                             swalSuccess('Success', "Collected Successfully");
@@ -187,6 +189,8 @@ $(document).ready(function () {
                         }
                     },
                 });
+            }else{
+                $('#submit_collection').attr('disabled', false);
             }
             
         });
