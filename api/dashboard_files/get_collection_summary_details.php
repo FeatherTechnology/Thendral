@@ -2,6 +2,7 @@
 require "../../ajaxconfig.php";
 @session_start();
 $user_id = $_SESSION['user_id'];
+$current_date = date('Y-m-d');
 
 // Use a default value for $branchId if it's not set
 $branchId = isset($_POST['branchId']) ? $_POST['branchId'] : null;
@@ -12,8 +13,8 @@ $month_paid = "
 SELECT COALESCE(SUM(c.collection_amount), 0) AS month_paid 
 FROM collection c 
 JOIN group_creation gc ON c.group_id = gc.grp_id 
-WHERE MONTH(c.collection_date) = MONTH(CURDATE()) 
-AND YEAR(c.collection_date) = YEAR(CURDATE()) 
+WHERE MONTH(c.collection_date) = MONTH('$current_date') 
+AND YEAR(c.collection_date) = YEAR('$current_date') 
 ";
 
 // Add conditions based on branchId
@@ -27,7 +28,7 @@ $month_paid .= "GROUP BY gc.grp_id";
 // Initialize the SQL for unpaid amount calculation
 $month_unpaid = "
 SELECT
-    ((ad.chit_amount * gc.total_members) - COALESCE(SUM(LEAST(c.collection_amount, ad.chit_amount)), 0)) AS unpaid_amount
+    ((ad.chit_amount * gc.total_members) - COALESCE(LEAST(SUM(c.collection_amount), SUM(ad.chit_amount)), 0)) AS unpaid_amount
 FROM
     group_creation gc
     JOIN auction_details ad ON
@@ -35,8 +36,8 @@ FROM
  LEFT JOIN collection c ON
     ad.id = c.auction_id 
 WHERE
-  MONTH(ad.date) = MONTH(CURDATE()) 
-    AND YEAR(ad.date) = YEAR(CURDATE()) AND ad.status IN (2, 3) AND
+  MONTH(ad.date) = MONTH('$current_date') 
+    AND YEAR(ad.date) = YEAR('$current_date') AND ad.status IN (2, 3) AND
 ";
 
 // Add conditions based on branchId for unpaid amount
@@ -49,6 +50,7 @@ if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
 $month_unpaid .= "
 GROUP BY 
     gc.grp_id";
+echo $month_unpaid;
 
     $prev_pen_amount  = "
     SELECT  
@@ -57,18 +59,18 @@ GROUP BY
          FROM auction_details ad
          JOIN group_creation gc_sub ON ad.group_id = gc_sub.grp_id
          WHERE ad.group_id = gc.grp_id
-           AND (YEAR(ad.date) < YEAR(CURRENT_DATE) 
-            OR (YEAR(ad.date) = YEAR(CURRENT_DATE) 
-                AND MONTH(ad.date) < MONTH(CURRENT_DATE)))
+           AND (YEAR(ad.date) < YEAR('$current_date') 
+            OR (YEAR(ad.date) = YEAR('$current_date') 
+                AND MONTH(ad.date) < MONTH('$current_date')))
            AND ad.status IN (2, 3)
         ) - 
         (SELECT COALESCE(SUM(c.collection_amount), 0)
          FROM collection c
          LEFT JOIN auction_details ad ON c.auction_id = ad.id
          WHERE c.group_id = gc.grp_id
-           AND (YEAR(ad.date) < YEAR(CURRENT_DATE) 
-            OR (YEAR(ad.date) = YEAR(CURRENT_DATE) 
-                AND MONTH(ad.date) < MONTH(CURRENT_DATE)))
+           AND (YEAR(ad.date) < YEAR('$current_date') 
+            OR (YEAR(ad.date) = YEAR('$current_date') 
+                AND MONTH(ad.date) < MONTH('$current_date')))
             AND ad.status IN (2, 3)
         )
     ) AS pending_amount

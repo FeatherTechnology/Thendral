@@ -69,7 +69,6 @@ $(document).on('click', '.ledger_view_chart', function (event) {
     $('#back_btn').show();
     $('.group_table_content').hide();
     $('#curr_closed').hide();
-    // $('#ledger_view_chart_model').modal('show');
     let groupId = $(this).data('value');
     getLedgerViewChart(groupId);
 });
@@ -94,9 +93,6 @@ $(document).on('click', '.collectionActionBtn', function (event) {
         event.preventDefault();
         $('#due_chart_model').modal('show');
         const dataValue = JSON.parse($(this).attr('data-value'));
-        let groupId = dataValue.group_id;
-        let cusMappingID = dataValue.cus_mapping_id;
-        let share_id = dataValue.share_id;
         getDueChart(dataValue);
 
         setTimeout(() => {
@@ -203,7 +199,6 @@ function closeChartsModal() {
     $('#auction_chart_model').modal('hide');
     $('#settlement_chart_model').modal('hide');
     $('#collection_chart_model').modal('hide');
-    $('#ledger_view_chart_model').modal('hide');
 }
 function closeDueChartModal(){
     $('#due_chart_model').modal('hide');

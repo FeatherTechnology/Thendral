@@ -231,29 +231,6 @@ function moneyFormatIndia($num1)
 </div>
     <!-- /////////////////////////////////////////////////////////////////// Collection Chart Modal END ////////////////////////////////////////////////////////////// -->
 
-<!-- /////////////////////////////////////////////////////////////////// Ledger View Modal Start /////////////////////////////////////////////////////////////// -->
-<!-- <div class="modal fade bd-example-modal-lg" id="ledger_view_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">
-        <div class="modal-content" style="background-color: white">
-            <div class="modal-header">
-                <h5 class="modal-title" id="dueChartTitle">Ledger View Chart </h5>
-                <button type="button" class="close" tabindex="1" onclick="closeChartsModal()">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="container-fluid" id="ledger_view_table_div" style="overflow: scroll;">
-                    
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="closeChartsModal()" tabindex="4">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
-    <!-- /////////////////////////////////////////////////////////////////// Ledger View Modal END ////////////////////////////////////////////////////////////// -->
-
     <!-- /////////////////////////////////////////////////////////////////// Due Chart Modal Start ////////////////////////////////////////////////////////////////////// -->
 <div class="modal fade bd-example-modal-lg" id="due_chart_model" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg " role="document" style="max-width: 70% !important">

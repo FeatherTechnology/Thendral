@@ -108,7 +108,7 @@ $customer_details = $qry->fetchAll(PDO::FETCH_ASSOC);
 
                     <?php 
                     foreach($auction_details AS $row){
-                        $qry = $pdo->query("SELECT SUM(collection_amount) AS coll_amnt FROM collection WHERE group_id = '$group_id' AND share_id = '". $cus_info['share_id']. "' AND MONTH(collection_date) = MONTH('". $row['date'] ."') AND YEAR(collection_date) = YEAR('". $row['date'] ."') ");
+                        $qry = $pdo->query("SELECT SUM(collection_amount) AS coll_amnt FROM collection WHERE group_id = '$group_id' AND share_id = '". $cus_info['share_id']. "' AND auction_month = '". $row['auction_month'] ."' ");
                         $row = $qry->fetch();
 
                     ?>
