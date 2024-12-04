@@ -1,5 +1,6 @@
 <?php
 require "../../../ajaxconfig.php";
+$current_date = date('Y-m-d');
 @session_start();
 $user_id = $_SESSION['user_id'];
 
@@ -24,16 +25,13 @@ $qry = $pdo->query("
     LEFT JOIN bank_creation e ON a.bank_id = e.id 
     LEFT JOIN customer_creation cc ON a.group_mem = cc.id 
     WHERE a.insert_login_id = '$user_id' 
-    AND DATE(a.created_on) = CURDATE() 
+    AND DATE(a.created_on) = '$current_date'
 ");
 if ($qry->rowCount() > 0) {
     while ($result = $qry->fetch()) {
-        // $result['coll_mode'] = $cash_type[$result['coll_mode']];
-        $result['bank_namecash'] = $result['bank_namecash'];
         $result['trans_cat'] = $trans_cat[$result['trans_cat']];
         $result['name'] = $result['transname'];
         $result['type'] = $crdr[$result['type']];
-        // $result['username'] = $result['username'];
         $result['amount'] = moneyFormatIndia($result['amount']);
         // Ensure no empty values in the unique string
         $id = !empty($result['id']) ? $result['id'] : '0';
