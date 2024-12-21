@@ -50,13 +50,15 @@ $(document).ready(function () {
         let auctionId = dataParts[2];
         let cusMappingID = dataParts[3]; // Extract cus_mapping_id from data attribute
         let cusId = dataParts[4];
+        let share_id = dataParts[5];
 
         $.ajax({
             url: 'api/collection_files/fetch_pay_details.php',
             type: 'POST',
             data: {
                 group_id: groupId,
-                cus_mapping_id: cusMappingID
+                cus_mapping_id: cusMappingID,
+                share_id:share_id
             },
             dataType: 'json',
             success: function (response) {
@@ -154,6 +156,7 @@ $(document).ready(function () {
                         cus_id: customerId,
                         auction_id: auctionId,
                         cus_mapping_id: cusMappingID, // Pass cus_mapping_id
+                        share_id: share_id, // Pass cus_mapping_id
                         auction_month: $('#auction_month').val(),
                         chit_value: chit_value,
                         chit_amount: chitAmount, // Use rounded chit amount
@@ -178,7 +181,6 @@ $(document).ready(function () {
                             // Use the coll_id from the response to print the collection
                             setTimeout(function () {
                                 printCollection(response.coll_id); // Pass the collection ID here
-                                console.log(coll_id);
                             }, 1000);
                         } else {
                             swalError('Warning', 'Failed to save the collection details');
@@ -323,7 +325,8 @@ $(document).ready(function () {
         let dataParts = dataValue.split('_');
         let groupId = dataParts[0];
         let cusMappingID = dataParts[1];
-        getCommitmentInfoTable(cusMappingID, groupId);
+        let share_id = dataParts[2];
+        getCommitmentInfoTable(cusMappingID,groupId,share_id);
         commitDate();
         // Unbind any existing click event to prevent multiple submissions
         $('#add_commit').off('click').on('click', function (event) {
@@ -352,6 +355,7 @@ $(document).ready(function () {
                 $.post('api/collection_files/submit_commitement.php', {
                     group_id: groupId,
                     cus_mapping_id: cusMappingID, // Pass cus_mapping_id
+                    share_id:share_id, // Pass cus_mapping_id
                     label: label,
                     remark: remark,
                     commitment_date:commitment_date
@@ -361,7 +365,7 @@ $(document).ready(function () {
                         $('#label').val('');
                         $('#remark').val('');
                         $('#commitment_date').val('');
-                        getCommitmentInfoTable(cusMappingID, groupId);
+                        getCommitmentInfoTable(cusMappingID, groupId,share_id);
                     } else {
                         swalError('Warning', 'Commitment Not Added!');
                     }
@@ -372,7 +376,7 @@ $(document).ready(function () {
         $(document).on('click', '.commitDeleteBtn', function () {
             var id = $(this).attr('value');
             swalConfirm('Delete', 'Do you want to Delete the Commitment Details?', function () {
-                getCommitDelete(id, cusMappingID, groupId); // Pass cusMappingID to delete function
+                getCommitDelete(id, cusMappingID, groupId,share_id); // Pass cusMappingID to delete function
             });
         });
     });

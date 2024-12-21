@@ -3,7 +3,6 @@ require '../../ajaxconfig.php';
 
 $auction_id = $_POST['auction_id'];
 $cus_id = $_POST['cus_id'];
-
 $qry = $pdo->query("
     SELECT si.balance_amount,si.settle_amount
     FROM settlement_info si
@@ -16,7 +15,7 @@ $qry = $pdo->query("
 if ($qry->rowCount() > 0) {
     $result = $qry->fetch(PDO::FETCH_ASSOC);
 } else {
-    $result = ['balance_amount' => 0]; // Default to 0 if no records found
+    $result = ['balance_amount' => null]; // Default to 0 if no records found
 }
 
 $pdo = null; // Close connection

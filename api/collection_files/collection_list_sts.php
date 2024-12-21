@@ -11,64 +11,67 @@ class CollectStsClass
         $this->pdo = $pdo;
     }
 
-    public function updateCollectStatus($cus_id,$id)
-{
-    $currentMonth = date('m');
-    $currentYear = date('Y');
+    public function updateCollectStatus($cus_id, $id)
+    {
+        $currentMonth = date('m');
+        $currentYear = date('Y');
 
-    // Fetch all groups for the customer
-   $qry1 = "SELECT DISTINCT ad.group_id
+        // Fetch all groups for the customer
+        $qry1 = "SELECT DISTINCT ad.group_id
              FROM auction_details ad
-             LEFT JOIN group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-             LEFT JOIN customer_creation cc ON gcm.cus_id = cc.id
+         LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
              WHERE cc.cus_id = '$cus_id'
                AND ad.status IN (2, 3) AND YEAR(ad.date) = '$currentYear'
                            AND MONTH(ad.date) = '$currentMonth' ";
 
-    $statement = $this->pdo->query($qry1);
-    
-    $groups = $statement->fetchAll(PDO::FETCH_ASSOC);
+        $statement = $this->pdo->query($qry1);
 
-    $overallStatus = 'Payable'; 
+        $groups = $statement->fetchAll(PDO::FETCH_ASSOC);
 
-    foreach ($groups as $group) {
-        $group_id = $group['group_id'];
+        $overallStatus = 'Payable';
 
-        // Fetch count of customer mappings for this group
-     $qryCount = "SELECT id as cc_id
-                     FROM group_cus_mapping
+        foreach ($groups as $group) {
+            $group_id = $group['group_id'];
+
+            // Fetch count of customer mappings for this group
+            $qryCount = "SELECT id as cc_id
+                     FROM group_share
                      WHERE grp_creation_id = '$group_id'
                        AND cus_id = '$id'";
 
-        $stmtCount = $this->pdo->query($qryCount);
-        
-        $mappings = $stmtCount->fetchAll(PDO::FETCH_ASSOC);
+            $stmtCount = $this->pdo->query($qryCount);
 
-        // Check payment status for each mapping
-        foreach ($mappings as $mapping) {
-            $cus_mapping_id = $mapping['cc_id'];
+            $mappings = $stmtCount->fetchAll(PDO::FETCH_ASSOC);
 
-       $qry2 = "SELECT gcm.coll_status
-                     FROM group_cus_mapping gcm
-                     WHERE gcm.id =  '$cus_mapping_id'
-                       AND gcm.grp_creation_id='$group_id'";
+            // Check payment status for each mapping
+            foreach ($mappings as $mapping) {
+                $map_id = $mapping['cc_id'];
 
-            $stmt2 = $this->pdo->query($qry2);
-           
-            $result = $stmt2->fetch(PDO::FETCH_ASSOC);
-        
+                $qry2 = "SELECT gs.coll_status
+                     FROM group_share gs
+                     WHERE gs.id =  '$map_id'
+                       AND gs.grp_creation_id='$group_id'";
 
-            $coll_status = $result['coll_status'] ?? 'Payable'; // Default to 'Payable' if no status is found
+                $stmt2 = $this->pdo->query($qry2);
 
-            // If any mapping is 'Payable', set overall status to 'Payable'
-            if ($coll_status === 'Payable') {
-                $overallStatus = 'Payable';
-                break 2; // Exit both loops early as we found a 'Payable' status
+                $result = $stmt2->fetch(PDO::FETCH_ASSOC);
+
+
+                $coll_status = $result['coll_status'] ?? 'Payable'; // Default to 'Payable' if no status is found
+
+                // If any mapping is 'Payable', set overall status to 'Payable'
+                if ($coll_status === 'Payable') {
+                    $overallStatus = 'Payable';
+                    break 2; // Exit both loops early as we found a 'Payable' status
+                }
             }
         }
+
+        return $overallStatus;
     }
-
-    return $overallStatus;
 }
-
-} 

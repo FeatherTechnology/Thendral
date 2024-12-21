@@ -37,6 +37,7 @@
         <input type="hidden" id="hand_cash">
         <input type="hidden" id="bank_cash">
         <input type="hidden" id="auction_date">
+        <input type="hidden" id="set_amount">
         <!-- Row start -->
         <div class="row gutters">
             <div class="col-12">

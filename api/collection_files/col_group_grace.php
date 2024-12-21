@@ -11,7 +11,7 @@ class GraceperiodClass
         $this->pdo = $pdo;
     }
 
-    public function updateGraceStatus($cus_mapping_id, $group_id)
+    public function updateGraceStatus($share_id, $group_id)
     {
         $currentMonth = date('m');
         $currentYear = date('Y');
@@ -23,7 +23,7 @@ class GraceperiodClass
     COALESCE(
         (SELECT SUM(c.collection_amount)
          FROM collection c
-         WHERE c.cus_mapping_id = '$cus_mapping_id' 
+         WHERE c.share_id = '$share_id' 
            AND c.group_id = '$group_id'
            AND (c.collection_date <= NOW() OR c.collection_date IS NULL)
         ), 0
@@ -31,7 +31,7 @@ class GraceperiodClass
     COALESCE(SUM(ad.chit_amount), 0) - COALESCE(
         (SELECT SUM(c.collection_amount)
          FROM collection c
-         WHERE c.cus_mapping_id = '$cus_mapping_id' 
+         WHERE c.share_id = '$share_id' 
            AND c.group_id = '$group_id'
            AND (c.collection_date <= NOW() OR c.collection_date IS NULL)
         ), 0

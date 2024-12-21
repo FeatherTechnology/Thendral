@@ -3,6 +3,7 @@ require '../../ajaxconfig.php';
 
 $group_id = $_POST['group_id'];
 $cusMappingID = $_POST['cus_mapping_id'];
+$share_id = $_POST['share_id'];
 $currentMonth = date('m'); // Get the current month
 $currentYear = date('Y'); // Get the current year
 
@@ -16,31 +17,46 @@ $auction_month_current = ($currentYear * 12 + $currentMonth) - (substr($start_mo
 
 // Fetch current auction details including collections
 $current_auction_query = "SELECT
-        gc.grp_name,
-        ad.auction_month,
-        ad.date,
-        gc.chit_value,
-        ad.chit_amount,
-        COALESCE(SUM(cl.collection_amount), 0) AS collection_amount
-    FROM
-        auction_details ad
-    LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
-    LEFT JOIN collection cl ON ad.group_id = cl.group_id AND ad.auction_month = cl.auction_month AND cl.cus_mapping_id = '$cusMappingID'
-    WHERE
-        ad.group_id = '$group_id' AND ad.auction_month = $auction_month_current
-    GROUP BY ad.group_id, ad.auction_month";
+    gc.grp_name,
+    ad.auction_month,
+    ad.date,
+    gc.chit_value,
+    ad.chit_amount,
+    gs.share_percent,
+    (ad.chit_amount * gs.share_percent / 100) AS chit_share,
+    COALESCE(SUM(cl.collection_amount),
+    0) AS collection_amount
+FROM
+    auction_details ad
+LEFT JOIN group_creation gc ON
+    ad.group_id = gc.grp_id
+LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+       LEFT JOIN collection cl ON ad.group_id = cl.group_id AND ad.auction_month = cl.auction_month AND cl.cus_mapping_id = '$cusMappingID' AND cl.share_id ='$share_id'
+WHERE
+ad.group_id = '$group_id' AND ad.auction_month = $auction_month_current AND gs.id ='$share_id'
+GROUP BY
+    ad.group_id,
+    ad.auction_month";
 
 // Fetch previous auction details to calculate pending amount
 $previous_auction_query = "SELECT
     ad.auction_month,
     ad.chit_amount,
+     (ad.chit_amount * gs.share_percent / 100) AS chit_share,
     COALESCE(SUM(cl.collection_amount), 0) AS collection_amount
 FROM
     auction_details ad
+    LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
 LEFT JOIN
     collection cl ON ad.group_id = cl.group_id
     AND ad.auction_month = cl.auction_month
-    AND cl.cus_mapping_id = '$cusMappingID'
+    AND cl.cus_mapping_id = '$cusMappingID'AND cl.share_id ='$share_id'
 WHERE
     ad.group_id = '$group_id'
     AND ad.auction_month IN (
@@ -49,7 +65,7 @@ WHERE
         WHERE group_id = '$group_id'
         AND auction_month < $auction_month_current
         ORDER BY auction_month DESC
-    )
+    )AND gs.id ='$share_id'
 GROUP BY
     ad.auction_month
 ORDER BY
@@ -60,20 +76,25 @@ $collections_query = '';
 if ($auction_month_current != 1) {
     $collections_query = "SELECT 
         ad.chit_amount,
+        (ad.chit_amount * gs.share_percent / 100) AS chit_share,
         c.payable,
         c.collection_date, 
         c.collection_amount, 
         c.id as coll_id
     FROM 
         auction_details ad
+         LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
     LEFT JOIN 
         collection c ON ad.group_id = c.group_id 
                      AND c.cus_mapping_id = '$cusMappingID'
-                     AND ad.auction_month = c.auction_month
+                     AND ad.auction_month = c.auction_month AND c.share_id ='$share_id'
     WHERE 
         c.group_id = '$group_id'
         AND c.cus_mapping_id = '$cusMappingID'
-        AND c.auction_month = $auction_month_current
+        AND c.auction_month = $auction_month_current AND c.share_id ='$share_id'
     ORDER BY c.id";
 }
 
@@ -90,7 +111,7 @@ if ($current_statement->rowCount() > 0) {
     // Loop through the previous auction data to calculate pending amount
     while ($previous_row = $previous_statement->fetch(PDO::FETCH_ASSOC)) {
         $previous_collection_amount = (int)$previous_row['collection_amount'];
-        $previous_chit_amount = (int)$previous_row['chit_amount'];
+        $previous_chit_amount = (int)$previous_row['chit_share'];
         $pending += max(0, $previous_chit_amount - $previous_collection_amount);
     }
 
@@ -98,7 +119,7 @@ if ($current_statement->rowCount() > 0) {
     $total_collected = (int)$current_row['collection_amount'];
 
     // Initial payable amount for the current month is chit_amount + pending amount (if any)
-    $initial_payable_amnt = (int)$current_row['chit_amount'] + $pending;
+    $initial_payable_amnt = (int)$current_row['chit_share'] + $pending;
 
     // Calculate the remaining balance for the current auction month
     $remaining_balance = $initial_payable_amnt - $total_collected;
@@ -122,7 +143,7 @@ if ($current_statement->rowCount() > 0) {
         'auction_month' => $current_row['auction_month'],
         'date' => date('d-m-Y', strtotime($current_row['date'])),
         'chit_value' => $current_row['chit_value'],
-        'chit_amount' => (int)$current_row['chit_amount'],
+        'chit_amount' => (int)$current_row['chit_share'],
         'pending_amt' => $pending,
         'payable_amnt' => $payable_amnt,
         'payableAmount' => $initial_payable_amnt 

@@ -46,8 +46,12 @@ $query = "SELECT
     ad.auction_month
 FROM
     auction_details ad
-LEFT JOIN group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-LEFT JOIN customer_creation cc ON gcm.cus_id = cc.id
+LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
 LEFT JOIN place pl ON cc.place = pl.id
 LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
     JOIN 
@@ -55,7 +59,7 @@ LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
     JOIN 
         users us ON FIND_IN_SET(gc.branch, us.branch) > 0
 WHERE
-    gc.status BETWEEN 3 AND 4 AND gcm.coll_status !='Paid'
+    gc.status BETWEEN 3 AND 4 AND gs.coll_status !='Paid'
     AND YEAR(ad.date) = '$currentYear'
     AND MONTH(ad.date) = '$currentMonth'  AND us.id = '$user_id'";
 // Add search condition

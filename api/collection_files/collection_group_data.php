@@ -32,14 +32,19 @@ $query = "SELECT
     ad.auction_month,
     ad.date AS due_date,
     gcm.id AS cus_mapping_id,
+    gs.id AS share_id,
     cc.cus_id,
     gc.grace_period,
-    gcm.settle_status -- Fetch settle_status directly for all months
+    gs.settle_status -- Fetch settle_status directly for all months
 FROM
     auction_details ad
 LEFT JOIN group_creation gc ON ad.group_id = gc.grp_id
-LEFT JOIN group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-LEFT JOIN customer_creation cc ON gcm.cus_id = cc.id
+LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+  LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
     JOIN 
         branch_creation bc ON gc.branch = bc.id
     JOIN 
@@ -66,15 +71,15 @@ $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 $number_filter_row = $statement->rowCount(); // Get the number of rows returned by the main query
 
 // Store settle statuses for all mappings in a separate query
-$settleStatusQuery = "SELECT
-    gcm.id AS cus_mapping_id,
-    gcm.settle_status
+ $settleStatusQuery = "SELECT
+    gs.id AS share_id,
+    gs.settle_status
 FROM
-    group_cus_mapping gcm
+    group_share gs
 JOIN
-    auction_details ad ON gcm.grp_creation_id = ad.group_id
+    auction_details ad ON gs.grp_creation_id = ad.group_id
 WHERE
-    gcm.cus_id = (SELECT id FROM customer_creation WHERE id = '$id') AND ad.status='3'"; // Assuming you're filtering by the same customer id
+    gs.cus_id = (SELECT id FROM customer_creation WHERE id = '$id')"; // Assuming you're filtering by the same customer id
 
 $settleStatusStatement = $pdo->prepare($settleStatusQuery);
 $settleStatusStatement->execute();
@@ -95,13 +100,13 @@ foreach ($result as $row) {
     $sub_array[] = moneyFormatIndia($roundedAmount);
 
     // Get settle_status from the previously fetched settleStatuses array
-    $settle_status = $settleStatuses[$row['cus_mapping_id']] ?? ''; // Default to 'N/A' if not found
+    $settle_status = $settleStatuses[$row['share_id']] ?? ''; // Default to 'N/A' if not found
     $sub_array[] = $settle_status;
 
     // Update status logic
-    $status = $collectionSts->updateCollectionStatus($row['cus_mapping_id'], $row['grp_id']);
+    $status = $collectionSts->updateCollectionStatus($row['share_id'], $row['grp_id']);
     $sub_array[] = $status;
-    $grace_status = $graceperiodSts->updateGraceStatus($row['cus_mapping_id'],$row['grp_id']);
+    $grace_status = $graceperiodSts->updateGraceStatus($row['share_id'],$row['grp_id']);
 
     // Grace period calculation
     $auction_month = $row['auction_month'] ?? 0;
@@ -143,8 +148,8 @@ foreach ($result as $row) {
     $sub_array[] = "<div class='dropdown'>
                         <button class='btn btn-outline-secondary'><i class='fa'>&#xf107;</i></button>
                         <div class='dropdown-content'>
-                            <a href='#' class='add_pay' data-value='{$row['grp_id']}_{$row['cus_id']}_{$row['auction_id']}_{$row['cus_mapping_id']}_{$row['customer_id']}'> Pay</a>
-                            <a href='#' class='add_commitment' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}'>Commitment</a>
+                            <a href='#' class='add_pay' data-value='{$row['grp_id']}_{$row['cus_id']}_{$row['auction_id']}_{$row['cus_mapping_id']}_{$row['customer_id']}_{$row['share_id']}'> Pay</a>
+                            <a href='#' class='add_commitment' data-value='{$row['grp_id']}_{$row['cus_mapping_id']}_{$row['share_id']}'>Commitment</a>
                         </div>
                     </div>";
 

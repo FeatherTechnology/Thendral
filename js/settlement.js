@@ -229,10 +229,11 @@ $(document).ready(function () {
             editCustomerCreation(customerId)
             getGuarantorRelationship(customerId)
             fetchSettlementData(customerId)
-            checkBalance()
+            //checkBalance()
             setTimeout(function () {
                 getDocInfoTable();
                 getCashAck();
+                fetchSettlementData(customerId)
                 //  getDenomImage();
             }, 1000);
         } else {
@@ -378,6 +379,7 @@ $(document).ready(function () {
         settleInfo.append('cus_id', $('#cus_id').val());
         settleInfo.append('settle_date', $('#settle_date').val());
         settleInfo.append('settle_amount', $('#settle_amount').val().replace(/,/g, ''));
+        settleInfo.append('set_amount', $('#set_amount').val());
         settleInfo.append('settle_balance', parseFloat($('#settle_balance').val().replace(/,/g, '')) || 0);
         settleInfo.append('payment_type', $('#payment_type').val());
         settleInfo.append('settle_type', $('#settle_type').val());
@@ -729,7 +731,9 @@ function fetchSettlementData(id) {
         if (response.length > 0) {
             // Assuming `response` is an array and we need the first object's `settlement_amount`
             let settlement_amount = response[0].settlement_amount;
+            let set_amount = response[0].settle_amount;
             $('#settle_amount').val(moneyFormatIndia(settlement_amount));
+            $('#set_amount').val(set_amount);
             checkBalance()
 
         } else {
@@ -992,7 +996,7 @@ function checkBalance() {
             if (response && response.balance_amount !== undefined) {
                 // Check if balance amount is zero
                 let balanceAmount = response.balance_amount;
-                if (balanceAmount === '0' || balanceAmount === 0) {
+                if (balanceAmount === 'null' || balanceAmount === null) {
                     // Set balance to settlement amount if balance is zero
                     $('#settle_balance').val($('#settle_amount').val());
                 } else {
@@ -1284,15 +1288,41 @@ function getCustomerName(id) {
     $.post('api/settlement_files/get_settle_customer.php', { id: id }, function (response) {
         let appendCusOption = '';
         appendCusOption += "<option value=''>Select Customer Name</option>";
+        let isSharePercent100 = false; // Flag for share percent check
+        let selectedCusName = ''; // Store customer name if share percent is 100
+        let selectedCusId = ''; // Store customer ID if share percent is 100
+
         $.each(response, function (index, val) {
-            let selected = '';
             let editGId = $('#custom_name_edit').val();
-            if (val.id == editGId) {
-                selected = 'selected';
+            if (val.share_percent == 100) {
+                isSharePercent100 = true;
+                selectedCusName = val.cus_name;
+                selectedCusId = val.id;
+            } else {
+                let selected = (val.id == editGId) ? 'selected' : '';
+                appendCusOption += "<option value='" + val.id + "' " + selected + ">" + val.cus_name + "</option>";
             }
-            appendCusOption += "<option value='" + val.id + "' " + selected + ">" + val.cus_name + "</option>";
         });
 
-        $('#customer_name').empty().append(appendCusOption);
+        // If share percent is 100, disable the dropdown and show the customer name
+        if (isSharePercent100) {
+            $('#customer_name').attr('disabled', true).html("<option value=''>" + selectedCusName + "</option>");
+
+            // Manually trigger the onchange functions with the selected customer ID
+            if (selectedCusId) {
+                editCustomerCreation(selectedCusId);
+                getGuarantorRelationship(selectedCusId);
+                fetchSettlementData(selectedCusId);
+
+                setTimeout(function () {
+                    getDocInfoTable();
+                    getCashAck();
+                    fetchSettlementData(selectedCusId);
+                }, 1000);
+            }
+        } else {
+            $('#customer_name').attr('disabled', false).empty().append(appendCusOption);
+        }
     }, 'json');
 }
+

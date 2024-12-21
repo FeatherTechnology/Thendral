@@ -21,8 +21,12 @@ class GraceperiodClass
         // Step 1: Fetch all the group IDs for the given customer
         $qry = "SELECT DISTINCT ad.group_id
                 FROM auction_details ad
-                LEFT JOIN group_cus_mapping gcm ON ad.group_id = gcm.grp_creation_id
-                LEFT JOIN customer_creation cc ON gcm.cus_id = cc.id
+                LEFT JOIN group_share gs ON
+    ad.group_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm ON
+    gs.cus_mapping_id = gcm.id
+LEFT JOIN customer_creation cc ON
+    gs.cus_id = cc.id
                 WHERE cc.cus_id = '$cus_id'
                   AND ad.status IN (2, 3)";
         $statement = $this->pdo->query($qry);
@@ -34,8 +38,8 @@ class GraceperiodClass
         foreach ($groups as $group) {
             $group_id = $group['group_id'];
 
-            $qryCount = "SELECT id as cus_mapping_id
-                         FROM group_cus_mapping
+            $qryCount = "SELECT id as map_id
+                         FROM group_share
                          WHERE grp_creation_id = '$group_id'
                            AND cus_id = '$id' AND coll_status='Payable'"; // Fetch all instances of the customer in the group
 
@@ -46,14 +50,14 @@ class GraceperiodClass
             if (count($mappings) > 0) {
                 // Check payment status for each mapping
                 foreach ($mappings as $mapping) {
-                    $cus_mapping_id = $mapping['cus_mapping_id'];
+                    $mapping_id = $mapping['map_id'];
 
                     // Query to fetch unpaid amounts (chit_amount - collection_amount)
                     $qry1 = "SELECT 
                                 COALESCE(SUM(ad.chit_amount), 0) - COALESCE(
                                     (SELECT SUM(c.collection_amount)
                                      FROM collection c
-                                     WHERE c.cus_mapping_id = '$cus_mapping_id' 
+                                     WHERE c.share_id = '$mapping_id' 
                                        AND c.group_id = '$group_id'
                                        AND (c.collection_date <= NOW() OR c.collection_date IS NULL)
                                     ), 0

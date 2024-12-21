@@ -11,17 +11,17 @@ class CollectionStsClass
         $this->pdo = $pdo;
     }
 
-    public function updateCollectionStatus($cus_mapping_id,$group_id)
+    public function updateCollectionStatus($share_id,$group_id)
     {
         $coll_status = 'Payable'; // Default status
         $currentMonth = date('m');
         $currentYear = date('Y');
 
         // Directly interpolating variables into the SQL query
-        $query = "SELECT gcm.coll_status
-                     FROM group_cus_mapping gcm 
-                     WHERE gcm.id = '$cus_mapping_id'
-                       AND gcm.grp_creation_id = '$group_id'";
+        $query = "SELECT gs.coll_status
+                     FROM group_share gs 
+                     WHERE gs.id = '$share_id'
+                       AND gs.grp_creation_id = '$group_id'";
         
         $result = $this->pdo->query($query);
         $row = $result->fetch(PDO::FETCH_ASSOC);
