@@ -408,10 +408,9 @@ $(document).ready(function () {
         }, 'json');
     });
 
-
-    $('#submit_other_transaction').click(function (event) {
+    $('#submit_other_transaction').click(async function (event) {
         event.preventDefault();
-
+    
         let otherTransData = {
             'coll_mode': $("input[name='othertransaction_cash_type']:checked").val(),
             'bank_id': $('#othertransaction_bank_name :selected').val(),
@@ -422,51 +421,42 @@ $(document).ready(function () {
             'cat_type': $('#cat_type :selected').val(), // Debit or Credit
             'other_ref_id': $('#other_ref_id').val(),
             'other_trans_id': $('#other_trans_id').val(),
-            'other_amnt': parseFloat($('#other_amnt').val().replace(/,/g, '')),
+            'other_amnt': parseFloat($('#other_amnt').val().replace(/,/g, '')) || '', // Handle NaN
             'auction_month': $('#auction_month').val(),
             'other_remark': $('#other_remark').val()
         };
+    
         let otherAmount = otherTransData.other_amnt;
         let collMode = otherTransData.coll_mode;
         let catType = otherTransData.cat_type; // 1 = Credit, 2 = Debit
         let transCategory = parseInt(otherTransData.trans_category);
-        // Fetch user's total credit and debit amounts
-        $.post('api/accounts_files/accounts/get_user_transactions.php', {
-            // 'coll_mode': otherTransData.coll_mode,
-            'other_trans_name': otherTransData.other_trans_name,
-            'group_id': otherTransData.group_id,
-            'group_mem': otherTransData.group_mem
-        }, function (response) {
-            let totalCredit = parseFloat(response.total_type_1_amount || 0); // Total Credit
-            let totalDebit = parseFloat(response.total_type_2_amount || 0);  // Total Debit
-
+    
+        try {
+            // Step 1: Fetch user's total credit and debit amounts
+            let userTransactionsResponse = await $.post('api/accounts_files/accounts/get_user_transactions.php', {
+                'other_trans_name': otherTransData.other_trans_name,
+                'group_id': otherTransData.group_id,
+                'group_mem': otherTransData.group_mem
+            });
+    
+            let totalCredit = parseFloat(userTransactionsResponse.total_type_1_amount || 0); // Total Credit
+            let totalDebit = parseFloat(userTransactionsResponse.total_type_2_amount || 0);  // Total Debit
+    
             let balance;
             if (catType == '2') { // Debit Transaction
                 balance = totalCredit - totalDebit; // Calculate balance
             } else if (catType == '1') { // Credit Transaction
-                balance = totalDebit - totalCredit; // Calculate balance  
+                balance = totalDebit - totalCredit; // Calculate balance
             }
-
-            // Validate Debit Transactions
+    
+            // Step 2: Validate Debit/Credit Transactions
             if (transCategory >= 3 && transCategory <= 9) {
-                if (catType == '2') { // Debit Transaction
-                    if (balance !== 0) {
-                        // Allow debit if balance is zero or negative, as long as debit amount does not exceed the absolute value of the balance
-                        if (otherAmount > Math.abs(balance)) {
-                            const formattedBalance = moneyFormatIndia(Math.abs(balance));
-                            swalError('Warning', 'You may only debit up to: ' + formattedBalance);
-                            return;
-                        }
-                    }
-                } else if (catType == '1') { // Credit Transaction
-                    // Allow credit if balance is negative or zero
-                    if (balance !== 0) {
-                        if (otherAmount > Math.abs(balance)) {
-                            const formattedBalance = moneyFormatIndia(Math.abs(balance));
-                            swalError('Warning', 'You may only credit up to: ' + formattedBalance);
-                            return;
-                        }
-                    }
+                if (balance > 0 && otherAmount > Math.abs(balance)) {
+                    const formattedBalance = moneyFormatIndia(Math.abs(balance));
+                    let drCr = (catType == '2') ? 'debit' : 'credit';
+    
+                    swalError('Warning', 'You may only ' + drCr + ' up to: ' + formattedBalance);
+                    return;
                 }
             } else if (transCategory <= 2) {
                 if (catType == '2' && totalCredit < totalDebit + otherAmount) {
@@ -475,41 +465,48 @@ $(document).ready(function () {
                     return;
                 }
             }
-
-            // Fetch hand cash and bank cash balances for validation
-            getClosingBal(function (hand_cash_balance, bank_cash_balance) {
-                if (catType == '2') { // Debit Transaction
-                    if (collMode == '1' && otherAmount > hand_cash_balance) {
-                        swalError('Warning', 'Insufficient hand cash balance.');
-                        return;
-                    }
-                    if (collMode == '2' && otherAmount > bank_cash_balance) {
-                        swalError('Warning', 'Insufficient bank cash balance.');
-                        return;
-                    }
+    
+            // Step 3: Fetch hand cash and bank cash balances for validation
+            if (catType == '2') { // Debit Transaction
+                let [hand_cash_balance, bank_cash_balance] = await new Promise((resolve) => {
+                    getClosingBal(function (hand_cash_balance, bank_cash_balance) {
+                        resolve([hand_cash_balance, bank_cash_balance]);
+                    });
+                });
+    
+                if (collMode == '1' && otherAmount > hand_cash_balance) { // Hand cash
+                    swalError('Warning', 'Insufficient hand cash balance.');
+                    return;
                 }
-                //    Proceed if all validations pass
-                if (otherTransFormValid(otherTransData)) {
-                    $.post('api/accounts_files/accounts/submit_other_transaction.php', otherTransData, function (response) {
-                        if (response == '1') {
-                            swalSuccess('Success', 'Other Transaction added successfully.');
-                            otherTransTable('#other_transaction_table');
-                            getClosingBal(); // Update closing balance after submission
-                            $('#grp_id_cont').hide(); // Hide the group ID container for other categories
-                            $('#mem_id_cont').hide();
-                            $('#name_id_cont').show();
-                            $('#name_modl_btn').show();
-                            $('.other_month_div').hide();
-                        } else {
-                            swalError('Error', 'Failed to add transaction.');
-                        }
-                    }, 'json');
+                if (collMode == '2' && otherAmount > bank_cash_balance) { // Bank cash
+                    swalError('Warning', 'Insufficient bank cash balance.');
+                    return;
                 }
-                else {
-                    swalError('Warning', 'Please fill all required fields.');
+            }
+    
+            // Step 4: Proceed if all validations pass
+            if (otherTransFormValid(otherTransData)) {
+                let submissionResponse = await $.post('api/accounts_files/accounts/submit_other_transaction.php', otherTransData, 'json');
+    
+                if (submissionResponse == '1') {
+                    swalSuccess('Success', 'Other Transaction added successfully.');
+                    otherTransTable('#other_transaction_table');
+                    getClosingBal(); // Update closing balance after submission
+                    $('#grp_id_cont').hide(); // Hide the group ID container for other categories
+                    $('#mem_id_cont').hide();
+                    $('#name_id_cont').show();
+                    $('#name_modl_btn').show();
+                    $('.other_month_div').hide();
+                } else {
+                    swalError('Error', 'Failed to add transaction.');
                 }
-            });
-        }, 'json');
+            } else {
+                swalError('Warning', 'Please fill all required fields.');
+            }
+        } catch (error) {
+            console.error('Error occurred:', error);
+            swalError('Error', 'An unexpected error occurred.');
+        }
     });
 
     $(document).on('click', '.transDeleteBtn', function () {
