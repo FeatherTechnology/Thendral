@@ -257,15 +257,16 @@ $(document).ready(function () {
                                 </tr>
                             `).join('');
                             
+                            // HTML Content with consistent alignment and styling
                             const content = `
-                                <div id="print_content" style="text-align: center;">
-                                    <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                                        <img src="img/thendral_logo_icon.png" style="width:150px; height: 100px;">
-                                    </h2>
-                                    <table style="margin: 0 auto; border-collapse: collapse; width: 50%; border: none;">
-                                        ${rows}
-                                    </table>
-                                </div>
+                            <div id="print_content" style="text-align: center; font-size: 13px;">
+                                <h2 style="margin-bottom: 20px;">
+                                    <img src="img/thendral_logo_icon.png" style="width: 125px; height: 90px;" />
+                                </h2>
+                                <table style="margin: 0 auto; border-collapse: collapse; width: 90%; text-align: left; border: none;">
+                                    ${rows}
+                                </table>
+                            </div>
                             `;
     
                             // Create a new window for printing
@@ -275,10 +276,34 @@ $(document).ready(function () {
                                 <head>
                                     <title>Print Collection Details</title>
                                     <style>
-                                        body { font-family: Arial, sans-serif; text-align: center; }
-                                        table { margin: 0 auto; border-collapse: collapse; width: 50%; border: none; }
-                                        td { padding: 8px; }
-                                        strong { font-weight: bold; }
+                                        body {
+                                            font-family: Arial, sans-serif;
+                                            margin: 0;
+                                            padding: 0;
+                                            text-align: center;
+                                        }
+                                        table {
+                                            width: 90%;
+                                            margin: 0 auto;
+                                            border-collapse: collapse;
+                                            table-layout: fixed; /* Ensures equal column widths */
+                                            border: none;
+                                        }
+                                        td {
+                                            padding: 4px;
+                                            border: none;
+                                            font-size: 13px;
+                                            word-wrap: break-word;
+                                        }
+                                        .label {
+                                            font-weight: bold;
+                                            text-align: right;
+                                            width: 40%;
+                                        }
+                                        h2 img {
+                                            display: block;
+                                            margin: 0 auto;
+                                        }
                                     </style>
                                 </head>
                                 <body>
@@ -397,9 +422,7 @@ $(document).ready(function () {
         let cusMappingID = dataParts[1];
         let auction_month = dataParts[2];
         let share_id = dataParts[3];
-        getDueChart(groupId, cusMappingID, auction_month,share_id);
-
-        setTimeout(() => {
+        getDueChart(groupId, cusMappingID, auction_month,share_id).then(function(response){
             $('.print_due_coll').click(function () {
                 // Fetch the data from the server and create a table with it
                 const coll_id = $(this).attr('id');
@@ -451,17 +474,16 @@ $(document).ready(function () {
                             </tr>
                         `).join('');
                         
-
+                        // HTML Content with consistent alignment and styling
                         const content = `
-                            <div id="print_content" style="text-align: center;">
-                                <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                                    <img src="img/thendral_logo_icon.png"  style=" height: 100px;">
-                                   
-                                </h2>
-                                <table style="margin: 0 auto; border-collapse: collapse; width: 50%; border: none;">
-                                    ${rows}
-                                </table>
-                            </div>
+                        <div id="print_content" style="text-align: center; font-size: 13px;">
+                            <h2 style="margin-bottom: 20px;">
+                                <img src="img/thendral_logo_icon.png" style="width: 125px; height: 90px;" />
+                            </h2>
+                            <table style="margin: 0 auto; border-collapse: collapse; width: 90%; text-align: left; border: none;">
+                                ${rows}
+                            </table>
+                        </div>
                         `;
 
                         // Create a temporary iframe to hold the content for printing
@@ -471,10 +493,34 @@ $(document).ready(function () {
                             <head>
                                 <title>Print Collection Details</title>
                                 <style>
-                                    body { font-family: Arial, sans-serif; text-align: center; }
-                                    table { margin: 0 auto; border-collapse: collapse; width: 50%; border: none; }
-                                    td { padding: 8px; }
-                                    strong { font-weight: bold; }
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        margin: 0;
+                                        padding: 0;
+                                        text-align: center;
+                                    }
+                                    table {
+                                        width: 90%;
+                                        margin: 0 auto;
+                                        border-collapse: collapse;
+                                        table-layout: fixed; /* Ensures equal column widths */
+                                        border: none;
+                                    }
+                                    td {
+                                        padding: 4px;
+                                        border: none;
+                                        font-size: 13px;
+                                        word-wrap: break-word;
+                                    }
+                                    .label {
+                                        font-weight: bold;
+                                        text-align: right;
+                                        width: 40%;
+                                    }
+                                    h2 img {
+                                        display: block;
+                                        margin: 0 auto;
+                                    }
                                 </style>
                             </head>
                             <body>
@@ -493,10 +539,7 @@ $(document).ready(function () {
                     },
                 });
             });
-
-        }, 1000);
-
-
+        });
     });
     ////////////////////////////////////////////////////////Due End////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////Commitement Chart Start////////////////////////////////////////////
@@ -615,71 +658,78 @@ function getCommitmentChartTable(groupId ,cusMappingID,share_id) {
     }, 'json')
 }
 function getDueChart(groupId, cusMappingID, auction_month,share_id) {
-    $.ajax({
-        url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            group_id: groupId,
-            cus_mapping_id: cusMappingID,
-            auction_month: auction_month,
-            share_id: share_id
-        },
-        success: function (response) {
-            var tbody = $('#due_chart_table tbody');
-            tbody.empty(); // Clear existing rows
+    return new Promise(function (resolve, reject){
 
-            // Track whether we have added any rows
-            var hasRows = false;
-
-            $.each(response, function (index, item) {
-                var auctionMonth = item.auction_month;
-                var auctionDate = item.auction_date;
-
-                // Format the values using moneyFormatIndia
-                var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
-              //  var payable = item.payable ? moneyFormatIndia(item.payable) : '';
-                var collectionDate = item.collection_date ? item.collection_date : '';
-                var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';
-                //  var pending = item.pending;
-                var pending = item.pending !== null && item.pending !== undefined ? moneyFormatIndia(item.pending) : '';
-              var initialPayableAmount = item.initial_payable_amount ? moneyFormatIndia(item.initial_payable_amount) : '';
-                var action = item.action ? item.action : '';
-
-                var row = '<tr>' +
-                    '<td>' + auctionMonth + '</td>' +
-                    '<td>' + auctionDate + '</td>' +
-                    '<td>' + chitAmount + '</td>' +
-                    '<td>' + initialPayableAmount + '</td>' +
-                    '<td>' + collectionDate + '</td>' +
-                    '<td>' + collectionAmount + '</td>' +
-                    '<td>' + pending + '</td>' +
-                    '<td>' + action + '</td>' +
-                    '</tr>';
-
-                tbody.append(row);
-                hasRows = true;
-            });
-
-            // If no data was found in the response
-            if (!hasRows) {
-                // Display a row with auction_month and a 'No data available' message
-                var noDataRow = '<tr>' +
-                    '<td>' + auction_month + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '<td>' + '' + '</td>' +
-                    '</tr>';
-                tbody.append(noDataRow);
+        $.ajax({
+            url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                group_id: groupId,
+                cus_mapping_id: cusMappingID,
+                auction_month: auction_month,
+                share_id: share_id
+            },
+            success: function (response) {
+                var tbody = $('#due_chart_table tbody');
+                tbody.empty(); // Clear existing rows
+    
+                // Track whether we have added any rows
+                var hasRows = false;
+    
+                $.each(response, function (index, item) {
+                    var auctionMonth = item.auction_month;
+                    var auctionDate = item.auction_date;
+    
+                    // Format the values using moneyFormatIndia
+                    var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
+                  //  var payable = item.payable ? moneyFormatIndia(item.payable) : '';
+                    var collectionDate = item.collection_date ? item.collection_date : '';
+                    var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';
+                    //  var pending = item.pending;
+                    var pending = item.pending !== null && item.pending !== undefined ? moneyFormatIndia(item.pending) : '';
+                  var initialPayableAmount = item.initial_payable_amount ? moneyFormatIndia(item.initial_payable_amount) : '';
+                    var action = item.action ? item.action : '';
+    
+                    var row = '<tr>' +
+                        '<td>' + auctionMonth + '</td>' +
+                        '<td>' + auctionDate + '</td>' +
+                        '<td>' + chitAmount + '</td>' +
+                        '<td>' + initialPayableAmount + '</td>' +
+                        '<td>' + collectionDate + '</td>' +
+                        '<td>' + collectionAmount + '</td>' +
+                        '<td>' + pending + '</td>' +
+                        '<td>' + action + '</td>' +
+                        '</tr>';
+    
+                    tbody.append(row);
+                    hasRows = true;
+                });
+    
+                // If no data was found in the response
+                if (!hasRows) {
+                    // Display a row with auction_month and a 'No data available' message
+                    var noDataRow = '<tr>' +
+                        '<td>' + auction_month + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '<td>' + '' + '</td>' +
+                        '</tr>';
+                    tbody.append(noDataRow);
+                }
+                //Resolve the pormise when ajax completes successfully
+                resolve(response);
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error: ' + status + error);
+                // Reject the promise if there is an error.
+                reject(new Error('Failed to fetch data:' + error));
             }
-        },
-        error: function (xhr, status, error) {
-            console.error('AJAX Error: ' + status + error);
-        }
+        });
     });
 }
 function getBankName() {

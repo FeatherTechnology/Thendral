@@ -1,6 +1,6 @@
 <?php
 require "../../../ajaxconfig.php";
-
+$current_date = date('Y-m-d');
 $loan_issue_list_arr = array();
 $cash_type = $_POST['cash_type'];
 $bank_id = $_POST['bank_id'];
@@ -30,7 +30,7 @@ $query = "WITH SettlementSummary AS (
     FROM 
         settlement_info si
     WHERE 
-        DATE(si.settle_date) = CURDATE()
+        DATE(si.settle_date) = '$current_date'
         $bank_condition
     GROUP BY 
         si.insert_login_id, DATE_FORMAT(si.settle_date, '%d-%m-%Y')

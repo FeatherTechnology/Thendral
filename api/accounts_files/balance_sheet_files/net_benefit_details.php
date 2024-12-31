@@ -146,13 +146,13 @@ while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {
         }
         // Proceed with benefit calculation only if final value is greater than 0
 
-        if ($collection_amount == $payable) {
+        
             if ($row['total_members'] > 0) {
                 // Calculate benefit per group
                 $benefit_per_group = ($commision_percent) * $row['total_paid_members'];
                 $benefit += $benefit_per_group;
             }
-        }
+        
     }
 
 

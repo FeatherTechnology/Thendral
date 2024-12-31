@@ -69,7 +69,6 @@ $(document).on('click', '.ledger_view_chart', function (event) {
     $('#back_btn').show();
     $('.group_table_content').hide();
     $('#curr_closed').hide();
-    // $('#ledger_view_chart_model').modal('show');
     let groupId = $(this).data('value');
     getLedgerViewChart(groupId);
 });
@@ -94,12 +93,9 @@ $(document).on('click', '.collectionActionBtn', function (event) {
         event.preventDefault();
         $('#due_chart_model').modal('show');
         const dataValue = JSON.parse($(this).attr('data-value'));
-        let groupId = dataValue.group_id;
-        let cusMappingID = dataValue.cus_mapping_id;
-        let share_id = dataValue.share_id;
-        getDueChart(dataValue);
+        
+        getDueChart(dataValue).then(function(response){
 
-        setTimeout(() => {
             $('.print_due_coll').click(function () {
                 // Fetch the data from the server and create a table with it
                 const coll_id = $(this).attr('id');
@@ -151,16 +147,16 @@ $(document).on('click', '.collectionActionBtn', function (event) {
                             </tr>
                         `).join('');
 
+                        // HTML Content with consistent alignment and styling
                         const content = `
-                            <div id="print_content" style="text-align: center;">
-                                <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
-                                   <img src="img/thendral_logo_icon.png" style=" height: 100px;">
-                                    
-                                </h2>
-                                <table style="margin: 0 auto; border-collapse: collapse; width: 50%; border: none;">
-                                    ${rows}
-                                </table>
-                            </div>
+                        <div id="print_content" style="text-align: center; font-size: 13px;">
+                            <h2 style="margin-bottom: 20px;">
+                                <img src="img/thendral_logo_icon.png" style="width: 125px; height: 90px;" />
+                            </h2>
+                            <table style="margin: 0 auto; border-collapse: collapse; width: 90%; text-align: left; border: none;">
+                                ${rows}
+                            </table>
+                        </div>
                         `;
 
                         // Create a temporary iframe to hold the content for printing
@@ -170,10 +166,34 @@ $(document).on('click', '.collectionActionBtn', function (event) {
                             <head>
                                 <title>Print Collection Details</title>
                                 <style>
-                                    body { font-family: Arial, sans-serif; text-align: center; }
-                                    table { margin: 0 auto; border-collapse: collapse; width: 50%; border: none; }
-                                    td { padding: 8px; }
-                                    strong { font-weight: bold; }
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        margin: 0;
+                                        padding: 0;
+                                        text-align: center;
+                                    }
+                                    table {
+                                        width: 90%;
+                                        margin: 0 auto;
+                                        border-collapse: collapse;
+                                        table-layout: fixed; /* Ensures equal column widths */
+                                        border: none;
+                                    }
+                                    td {
+                                        padding: 4px;
+                                        border: none;
+                                        font-size: 13px;
+                                        word-wrap: break-word;
+                                    }
+                                    .label {
+                                        font-weight: bold;
+                                        text-align: right;
+                                        width: 40%;
+                                    }
+                                    h2 img {
+                                        display: block;
+                                        margin: 0 auto;
+                                    }
                                 </style>
                             </head>
                             <body>
@@ -192,8 +212,8 @@ $(document).on('click', '.collectionActionBtn', function (event) {
                     },
                 });
             });
+        });
 
-        }, 1000);
     });
     ////////////////////////////////////////////////////////Due End////////////////////////////////////////////////////////////
 
@@ -203,7 +223,6 @@ function closeChartsModal() {
     $('#auction_chart_model').modal('hide');
     $('#settlement_chart_model').modal('hide');
     $('#collection_chart_model').modal('hide');
-    $('#ledger_view_chart_model').modal('hide');
 }
 function closeDueChartModal(){
     $('#due_chart_model').modal('hide');
@@ -464,51 +483,62 @@ function getLedgerViewChart(groupId){
 }
 
 function getDueChart(dataValue) {
-    $.ajax({
-        url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            group_id: dataValue.group_id,
-            cus_mapping_id: dataValue.cus_mapping_id,
-            share_id: dataValue.share_id
-        },
-        success: function (response) {
-            $('#due_cus_info').empty().html(`Customer ID: ${ dataValue.cus_id} | Mapping ID: ${ dataValue.mapping_id} | Customer Name:  ${ dataValue.cus_name} | Settlement: ${ dataValue.settle_sts}`);
-            var tbody = $('#due_chart_table tbody');
-            tbody.empty(); // Clear existing rows
+    // Return a new Promise
+    return new Promise(function (resolve, reject) {
+        $.ajax({
+            url: 'api/collection_files/due_chart_data.php', // Correct path to your PHP script
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                group_id: dataValue.group_id,
+                cus_mapping_id: dataValue.cus_mapping_id,
+                share_id: dataValue.share_id
+            },
+            success: function (response) {
+                // Update the UI
+                $('#due_cus_info').empty().html(`
+                    Customer ID: ${dataValue.cus_id} | Mapping ID: ${dataValue.mapping_id} | 
+                    Customer Name: ${dataValue.cus_name} | Settlement: ${dataValue.settle_sts}
+                `);
+                
+                var tbody = $('#due_chart_table tbody');
+                tbody.empty(); // Clear existing rows
 
-            $.each(response, function (index, item) {
-                var auctionMonth = item.auction_month;
-                var auctionDate = item.auction_date;
+                // Iterate and append rows to the table
+                $.each(response, function (index, item) {
+                    var auctionMonth = item.auction_month || '';
+                    var auctionDate = item.auction_date || '';
+                    var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
+                    var collectionDate = item.collection_date || '';
+                    var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';
+                    var pending = item.pending ? moneyFormatIndia(item.pending) : '';
+                    var initialPayableAmount = item.initial_payable_amount ? moneyFormatIndia(item.initial_payable_amount) : '';
+                    var action = item.action || '';
 
-                // Format the values using moneyFormatIndia
-                var chitAmount = item.chit_share ? moneyFormatIndia(Math.round(item.chit_share)) : '';
-              //  var payable = item.payable ? moneyFormatIndia(item.payable) : '';
-                var collectionDate = item.collection_date ? item.collection_date : '';
-                var collectionAmount = item.collection_amount ? moneyFormatIndia(item.collection_amount) : '';
-                //  var pending = item.pending;
-                var pending = item.pending !== null && item.pending !== undefined ? moneyFormatIndia(item.pending) : '';
-              var initialPayableAmount = item.initial_payable_amount ? moneyFormatIndia(item.initial_payable_amount) : '';
-                var action = item.action ? item.action : '';
+                    var row = `
+                        <tr>
+                            <td>${auctionMonth}</td>
+                            <td>${auctionDate}</td>
+                            <td>${chitAmount}</td>
+                            <td>${initialPayableAmount}</td>
+                            <td>${collectionDate}</td>
+                            <td>${collectionAmount}</td>
+                            <td>${pending}</td>
+                            <td>${action}</td>
+                        </tr>
+                    `;
 
-                var row = '<tr>' +
-                    '<td>' + auctionMonth + '</td>' +
-                    '<td>' + auctionDate + '</td>' +
-                    '<td>' + chitAmount + '</td>' +
-                    '<td>' + initialPayableAmount + '</td>' +
-                    '<td>' + collectionDate + '</td>' +
-                    '<td>' + collectionAmount + '</td>' +
-                    '<td>' + pending + '</td>' +
-                    '<td>' + action + '</td>' +
-                    '</tr>';
+                    tbody.append(row);
+                });
 
-                tbody.append(row);
-            });
-
-        },
-        error: function (xhr, status, error) {
-            console.error('AJAX Error: ' + status + error);
-        }
+                // Resolve the Promise when AJAX completes successfully
+                resolve(response);
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                // Reject the Promise if there is an error
+                reject(new Error('Failed to fetch data: ' + error));
+            }
+        });
     });
 }

@@ -1,6 +1,6 @@
 <?php
 require "../../../ajaxconfig.php";
-
+$current_date = date('Y-m-d');
 $collection_list_arr = array();
 $cash_type = $_POST['cash_type'];
 $bank_id = $_POST['bank_id'];
@@ -24,7 +24,7 @@ $qry = $pdo->query("WITH aggregated_data AS (
         c.insert_login_id = u.id
         AND $cndtn
     WHERE
-        DATE(c.collection_date) >= DATE(NOW()) AND
+        DATE(c.collection_date) >= DATE('$current_date') AND
         c.collection_date > COALESCE(
             (
                 SELECT created_on
@@ -77,7 +77,7 @@ second_query AS (
         FIND_IN_SET(bc.branch_name, ac.branch)
     WHERE
         $cndtn
-        AND DATE(ac.created_on) = DATE(NOW())
+        AND DATE(ac.created_on) = DATE('$current_date')
         AND ac.user_id NOT IN (
             SELECT userid
             FROM first_query
