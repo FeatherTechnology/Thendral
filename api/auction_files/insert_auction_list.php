@@ -47,9 +47,42 @@ if (isset($data['data']) && is_array($data['data'])) {
     if ($maxResult) {
         $max_value = $maxResult['value'];
         $cus_name = $maxResult['cus_name'];
-
-        // Set status uniformly for all customers (including company)
-        $status = ($cus_name == -1) ? 3 : 2;
+        
+        $trans_cat = "
+            SELECT gs.cus_mapping_id,
+                   COUNT(CASE WHEN gs.settle_status = 'Yes' THEN 1 END) AS settled_count,
+                   COUNT(gs.cus_mapping_id) AS total_count
+            FROM other_transaction os
+            LEFT JOIN group_share gs ON os.group_mem = gs.cus_id
+            WHERE gs.grp_creation_id = '$group_id' GROUP BY gs.id
+        ";
+        $transResult = $pdo->query($trans_cat)->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Default status
+        $status = 2; 
+        
+        foreach ($transResult as $row) {
+            $settled_count = $row['settled_count'];
+            $total_count = $row['total_count'];
+            $cus_mapping_id = $row['cus_mapping_id']; // Assuming cus_mapping_id is part of the result
+        
+            // Check if the cus_mapping_id matches the provided cus_name (from $maxResult)
+            if ($cus_mapping_id == $cus_name) {
+                // Check if the settled count matches the total count for this cus_mapping_id
+                if ($settled_count == $total_count) {
+                    $status = 3; // Set to 3 if counts match
+                } else {
+                    $status = 2; // Set to 2 otherwise
+                }
+            } else {
+                $status = 2; // Set to 2 if the cus_mapping_id does not match
+            }
+        }
+        
+        // Override status if customer name is 'Company'
+        if ($cus_name == -1) {
+            $status = 3;  // Set to 3 if cus_name represents 'Company'
+        }
 
         // Update the auction_details table
         $updateDetailsQuery = "UPDATE auction_details SET auction_value = '$max_value', cus_name = '$cus_name', 
