@@ -285,61 +285,52 @@
                     <button name="print_cal" id="print_cal" class="btn btn-primary" tabindex="1" style="margin-left: 650px;"><span class="icon-download"></span>&nbsp;Download</button>
                     <form id="Calculation_form">
                         <div class="row">
-                            <input type="hidden" name="bank_id" id='bank_id'>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="group_name">Group Name</label>
                                     <input class="form-control" name="group_name" id="group_name" tabindex="1" placeholder="Enter Group Name" readonly>
-                                    <input type="hidden" id="addgrp_name_id" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="auction_month">Auction Month</label>
                                     <input class="form-control" name="auction_month" id="auction_month" tabindex="1" placeholder="Enter Auction Month" readonly>
-                                    <input type="hidden" id="addauction_id" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="cal_date">Date</label>
                                     <input class="form-control" name="cal_date" id="cal_date" tabindex="1" readonly>
-                                    <input type="hidden" id="addcal_date" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="chit_value">Chit Value</label>
                                     <input class="form-control" name="chit_value" id="chit_value" tabindex="1" readonly>
-                                    <input type="hidden" id="addchit_value" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="auction_value">Auction Value</label>
                                     <input class="form-control" name="auction_value" id="auction_value" tabindex="1" disabled>
-                                    <input type="hidden" id="addvalue_id" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="Commission">Commission</label>
                                     <input class="form-control" name="Commission" id="Commission" tabindex="1" disabled>
-                                    <input type="hidden" id="addcomm_id" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="total_value">Total Value</label>
                                     <input class="form-control" name="total_value" id="total_value" tabindex="1" disabled>
-                                    <input type="hidden" id="addtot_id" value='0'>
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="chit_amount">Chit Amount</label>
                                     <input class="form-control" name="chit_amount" id="chit_amount" tabindex="1" disabled>
-                                    <input type="hidden" id="addchit_id" value='0'>
                                 </div>
                             </div>
                         </div>
