@@ -20,9 +20,10 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
 
     // Get the list of customer names already in other_transaction for this group
     $transaction_qry = "
-        SELECT group_mem 
-        FROM other_transaction 
-        WHERE group_id = '$group_id' GROUP BY group_mem;
+        SELECT gs.cus_mapping_id
+        FROM other_transaction os
+         LEFT JOIN group_share gs ON os.group_mem = gs.cus_id
+        WHERE gs.grp_creation_id = '$group_id' ;
     ";
     $transaction_customers = $pdo->query($transaction_qry)->fetchAll(PDO::FETCH_COLUMN);
 
@@ -91,23 +92,28 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
     foreach ($customers as $customer) {
         $customer_ids = explode(',', $customer['cust_id']); // Split combined customer IDs
         $chit_count = $customer['chit_count'];
+        $id = $customer['id'];
 
         // Loop through each customer ID and process
         foreach ($customer_ids as $customer_id) {
             $auction_taken_count = count(array_filter($taken_customers, fn($id) => $id == $customer_id));
-        //    echo "Customer ID: $customer_id | Auction Taken Count: $auction_taken_count | $chit_count <br>";
-            
             // Count how many transactions this customer has in other_transaction
-            $transaction_taken_count = count(array_filter($transaction_customers, fn($id) => $id == $customer_id));
-        }
+            $transaction_taken_count = count(array_filter($transaction_customers, fn($id) => $id == $id));
 
             // Check eligibility: customer can participate if their combined auction and transaction counts are less than or equal to their chit count
-            if (($auction_taken_count + $transaction_taken_count) < $chit_count) {
+            if (($auction_taken_count ) < $chit_count) {
                 // Add to the list
-                $customer_list_arr[] = $customer;
-              //  print_r($customer_list_arr);
+                $customer_data = $customer;
+               
+                // Check if customer is in other transactions and set highlight flag
+                if (in_array($id, $transaction_customers)) {
+                    //echo "Customer ID " . $id . " found in transaction_customers.<br>";
+                    $customer_data['highlight'] = 'red';  // Mark for red highlighting
+                   
+                }
+                $customer_list_arr[] = $customer_data;
             }
-        
+        }
     }
 
     $pdo = null; // Close Connection.
