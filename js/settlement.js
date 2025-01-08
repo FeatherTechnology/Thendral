@@ -550,6 +550,128 @@ $(document).ready(function () {
 
     ////////////////////////Document End/////////////////////////////////////////////
 
+    ///////////////////////Auction Info START //////////////////////////////
+    $('#auction_info').click(function(){
+        event.preventDefault();
+        $('#add_Calculation_modal').modal('show');
+
+        let auctionData = {
+            'group_id' : $('#group_id').val(),
+            'date' : $('#auction_date').val()
+        }
+    
+        $.ajax({
+            url: 'api/auction_files/fetch_calculation_data.php',
+            type: 'POST',
+            data: auctionData,
+            dataType: 'json',
+            success: function (response) {
+                $('#calc_group_name').val(response.group_name);
+                $('#calc_auction_month').val(response.auction_month);
+    
+                // Format the date in dd-mm-yyyy format
+                $('#cal_date').val(formatDate(new Date(response.cal_date)));
+    
+                $('#calc_chit_value').val(moneyFormatIndia(response.chit_value));
+                $('#calc_auction_value').val(moneyFormatIndia(response.auction_value));
+                $('#calc_commission').val(moneyFormatIndia(response.commission));
+                $('#calc_total_value').val(moneyFormatIndia(response.total_value));
+                $('#calc_chit_amount').val(moneyFormatIndia(Math.round(response.chit_amount)));
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+            }
+        });
+    });
+
+    $(document).on('click', '#print_cal', function () {
+
+        const chitValue = $('#calc_chit_value').val().replace(/,/g, ''); // Ensure no extra commas
+        const commission = $('#calc_commission').val().replace(/,/g, '');
+        const auctionValue = $('#calc_auction_value').val().replace(/,/g, '');
+        const chitAmount = $('#calc_chit_amount').val().replace(/,/g, '');
+        const totalValue = $('#calc_total_value').val().replace(/,/g, '');
+
+        const formattedChitValue = moneyFormatIndia(chitValue);
+        const formattedCommission = moneyFormatIndia(commission);
+        const formattedAuctionValue = moneyFormatIndia(auctionValue);
+        const formattedChitAmount = moneyFormatIndia(chitAmount);
+        const formattedTotalValue = moneyFormatIndia(totalValue);
+
+        // Create the HTML content with formatted values
+        const content = `
+        <div id="print_content" style="text-align: center;">
+            <h2 style="margin-bottom: 20px; display: flex; align-items: center; justify-content: center;">
+                <img src="img/thendral_logo_icon.png" style="margin-right: 10px;" class="img">
+               
+            </h2>
+            <table style="margin: 0 auto; border-collapse: collapse; width: 25%;">
+                <tr>
+                    <td><strong>Group Name</strong></td>
+                    <td>${$('#calc_group_name').val()}</td>
+                </tr>
+                <tr>
+                    <td><strong>Auction Month</strong></td>
+                    <td>${$('#calc_auction_month').val()}</td>
+                </tr>
+                <tr>
+                    <td><strong>Date</strong></td>
+                    <td>${$('#cal_date').val()}</td>
+                </tr>
+                <tr>
+                    <td><strong>Chit Value</strong></td>
+                    <td>${formattedChitValue}</td>
+                </tr>
+                <tr>
+                    <td><strong>Auction Value</strong></td>
+                    <td>${formattedAuctionValue}</td>
+                </tr>
+                <tr>
+                    <td><strong>Commission</strong></td>
+                    <td>${formattedCommission}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Value</strong></td>
+                    <td>${formattedTotalValue}</td>
+                </tr>
+                <tr>
+                    <td><strong>Chit Amount</strong></td>
+                    <td>${formattedChitAmount}</td>
+                </tr>
+            </table>
+        </div>
+    `;
+
+        const tempDiv = $('<div>').html(content).css({
+            position: 'absolute',
+            top: '-500px',
+            left: '-500px',
+            width: '800px',  // Adjust width
+            height: 'auto',  // Adjust height or set a specific height like '600px'
+            padding: '20px', // Optional: add padding for better layout in the image
+            backgroundColor: '#fff', // Ensure background is white (or any color you prefer)
+            textAlign: 'center', // Center-aligns the content
+            fontFamily: 'Arial, sans-serif' // Optional: for better font rendering
+        }).appendTo('body');
+
+        html2canvas(tempDiv[0], {
+            scale: 2,  // Increase the scale factor to improve the resolution
+            width: tempDiv.outerWidth(), // Set canvas width to the width of the div
+            height: tempDiv.outerHeight() // Set canvas height to the height of the div
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = imgData;
+            link.download = 'calculation_details.png';
+            link.click();
+            tempDiv.remove();
+        }).catch(err => {
+            console.error('Error generating image:', err);
+        });
+    });
+
+    ///////////////////////Auction Info END //////////////////////////////
+
 });
 $(function () {
     getSettlementTable();
@@ -1315,3 +1437,6 @@ function getCustomerName(id) {
     }, 'json');
 }
 
+function closeChartsModal() {
+    $('#add_Calculation_modal').modal('hide');
+}

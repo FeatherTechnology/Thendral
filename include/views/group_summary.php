@@ -142,6 +142,7 @@ function moneyFormatIndia($num1)
                             <th>Commision</th>
                             <th>Total amount</th>
                             <th>Chit Amount</th>
+                            <th>Customer Name</th>
                         </thead>
                         <tbody>
                         </tbody>

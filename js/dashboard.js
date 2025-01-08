@@ -150,25 +150,25 @@ function getApprovalCounts() {
 function getCollectionCounts() {
     let branchId = $('#branch_id :selected').val();
     $.post('api/dashboard_files/get_collection_details.php', { branchId }, function (response) {
-        $('#tot_paid').text(response['total_paid'])
-        $('#today_paid').text(response['today_paid'])
+        $('#tot_paid').text(moneyFormatIndia(response['total_paid']))
+        $('#today_paid').text(moneyFormatIndia(response['today_paid']))
     }, 'json');
 }
 
 function getClosedCounts() {
     let branchId = $('#branch_id :selected').val();
     $.post('api/dashboard_files/get_settlement_details.php', { branchId }, function (response) {
-        $('#tot_settle').text(response['total_settle'])
-        $('#today_settle').text(response['today_settle'])
+        $('#tot_settle').text(moneyFormatIndia(response['total_settle']))
+        $('#today_settle').text(moneyFormatIndia(response['today_settle']))
     }, 'json');
 }
 function getColsummaryCounts() {
     let branchId = $('#branch_id :selected').val();
     $.post('api/dashboard_files/get_collection_summary_details.php', { branchId }, function (response) {
-        $('#month_paid').text(response['month_paid'])
-        $('#month_unpaid').text(response['month_unpaid'])
-        $('#prev_pen_amount').text(response['prev_pen_amount'])
-        $('#total_outstanding').text(response['total_outstanding'])
+        $('#month_paid').text(moneyFormatIndia(response['month_paid']))
+        $('#month_unpaid').text(moneyFormatIndia(response['month_unpaid']))
+        $('#prev_pen_amount').text(moneyFormatIndia(response['prev_pen_amount']))
+        $('#total_outstanding').text(moneyFormatIndia(response['total_outstanding']))
 
     }, 'json');
 }

@@ -22,29 +22,32 @@ $query = "SELECT
             ad.group_id,
             gc.grp_name,
             gc.chit_value,
+            gc.date,
             gc.total_members,
             gc.total_months,
             ad.auction_month,
-         GROUP_CONCAT(
-    CASE 
-        WHEN ad.cus_name = '-1' THEN 'Company' 
-        ELSE COALESCE(cc.first_name, '') 
-    END 
-    SEPARATOR ' - '
-) AS cus_name, 
-            ad.auction_value
+            GROUP_CONCAT(
+                CASE 
+                    WHEN ad.cus_name = '-1' THEN 'Company' 
+                    ELSE COALESCE(cc.first_name, '') 
+                END 
+                SEPARATOR ' - '
+            ) AS cus_name, 
+            (gc.chit_value - ad.auction_value) AS settlement_amount 
         FROM 
             auction_details ad
         LEFT JOIN 
             group_creation gc ON ad.group_id = gc.grp_id
-      LEFT JOIN group_share gs ON ad.cus_name = gs.cus_mapping_id 
-LEFT JOIN customer_creation cc ON gs.cus_id = cc.id 
-           JOIN 
-        branch_creation bc ON gc.branch = bc.id
-    JOIN 
-        users us ON FIND_IN_SET(gc.branch, us.branch) > 0
+        LEFT JOIN 
+            group_share gs ON ad.cus_name = gs.cus_mapping_id 
+        LEFT JOIN 
+            customer_creation cc ON gs.cus_id = cc.id 
+        JOIN 
+            branch_creation bc ON gc.branch = bc.id
+        JOIN 
+            users us ON FIND_IN_SET(gc.branch, us.branch) > 0
         WHERE 
-            ad.status = 2  AND us.id = '$user_id'";
+            ad.status = 2  AND us.id = '$user_id' ";
 
 if (isset($_POST['search']) && $_POST['search'] != "") {
     $search = $_POST['search'];
@@ -85,11 +88,12 @@ foreach ($result as $row) {
     $sub_array[] = isset($row['group_id']) ? $row['group_id'] : '';
     $sub_array[] = isset($row['grp_name']) ? $row['grp_name'] : '';
     $sub_array[] = isset($row['chit_value']) ? moneyFormatIndia($row['chit_value']) : '';
+    $sub_array[] = isset($row['date']) ? $row['date'] : '';
     $sub_array[] = isset($row['total_members']) ? $row['total_members'] : '';
     $sub_array[] = isset($row['total_months']) ? $row['total_months'] : '';
     $sub_array[] = isset($row['auction_month']) ? $row['auction_month'] : '';
     $sub_array[] = isset($row['cus_name']) ? $row['cus_name'] : '';
-    $sub_array[] = isset($row['auction_value']) ? moneyFormatIndia($row['auction_value']) : '';
+    $sub_array[] = isset($row['settlement_amount']) ? moneyFormatIndia($row['settlement_amount']) : '';
     $action = "<button class='btn btn-primary settleListBtn' value='" . $row['id'] . "'>&nbsp;View</button>";
     $sub_array[] = $action;
     $data[] = $sub_array;

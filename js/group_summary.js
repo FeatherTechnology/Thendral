@@ -269,6 +269,7 @@ function getAuctionChart(groupId) {
                     '<td>' + commission + '</td>' +
                     '<td>' + total_value + '</td>' +
                     '<td>' + chitAmount + '</td>' +
+                    '<td>' + item.cus_name + '</td>' +
                     '</tr>';
 
                 tbody.append(row);
