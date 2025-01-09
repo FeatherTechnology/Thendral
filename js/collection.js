@@ -422,6 +422,8 @@ $(document).ready(function () {
         let cusMappingID = dataParts[1];
         let auction_month = dataParts[2];
         let share_id = dataParts[3];
+        var tbody = $('#due_chart_table tbody');
+        tbody.empty(); // Clear existing rows
         getDueChart(groupId, cusMappingID, auction_month,share_id).then(function(response){
             $('.print_due_coll').click(function () {
                 // Fetch the data from the server and create a table with it
@@ -659,7 +661,6 @@ function getCommitmentChartTable(groupId ,cusMappingID,share_id) {
 }
 function getDueChart(groupId, cusMappingID, auction_month,share_id) {
     return new Promise(function (resolve, reject){
-
         $.ajax({
             url: 'api/collection_files/due_chart_data.php', // Update this with the correct path to your PHP script
             type: 'POST',
@@ -672,7 +673,6 @@ function getDueChart(groupId, cusMappingID, auction_month,share_id) {
             },
             success: function (response) {
                 var tbody = $('#due_chart_table tbody');
-                tbody.empty(); // Clear existing rows
     
                 // Track whether we have added any rows
                 var hasRows = false;
