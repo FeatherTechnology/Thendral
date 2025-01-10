@@ -152,7 +152,7 @@ $(document).ready(function () {
 
     $('#submit_expenses_creation').click(function (event) {
         event.preventDefault();
-
+        $(this).attr('disabled', true);
         let expensesData = {
             'coll_mode': $("input[name='expenses_cash_type']:checked").val(),
             'bank_id': $('#expenses_bank_name :selected').val(),
@@ -172,12 +172,14 @@ $(document).ready(function () {
             // Check if cash mode is 1 (Hand Cash) and expenses amount is greater than hand cash balance
             if (collMode == '1' && expensesAmount > hand_cash_balance) {
                 swalError('Warning', 'Closing balance in hand cash is lesser than the expense amount.');
+                $('#submit_expenses_creation').attr('disabled', false);
                 return;
             }
 
             // Check if cash mode is 2 (Bank Transaction) and expenses amount is greater than bank cash balance
             if (collMode == '2' && expensesAmount > bank_cash_balance) {
                 swalError('Warning', 'Closing balance in bank cash is lesser than the expense amount.');
+                $('#submit_expenses_creation').attr('disabled', false);
                 return;
             }
 
@@ -189,6 +191,7 @@ $(document).ready(function () {
                         expensesTable('#expenses_creation_table');
                         getInvoiceNo();
                         getClosingBal(); // Update the closing balance after submission
+                        $('#submit_expenses_creation').attr('disabled', false);
                     } else {
                         swalError('Error', 'Failed to add expenses.');
                     }
@@ -390,11 +393,13 @@ $(document).ready(function () {
     });
 
     $('#submit_name').click(function (event) {
+        $(this).attr('disabled', true);
         event.preventDefault();
         let transCat = $('#trans_cat').attr('data-id');
         let name = $('#other_name').val();
         if (transCat == '' || name == '') {
             swalError('Warning', 'Kindly fill all the fields.');
+            $('#submit_name').attr('disabled', false);
             return false;
         }
         $.post('api/accounts_files/accounts/submit_other_name.php', { transCat, name }, function (response) {
@@ -402,6 +407,7 @@ $(document).ready(function () {
                 swalSuccess('Success', 'Transaction Name Added Successfully.');
                 getOtherTransNameTable();
                 $('#other_name').val('');
+                $('#submit_name').attr('disabled', false);
             } else {
                 swalError('Error', 'Transaction Name Not Added. Try Again Later.');
             }
@@ -410,7 +416,7 @@ $(document).ready(function () {
 
     $('#submit_other_transaction').click(async function (event) {
         event.preventDefault();
-    
+        $(this).attr('disabled', true);
         let otherTransData = {
             'coll_mode': $("input[name='othertransaction_cash_type']:checked").val(),
             'bank_id': $('#othertransaction_bank_name :selected').val(),
@@ -456,12 +462,14 @@ $(document).ready(function () {
                     let drCr = (catType == '2') ? 'debit' : 'credit';
     
                     swalError('Warning', 'You may only ' + drCr + ' up to: ' + formattedBalance);
+                    $('#submit_other_transaction').attr('disabled', false);
                     return;
                 }
             } else if (transCategory <= 2) {
                 if (catType == '2' && totalCredit < totalDebit + otherAmount) {
                     const formattedBalance = moneyFormatIndia(Math.abs(balance));
                     swalError('Warning', 'You may only debit up to: ' + formattedBalance);
+                    $('#submit_other_transaction').attr('disabled', false);
                     return;
                 }
             }
@@ -476,10 +484,12 @@ $(document).ready(function () {
     
                 if (collMode == '1' && otherAmount > hand_cash_balance) { // Hand cash
                     swalError('Warning', 'Insufficient hand cash balance.');
+                    $('#submit_other_transaction').attr('disabled', false);
                     return;
                 }
                 if (collMode == '2' && otherAmount > bank_cash_balance) { // Bank cash
                     swalError('Warning', 'Insufficient bank cash balance.');
+                    $('#submit_other_transaction').attr('disabled', false);
                     return;
                 }
             }
@@ -497,6 +507,7 @@ $(document).ready(function () {
                     $('#name_id_cont').show();
                     $('#name_modl_btn').show();
                     $('.other_month_div').hide();
+                    $('#submit_other_transaction').attr('disabled', false);
                 } else {
                     swalError('Error', 'Failed to add transaction.');
                 }
@@ -732,6 +743,7 @@ function expensesFormValid(expensesData) {
     for (key in expensesData) {
         if (key != 'agent_name' && key != 'expenses_total_issued' && key != 'expenses_total_amnt' && key != 'bank_id' && key != 'expenses_trans_id') {
             if (expensesData[key] == '' || expensesData[key] == null || expensesData[key] == undefined) {
+                $('#submit_expenses_creation').attr('disabled', false);
                 return false;
             }
         }
@@ -739,12 +751,14 @@ function expensesFormValid(expensesData) {
 
     if (expensesData['coll_mode'] == '2') {
         if (expensesData['bank_id'] == '' || expensesData['bank_id'] == null || expensesData['bank_id'] == undefined || expensesData['expenses_trans_id'] == '' || expensesData['expenses_trans_id'] == null || expensesData['expenses_trans_id'] == undefined) {
+            $('#submit_expenses_creation').attr('disabled', false);
             return false;
         }
     }
 
     if (expensesData['expenses_category'] == '14') {
         if (expensesData['agent_name'] == '' || expensesData['agent_name'] == null || expensesData['agent_name'] == undefined || expensesData['expenses_total_issued'] == '' || expensesData['expenses_total_issued'] == null || expensesData['expenses_total_issued'] == undefined || expensesData['expenses_total_amnt'] == '' || expensesData['expenses_total_amnt'] == null || expensesData['expenses_total_amnt'] == undefined) {
+            $('#submit_expenses_creation').attr('disabled', false);
             return false;
         }
     }
@@ -820,6 +834,7 @@ function otherTransFormValid(data) {
     for (key in data) {
         if (key != 'bank_id' && key != 'other_trans_id' && key != 'group_id' && key != 'group_mem' && key != 'auction_month' && key != 'other_trans_name') {
             if (data[key] == '' || data[key] == null || data[key] == undefined) {
+                $('#submit_other_transaction').attr('disabled', false);
                 return false;
             }
         }
@@ -827,16 +842,19 @@ function otherTransFormValid(data) {
 
     if (data['coll_mode'] == '2') {
         if (data['bank_id'] == '' || data['bank_id'] == null || data['bank_id'] == undefined || data['other_trans_id'] == '' || data['other_trans_id'] == null || data['other_trans_id'] == undefined) {
+            $('#submit_other_transaction').attr('disabled', false);
             return false;
         }
     }
     if (data['trans_category'] != '7') {
         if (data['other_trans_name'] == '' || data['other_trans_name'] == null || data['other_trans_name'] == undefined) {
+            $('#submit_other_transaction').attr('disabled', false);
             return false;
         }
     }
     if (data['trans_category'] == '7') {
         if (data['group_id'] == '' || data['group_id'] == null || data['group_id'] == undefined || data['group_mem'] == '' || data['group_mem'] == null || data['group_mem'] == undefined) {
+            $('#submit_other_transaction').attr('disabled', false);
             return false;
         }
     }
