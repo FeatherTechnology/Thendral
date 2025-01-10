@@ -83,7 +83,6 @@ foreach ($auctionData as $auction) {
     }
 }
 
-
 // Helper array to keep track of auction months that have been used
 $auctionMonthUsed = array();
 
@@ -146,14 +145,15 @@ foreach ($auctionData as $auctionDetails) {
                 $collection_date = new DateTime($row['collection_date']);
                 $row['collection_date'] = $collection_date->format('d-m-Y');
             }
-            if ($row['chit_share'] == 0 && $row['auction_month'] == $lastAuctionMonth) {
-                $row['chit_share'] = $chit_share;
-            }
-            
             $payable = (int)$row['payable'];
             $collection_amount = (int)$row['collection_amount'];
             $pending = $payable - $collection_amount;
             $initial_payable_amount =$payable;
+            if ($row['chit_share'] == 0 ) {
+                $row['chit_share'] = $chit_share;
+            }else{
+                $row['chit_share'] = $chit_share;
+            }
             // Ensure pending is not negative
             $pending = max($pending, 0);
             // Add auction_month and auction_date to the row

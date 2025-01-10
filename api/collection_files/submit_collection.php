@@ -23,7 +23,10 @@ if ($collection_amount >= $payable) {
 } else {
     $status = 'Payable';
 }
-
+if($chit_amount ==0){
+    $auction_id-=1;
+    $auction_month -=1;
+    }
 /// Insert the collection record
 $qry = $pdo->query("INSERT INTO collection (cus_mapping_id,share_id,auction_id, group_id, cus_id, auction_month, chit_value, chit_amount, pending, payable, coll_status, collection_date, coll_mode, transaction_id, bank_id, collection_amount, insert_login_id, created_on) 
 VALUES ('$cus_mapping_id','$share_id','$auction_id', '$group_id', '$cus_id', '$auction_month', '$chit_value', '$chit_amount', '$pending', '$payable', '$status', '$collection_date " . date(' H:i:s') . "', '$coll_mode', '$transaction_id', '$bank_name', '$collection_amount', '$user_id', CURRENT_TIMESTAMP())");

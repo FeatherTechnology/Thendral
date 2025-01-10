@@ -164,15 +164,22 @@ foreach ($mappings as $mapping) {
     $previous_amount = $total_chit_amount - $total_collection_amount;  // Calculate previous amount
 
     // Now, calculate the pending amount for the current date
-    $qry2 = "SELECT 
-    COALESCE(LEAST($previous_amount, COALESCE(SUM(c.collection_amount), 0)), 0) AS total_amount
-FROM 
-    collection c
-WHERE 
-    c.share_id = '$map_id'
-    AND MONTH(c.collection_date) = MONTH('$current_date')
-    AND YEAR(c.collection_date) = YEAR('$current_date');
-";
+    $qry2 = "
+    SELECT 
+        COALESCE(
+            LEAST(
+                $previous_amount, 
+                COALESCE(SUM(IF(c.chit_amount = 0, 0, c.collection_amount)), 0)
+            ), 
+            0
+        ) AS total_amount
+    FROM 
+        collection c
+    WHERE 
+        c.share_id = '$map_id'
+        AND MONTH(c.collection_date) = MONTH('$current_date')
+        AND YEAR(c.collection_date) = YEAR('$current_date');
+    ";
 
     // Directly execute the query using query()
     $stmt2 = $pdo->query($qry2);
@@ -185,11 +192,7 @@ WHERE
         $total_amount += $result5['total_amount'];  // Sum total amounts
     }
 }
-
-
-
 // Now, $total_pending_amount contains the total pending amount for all mappings
-
 try {
 
     // Query for total paid
