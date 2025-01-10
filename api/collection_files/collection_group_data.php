@@ -7,6 +7,7 @@ $currentMonth = date('m');
 $currentYear = date('Y');
 include 'collectionStatus.php';
 include './col_group_grace.php';
+$currentDate = new DateTime();
 $collectionSts = new CollectionStsClass($pdo);
 $graceperiodSts = new GraceperiodClass($pdo);
 $column = array(
@@ -22,34 +23,44 @@ $column = array(
 );
 
 // First query
-$query = "SELECT
-    ad.id AS auction_id,
+$query = "SELECT 
+    COALESCE(ad.id, last_ad.id) AS auction_id,
     cc.id AS customer_id,
     gc.grp_id,
     gc.grp_name,
     gc.chit_value,
-    ad.chit_amount,
-    (ad.chit_amount * gs.share_percent / 100) AS chit_share,
-    ad.auction_month,
-    ad.date AS due_date,
+    COALESCE(ad.chit_amount, last_ad.chit_amount) AS chit_amount,
+    (COALESCE(ad.chit_amount, last_ad.chit_amount) * gs.share_percent / 100) AS chit_share,
+    COALESCE(ad.auction_month, last_ad.auction_month) AS auction_month,
+    COALESCE(ad.date, last_ad.date) AS due_date,
     gcm.id AS cus_mapping_id,
     gs.id AS share_id,
     cc.cus_id,
     gc.grace_period,
-    gs.settle_status -- Fetch settle_status directly for all months
-FROM
+    gs.settle_status
+FROM 
     group_creation gc
-LEFT JOIN auction_details ad ON ad.group_id = gc.grp_id 
-    AND YEAR(ad.date) = '$currentYear'
-    AND MONTH(ad.date) = '$currentMonth'
-LEFT JOIN group_share gs ON
-    gc.grp_id = gs.grp_creation_id
-  LEFT JOIN group_cus_mapping gcm ON
-    gs.cus_mapping_id = gcm.id
-LEFT JOIN customer_creation cc ON
-    gs.cus_id = cc.id
-JOIN branch_creation bc ON gc.branch = bc.id
-JOIN users us ON FIND_IN_SET(gc.branch, us.branch) > 0
+    LEFT JOIN auction_details ad 
+        ON ad.group_id = gc.grp_id 
+        AND YEAR(ad.date) = '$currentYear' 
+        AND MONTH(ad.date) = '$currentMonth'
+    LEFT JOIN auction_details last_ad 
+        ON last_ad.group_id = gc.grp_id 
+        AND last_ad.date = (
+            SELECT MAX(ad2.date) 
+            FROM auction_details ad2 
+            WHERE ad2.group_id = gc.grp_id
+        )
+    LEFT JOIN group_share gs 
+        ON gc.grp_id = gs.grp_creation_id
+    LEFT JOIN group_cus_mapping gcm 
+        ON gs.cus_mapping_id = gcm.id
+    LEFT JOIN customer_creation cc 
+        ON gs.cus_id = cc.id
+    JOIN branch_creation bc 
+        ON gc.branch = bc.id
+    JOIN users us 
+        ON FIND_IN_SET(gc.branch, us.branch) > 0
 WHERE
      gc.status IN (3, 4) -- Fetch only groups with status 4
     AND cc.id = '$id'
@@ -63,6 +74,7 @@ if (isset($_POST['search']) && $_POST['search'] != "") {
 
 $query .= " ORDER BY gc.grp_id";
 
+
 // Prepare the statement for the main query
 $statement = $pdo->prepare($query);
 $statement->execute();
@@ -72,7 +84,7 @@ $result = $statement->fetchAll(PDO::FETCH_ASSOC);
 $number_filter_row = $statement->rowCount(); // Get the number of rows returned by the main query
 
 // Store settle statuses for all mappings in a separate query
- $settleStatusQuery = "SELECT
+$settleStatusQuery = "SELECT
     gs.id AS share_id,
     gs.settle_status
 FROM
@@ -99,7 +111,7 @@ foreach ($result as $row) {
     $chit_share = isset($row['chit_share']) && is_numeric($row['chit_share']) ? floor($row['chit_share']) : 0;
 
     $sub_array[] = moneyFormatIndia($chit_share);
-    
+
 
     // Get settle_status from the previously fetched settleStatuses array
     $settle_status = $settleStatuses[$row['share_id']] ?? ''; // Default to 'N/A' if not found
@@ -108,7 +120,7 @@ foreach ($result as $row) {
     // Update status logic
     $status = $collectionSts->updateCollectionStatus($row['share_id'], $row['grp_id']);
     $sub_array[] = $status;
-    $grace_status = $graceperiodSts->updateGraceStatus($row['share_id'],$row['grp_id']);
+    $grace_status = $graceperiodSts->updateGraceStatus($row['share_id'], $row['grp_id']);
 
     // Grace period calculation
     $auction_month = $row['auction_month'] ?? 0;
@@ -118,9 +130,8 @@ foreach ($result as $row) {
 
     $current_date = date('Y-m-d');
     if ($status === "Paid") {
-            $status_color = 'green';
-        }
-    elseif ($grace_status === 'orange') {
+        $status_color = 'green';
+    } elseif ($grace_status === 'orange') {
         $status_color = 'orange';
     } elseif ($grace_status === 'red') {
         $status_color = 'red';
@@ -201,4 +212,3 @@ function moneyFormatIndia($num1)
     }
     return ($num1 < 0 ? "-" : "") . $thecash;
 }
-?>

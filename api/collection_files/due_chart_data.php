@@ -23,7 +23,6 @@ WHERE
     AND gs.cus_mapping_id = '$cusMappingID' AND gs.id ='$share_id'");
 
 $auctionData = $qry1->fetchAll(PDO::FETCH_ASSOC);
-
 // Fetch start month
 $start_month_query = "SELECT start_month FROM group_creation WHERE grp_id = '$groupId'";
 $start_month_result = $pdo->query($start_month_query);
@@ -94,7 +93,6 @@ foreach ($auctionData as $auctionDetails) {
     $auction_month = $auctionDetails['auction_month'];
     $auction_date = $auctionDetails['auction_date'];
     $chit_share = (int)$auctionDetails['chit_share'];
-
     // Format the auction_date to dd-mm-yyyy
     if (!empty($auction_date)) {
         $date = new DateTime($auction_date);
@@ -124,6 +122,7 @@ foreach ($auctionData as $auctionDetails) {
     // Fetch collection details for the auction month
     $qry2 = $pdo->query("SELECT 
         c.chit_amount as chit_share,
+        c.auction_month,
         c.payable,
         c.collection_date, 
         c.collection_amount, 
@@ -150,6 +149,11 @@ foreach ($auctionData as $auctionDetails) {
             $collection_amount = (int)$row['collection_amount'];
             $pending = $payable - $collection_amount;
             $initial_payable_amount =$payable;
+            if ($row['chit_share'] == 0 ) {
+                $row['chit_share'] = $chit_share;
+            }else{
+                $row['chit_share'] = $chit_share;
+            }
             // Ensure pending is not negative
             $pending = max($pending, 0);
             // Add auction_month and auction_date to the row

@@ -673,7 +673,7 @@ function getCollectionList() {
         let columnMapping = [
             'sno',
             'name',
-            'branch_names',
+            'branch_name',
             'no_of_customers',
             'total_amount',
             'action'
