@@ -142,7 +142,7 @@
         <!----------------------------- CARD END Settlement ------------------------------>
         <!----------------------------- CARD START Collection Summary ------------------------------>
         <div class="card collection-summary-card" style="display: none;">
-            <div class="card-header" id="coll_summary_title">
+            <div class="card-header" id="coll_summary_title" style="display: none;">
                 <div class="card-title dashboard-count-header">Collection Summary</div>
             </div>
             <div class="card-body" id="coll_summ_body" style="display: none;">
