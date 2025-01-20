@@ -13,36 +13,25 @@ if (!empty($group_id)) {
             auction_details ad
         WHERE
             ad.group_id = '$group_id'
-            AND MONTH(ad.date) = MONTH(CURDATE())
-            AND YEAR(ad.date) = YEAR(CURDATE())
+            AND ad.auction_month = (
+                SELECT
+                    MAX(ad2.auction_month)
+                FROM
+                    auction_details ad2
+                WHERE
+                    ad2.group_id = '$group_id'
+                    AND ad2.status IN (2, 3)
+            )
     ";
 
     // Execute the query directly
     $stmt = $pdo->query($taken_auction_qry);
     $taken_customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // If no results for the current month, fetch the max auction month for that group
-    if (empty($taken_customers)) {
-        $max_auction_qry = "
-            SELECT
-                MAX(ad.auction_month) AS auction_month
-            FROM
-                auction_details ad
-            WHERE
-                ad.group_id = '$group_id'
-        ";
+    // Return the results as JSON
+    echo json_encode($taken_customers);
+} 
 
-        $stmt_max = $pdo->query($max_auction_qry);
-        $max_auction_month = $stmt_max->fetch(PDO::FETCH_ASSOC);
-
-        // Return the max auction month if no data for the current month
-        echo json_encode([$max_auction_month]);
-    } else {
-        // Return the result for the current month
-        echo json_encode($taken_customers);
-    }
-} else {
-    // If group_id is not provided, return an empty array
-    echo json_encode([]);
-}
+// Close the PDO connection
+$pdo = null;
 ?>
