@@ -7657,7 +7657,7 @@ button:focus {
   border-radius: 10px;
   box-shadow: 4px 5px 13px 7px #e5e9ec;
   border: 0;
-  border-bottom: 1px solid #d7dbe2;
+  /* border-bottom: 1px solid #d7dbe2; */
   margin-bottom: 1rem;
 }
 

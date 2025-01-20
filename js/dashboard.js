@@ -5,6 +5,7 @@ $(document).ready(function () {
         getCollectionCounts();
         getClosedCounts();
         getColsummaryCounts();
+        getUserAccess();
             
     });
 
@@ -86,6 +87,7 @@ $(document).ready(function () {
 $(function () {
     checkUserScreenAccess();
     checkSMSReminder();
+    getUserAccess();
 });
 
 function checkUserScreenAccess() {
@@ -135,7 +137,16 @@ function getBranchList() {
 
     }, 'json');
 }
-
+function getUserAccess() {
+    $.post('api/dashboard_files/get_collection_access.php',{},function(response){
+        const collectionAccess = response.collection_access || 0; // Default to 0 if not found
+        if(collectionAccess == 1){
+            $('#coll_summary_title').show();
+        }else{
+            $('#coll_summary_title').hide();
+        }
+    },'json');
+}
 function getProcessingGroupList() {
     let branchId = $('#branch_id :selected').val();
     serverSideTable('#group_creation_table', branchId , 'api/dashboard_files/get_process_group_list.php');

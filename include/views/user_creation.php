@@ -179,6 +179,17 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="col-sm-4 col-md-4 col-lg-4">
+                                        <div class="form-group">
+                                            <label for="collection_access">Collection Summary Access</label><span class="text-danger">*</span>
+                                            <input type="hidden" id="loan_cat_edit_it">
+                                            <select class="form-control" id="collection_access" name="collection_access" tabindex="18" >
+                                                <option value="">Select Collection Summary Access</option>
+                                                <option value="1">YES</option>
+                                                <option value="2">NO</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
