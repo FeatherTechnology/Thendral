@@ -113,7 +113,7 @@ class customerUploadClass
     function groupName($pdo, $grp_name)
     {
         // Use a direct query (ensure $grp_name is properly sanitized before using)
-        $stmt = $pdo->query("SELECT grp_id FROM group_creation WHERE grp_name = '$grp_name'");
+        $stmt = $pdo->query("SELECT grp_id FROM group_creation WHERE grp_name = '$grp_name'AND status <=3");
 
         if ($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
