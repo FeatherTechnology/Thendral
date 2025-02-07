@@ -18,6 +18,8 @@ $(document).ready(function () {
         'enquiry_creation':'enquiry',
         'expenses_report':'reports',
         'other_transaction_report':'reports',
+        'collection_report':'reports',
+        'pending_report':'reports',
         'bulk_upload':'bulk_upload'
     };
 
