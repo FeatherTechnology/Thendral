@@ -32,7 +32,7 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
     (
         SELECT 
             gcm.id,
-            gs.cus_id as cust_id,
+            gs.cus_mapping_id as cust_id,
             cc.cus_id, 
             GROUP_CONCAT(DISTINCT cc.first_name SEPARATOR ' - ') AS cus_name,
             pl.place,
@@ -63,7 +63,7 @@ if (isset($group_id) && !empty($group_id) && isset($auction_month) && !empty($au
     (
         SELECT 
             gcm.id,
-            GROUP_CONCAT(DISTINCT gs.cus_id) AS cust_id,
+            GROUP_CONCAT(DISTINCT gs.cus_mapping_id) AS cust_id,
             '' AS cus_id, 
             GROUP_CONCAT(cc.first_name SEPARATOR ' - ') AS cus_name,
             '' AS place,
