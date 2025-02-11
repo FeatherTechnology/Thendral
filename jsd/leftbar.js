@@ -1,3 +1,4 @@
+
 $(document).ready(function () {
     // Define the mapping of current_page values to current_module values
     const moduleMapping = {
@@ -28,21 +29,22 @@ $(document).ready(function () {
     const current_module = moduleMapping[current_page] || 'dashboard';
 
     // Call the function with the current module
-    setTimeout(() => {
-        toggleSidebarSubmenus(current_module);
-    }, 500);
+    getLeftbarMenuList(current_module);
 
 })
 
-$(function () {
-    getLeftbarMenuList();
-});
+// Wrap the $.ajax() function in a promise and use async/await
+async function getLeftbarMenuList(current_module) {
+    try {
+        const response = await $.ajax({
+            url: 'api/base_api/menulist.php',
+            method: 'POST',
+            dataType: 'json'
+        });
 
-function getLeftbarMenuList() {
-    $.post('api/base_api/menulist.php', function (response) {
-        if (response.length != 0) {
+        if (response.length !== 0) {
             // Call the function with the response
-            createSidebarMenu(response);
+           await createSidebarMenu(response);
             // Dropdown menu
             $(".sidebar-dropdown > a").click(function () {
                 $(".sidebar-submenu").slideUp(200);
@@ -55,8 +57,11 @@ function getLeftbarMenuList() {
                     $(this).parent().addClass("active");
                 }
             });
+            await toggleSidebarSubmenus(current_module);
         }
-    }, 'json')
+    } catch (error) {
+        console.error('Error fetching menu list:', error);
+    }
 }
 
 // Function to create the sidebar menu
