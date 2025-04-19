@@ -101,7 +101,6 @@ ORDER BY
 // Fetch collections for the current auction month if necessary
 $collections_query = '';
 
-
 // Execute queries
 $current_statement = $pdo->query($current_auction_query);
 $previous_statement = $pdo->query($previous_auction_query);
@@ -111,19 +110,22 @@ $pending = 0; // Initialize pending amount
 $auction_month = 0;
 $previous_auction_month = 0;
 $prev_auction_date = '';
-
+$previous_collection_amount =0;
+$previous_chit_amount =0;
 if ($current_statement->rowCount() > 0) {
     $current_row = $current_statement->fetch(PDO::FETCH_ASSOC);
 
     // Loop through the previous auction data to calculate pending amount
     while ($previous_row = $previous_statement->fetch(PDO::FETCH_ASSOC)) {
-        $previous_collection_amount = (int)$previous_row['collection_amount'];
-        $previous_chit_amount = (int)$previous_row['chit_share'];
-        $pending += max(0, $previous_chit_amount - $previous_collection_amount);
+        $previous_collection_amount += (int)$previous_row['collection_amount'];
+        $previous_chit_amount += (int)$previous_row['chit_share'];
+     
+        $pending = max(0, $previous_chit_amount - $previous_collection_amount);
         // $previous_auction_month = max(0,(int)$previous_row['auction_month']);
         $previous_auction_month = max($auction_month, (int)$previous_row['auction_month']);
         $prev_auction_date = date('d-m-Y', strtotime($previous_row['date']));
     }
+
     $current_auction_month = ($current_row['auction_month'] !== null) ? $current_row['auction_month'] : 0;
     $current_auction_date = (date('d-m-Y', strtotime($current_row['date'])) !== null) ? date('d-m-Y', strtotime($current_row['date'])) : 0;
     $auction_month = max($current_auction_month, $previous_auction_month);
@@ -135,7 +137,6 @@ if ($current_statement->rowCount() > 0) {
     }
 
     $total_collected = (int)$current_row['collection_amount'];
-
     // Initial payable amount for the current month is chit_amount + pending amount (if any)
     $initial_payable_amnt = (int)$current_row['chit_share'] + $pending;
 

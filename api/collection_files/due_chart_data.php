@@ -60,12 +60,13 @@ $previous_statement = $pdo->query($previous_auction_query);
 
 // Initialize pending amount
 $pending_amount = 0;
-
+$previous_collection_amount =0;
+$previous_chit_amount =0;
 // Calculate pending amount
 while ($previous_row = $previous_statement->fetch(PDO::FETCH_ASSOC)) {
-    $previous_collection_amount = (int)$previous_row['collection_amount'];
-    $previous_chit_amount = (int)$previous_row['chit_share'];
-    $pending_amount += max(0, $previous_chit_amount - $previous_collection_amount);
+    $previous_collection_amount += (int)$previous_row['collection_amount'];
+    $previous_chit_amount += (int)$previous_row['chit_share'];
+    $pending_amount = max(0, $previous_chit_amount - $previous_collection_amount);
 }
 $lastAuctionMonth = null;
 $lastAuctionDate = null;
