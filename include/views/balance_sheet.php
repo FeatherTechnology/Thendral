@@ -79,7 +79,7 @@
                                         <td></td>
                                     </tr>
                                     <tr>
-                                        <td></td>
+                                        <td><b>Chit Advance</b></td>
                                         <td></td>
                                         <td></td>
                                     </tr>
