@@ -15,17 +15,24 @@ if ($type == 'today') {
 
 
 } else if ($type == 'month') {
-    // Get the selected month and subtract one month
-    $selectedMonth = $_POST['month'];
+    // Get the selected month (format: YYYY‑MM) and compute the previous month
+    $selectedMonth = $_POST['month'];  // e.g., '2025-06'
     $previousMonth = date('Y-m', strtotime('-1 month', strtotime($selectedMonth)));
-    
-    // Extract the previous month and year
+
+    // Extract year and month parts
+    $year  = date('Y', strtotime($previousMonth));
     $month = date('m', strtotime($previousMonth));
-    $year = date('Y', strtotime($previousMonth));
-    
-    // Apply the filter to fetch data from the previous month
-    $where = " (MONTH(created_on) <= '$month' AND YEAR(created_on) = '$year') $userwhere";
+
+    // Build your filter clause
+    $where = "(
+        YEAR(created_on) < '$year'
+        OR (
+            YEAR(created_on) = '$year'
+            AND MONTH(created_on) <= '$month'
+        )
+    ) $userwhere";
 }
+
 
 $op_data = array();
 $op_data[0]['hand_cash'] = 0;

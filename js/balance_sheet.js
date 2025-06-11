@@ -108,6 +108,7 @@ function getBalSheetDetails(type, from_date, to_date, month){
         $('#balance_sheet_table tbody tr:nth-child(8) td:nth-child(2)').text(moneyFormatIndia(response[0]['exccr']));
         $('#balance_sheet_table tbody tr:nth-child(9) td:nth-child(2)').text(moneyFormatIndia(response[0]['contracr']));
         $('#balance_sheet_table tbody tr:nth-child(10) td:nth-child(2)').text(moneyFormatIndia(response[0]['oicr']));
+         $('#balance_sheet_table tbody tr:nth-child(11) td:nth-child(2)').text(moneyFormatIndia(response[0]['chitadcr']));
 
         $('#balance_sheet_table tbody tr:nth-child(5) td:nth-child(3)').text(moneyFormatIndia(response[0]['invdr']));
         $('#balance_sheet_table tbody tr:nth-child(6) td:nth-child(3)').text(moneyFormatIndia(response[0]['depdr']));

@@ -40,7 +40,10 @@ $qry4 = $pdo->query("SELECT COALESCE(SUM(amount),0) AS exc_cr FROM `other_transa
 if ($qry4->rowCount() > 0) {
     $exccr = $qry4->fetch(PDO::FETCH_ASSOC)['exc_cr'];
 } 
-
+$qry = $pdo->query("SELECT COALESCE(SUM(amount),0) AS chitc_adv FROM `other_transaction` WHERE trans_cat ='7' AND type = '1' AND $where "); //Chit advance
+if ($qry->rowCount() > 0) {
+    $chitadcr = $qry->fetch(PDO::FETCH_ASSOC)['chitc_adv'];
+}
 $qry5 = $pdo->query("SELECT COALESCE(SUM(contra),0) AS contra_cr FROM
 (
     SELECT SUM(amount) AS contra FROM `other_transaction` WHERE trans_cat ='5' AND type = '1' AND $where
@@ -77,6 +80,7 @@ if ($qry4->rowCount() > 0) {
     $excdr = $qry4->fetch(PDO::FETCH_ASSOC)['exc_dr'];
 }
 
+
 $qry5 = $pdo->query("SELECT COALESCE(SUM(contra),0) AS contra_dr FROM
 (
     SELECT SUM(amount) AS contra FROM `other_transaction` WHERE trans_cat ='5' AND type = '2' AND $where
@@ -109,6 +113,7 @@ $result[0]['elcr']  = $elcr;
 $result[0]['exccr'] = $exccr;
 $result[0]['contracr'] = $contracr;
 $result[0]['oicr'] = $oicr;
+$result[0]['chitadcr'] = $chitadcr;
 
 $result[0]['depdr'] = $depdr;
 $result[0]['invdr'] = $invdr;
