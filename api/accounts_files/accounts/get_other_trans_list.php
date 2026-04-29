@@ -3,6 +3,10 @@ require "../../../ajaxconfig.php";
 $current_date = date('Y-m-d');
 @session_start();
 $user_id = $_SESSION['user_id'];
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+
+$user_branches = $userData['branch']; // e.g. "1,2,3"
 
 $trans_cat = ["1" => 'Deposit', "2" => 'Investment', "3" => 'EL', "4" => 'Exchange', "5" => 'Bank Deposit', "6" => 'Bank Withdrawal', "7" => 'Chit Advance', "8" => 'Other Income', "9" => 'Bank Unbilled'];
 $cash_type = ["1" => 'Hand Cash', "2" => 'Bank Cash'];
@@ -17,14 +21,18 @@ $qry = $pdo->query("
         d.name as username,  
         CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
         e.bank_name as bank_namecash,
+        e1.bank_name as to_bank_name,
+        bc.branch_name,
         a.auction_month 
     FROM `other_transaction` a 
     LEFT JOIN other_trans_name b ON a.name = b.id 
     LEFT JOIN group_creation gc ON a.group_id = gc.grp_id 
+    LEFT JOIN branch_creation bc ON a.branch = bc.id 
     LEFT JOIN users d ON a.user_name = d.id 
     LEFT JOIN bank_creation e ON a.bank_id = e.id 
+    LEFT JOIN bank_creation e1 ON a.to_bank = e1.id 
     LEFT JOIN customer_creation cc ON a.group_mem = cc.id 
-    WHERE a.insert_login_id = '$user_id' 
+    WHERE FIND_IN_SET(a.branch, '$user_branches')
     AND DATE(a.created_on) = '$current_date'
 ");
 if ($qry->rowCount() > 0) {

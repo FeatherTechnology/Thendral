@@ -15,7 +15,7 @@ $(document).ready(function () {
             otherTransTable('#accounts_other_trans_table');
         }
     });
-   
+
     window.updateTotal = function (input, amount) {
         const quantity = parseInt($(input).val()) || 0; // Get quantity value
         const totalValue = quantity * amount; // Calculate total value
@@ -44,7 +44,7 @@ $(document).ready(function () {
         let collectTableRowVal = {
             'username': $(this).closest('tr').find('td:nth-child(2)').text(),
             'id': $(this).attr('value'),
-            'branch': $(this).closest('tr').find('td:nth-child(3)').text(),
+            'branch': $(this).data('branch'), // ✅ correct (ID)
             'no_of_customers': $(this).closest('tr').find('td:nth-child(4)').text(),
             'total_amount': $(this).closest('tr').find('td:nth-child(5)').text(),
             'cash_type': $("input[name='coll_cash_type']:checked").val(),
@@ -53,7 +53,7 @@ $(document).ready(function () {
         swalConfirm('Collect', `Do you want to collect Money from ${collectTableRowVal.username}?`, submitCollect, collectTableRowVal);
     });
 
-    
+
 
     $("input[name='issue_cash_type']").click(function () {
         let collCashType = $(this).val();
@@ -214,6 +214,7 @@ $(document).ready(function () {
 
     $('#other_trans_add').click(function () {
         otherTransTable('#other_transaction_table');
+        getBranchList();
     });
     $("input[name='othertransaction_cash_type']").click(function () {
         let otherCashType = $(this).val();
@@ -225,85 +226,151 @@ $(document).ready(function () {
             getBankName('#othertransaction_bank_name');
         } else {
             $('.other_trans_div').hide();
+            $('.other_exchange_div').hide();
             $('#othertransaction_bank_name').val('').attr('disabled', true);
+            $('#to_bank').val('')
+            $('#cat_type').val('');
         }
     });
+
+
     // let category = '';
     // Handle the category change event
     // Handle the category change event
     $('#trans_category').change(function () {
+
         let category = $(this).val();
 
-        if (category == '7') {  // If category is 7, show group-related inputs and functionalities
-            $('#grp_id_cont').show();
-            $('#name_id_cont').hide();
-            $('#name_modl_btn').hide();
-
-            getGroupID(); // Load group IDs for selection
-            getRefId(category);
-            // Bind the cat_type change event only when category == 7
-            $('#cat_type').off('change').on('change', function () {  // Off to ensure previous bindings are removed
-                let category_type = $(this).val();
-                $('.other_month_div').show();
-
-                if (category_type === '2') { // Debit
-                    getAuctionMonth(group_id);
-                    settleAmount(group_id);
-                    $('#other_amnt').prop('readonly', true);
-                    $('#auction_month').prop('readonly', true);
-                } else {  // Credit or Both
-                    $('#other_amnt').val('');
-                    getCreditAuctionMonth(group_id, category_type, group_mem_id);
-                    $('#other_amnt').prop('readonly', false);
-                    $('#auction_month').prop('readonly', true);
-                }
-            });
-
-        } else { // For all other categories
-            $('#grp_id_cont').hide();
-            $('#mem_id_cont').hide();
-            $('#name_id_cont').show();
-            $('#name_modl_btn').show();
-            $('.other_month_div').hide();
+        // 🔁 Common Reset
+        function resetFields() {
+            $('#group_id, #group_mem, #auction_month, #other_amnt').val('');
+            // Reset branch dropdown
+            $('#other_branch_name').val('');
             $('#other_amnt').prop('readonly', false);
-            $('#group_id').val('');
-            $('#group_mem').val('');
-            $('#other_amnt').val('');
-            $('#auction_month').val('');
+            $('.other_month_div').hide();
+            $('.other_exchange_div').hide();
+        }
 
-            // Unbind the cat_type change event for other categories
-            $('#cat_type').off('change');
+        function toggleNameSection(show = true) {
+            $('#name_id_cont, #name_modl_btn').toggle(show);
+            $('#grp_id_cont, #mem_id_cont').toggle(!show);
+        }
 
-            // Continue with other categories handling
-            $('#trans_cat').val($(this).find(':selected').text());
-            $('#trans_cat').attr('data-id', category);
+        function setCatTypeOptions(category) {
+            let options = "<option value=''>Select Type</option>";
 
-            if (category != '') {
+            if (['1', '2', '3', '4', '9'].includes(category)) {
+                options += "<option value='1'>Credit</option><option value='2'>Debit</option>";
+            } else if (category == '5') {
+                options += "<option value='2'>Debit</option>";
+            } else if (['6', '8'].includes(category)) {
+                options += "<option value='1'>Credit</option>";
+            }
+
+            $('#cat_type').html(options);
+        }
+
+        function handleModal(category) {
+            if (category) {
                 $('#name_modal_btn')
                     .attr('data-toggle', 'modal')
                     .attr('data-target', '#add_name_modal');
             } else {
-                $('#name_modal_btn')
-                    .removeAttr('data-toggle')
-                    .removeAttr('data-target');
+                $('#name_modal_btn').removeAttr('data-toggle data-target');
             }
-
-            nameDropDown();  // Populate names based on selected transaction category
-
-            // Populate cat_type options based on category value
-            let catTypeOptn = "<option value=''>Select Type</option>";
-            if (category == '1' || category == '2' || category == '3' || category == '4' || category == '9') {
-                catTypeOptn += "<option value='1'>Credit</option><option value='2'>Debit</option>";
-            } else if (category == '5') {
-                catTypeOptn += "<option value='2'>Debit</option>";
-            } else if (category == '6' || category == '8') {
-                catTypeOptn += "<option value='1'>Credit</option>";
-            }
-
-            $('#cat_type').empty().append(catTypeOptn); // Update cat_type options
-
-            getRefId(category); // Fetch reference IDs based on category
         }
+
+        function bindCatTypeChange(handler) {
+            $('#cat_type').off('change').on('change', handler);
+        }
+
+        // 🔄 Common execution
+        resetFields();
+
+        $('#trans_cat')
+            .val($(this).find(':selected').text())
+            .attr('data-id', category);
+
+        setCatTypeOptions(category);
+        handleModal(category);
+        nameDropDown();
+        getRefId(category);
+
+        // ===========================
+        // 🔥 Category-specific logic
+        // ===========================
+
+        if (category == '4') { // Exchange
+
+            $('#other_branch_name').on('change', function () {
+                $('#cat_type').val('');
+
+            });
+            $('#othertransaction_bank_name').on('change', function () {
+                let selectedBankId = $(this).val();
+                $('#cat_type').val('');
+                // Reload to_bank excluding selected bank
+                getBankName('#to_bank', selectedBankId);
+            });
+
+            toggleNameSection(true);
+
+            bindCatTypeChange(function () {
+                let type = $(this).val();
+                let othertransaction_cash_type = $("input[name='othertransaction_cash_type']:checked").val();
+                let selectedBankId = $('#othertransaction_bank_name').val();
+                if (type === '1') { // Credit
+
+                    let otherName = $('#other_trans_name').val();
+                    getExchangeData(otherName, othertransaction_cash_type, selectedBankId);
+                    $('#other_amnt').prop('readonly', true);
+                    $('.other_exchange_div').hide();
+
+                } else {
+                    $('#other_amnt').prop('readonly', false).val('');
+
+                    if (othertransaction_cash_type == '2') {
+                        $('.other_exchange_div').show();
+                        getBankName('#to_bank', selectedBankId);
+                    }
+                }
+            });
+
+        }
+        else if (category == '7') { // Chit Advance
+
+            toggleNameSection(false);
+            $('#grp_id_cont').show();
+
+            getGroupID();
+
+            bindCatTypeChange(function () {
+                let type = $(this).val();
+                $('.other_month_div').show();
+
+                if (type === '2') { // Debit
+                    getAuctionMonth(group_id);
+                    settleAmount(group_id);
+                    $('#other_amnt').prop('readonly', true);
+                    $('#auction_month').prop('readonly', true);
+                } else {
+                    $('#other_amnt').prop('readonly', false).val('');
+                    getCreditAuctionMonth(group_id, type, group_mem_id);
+                    $('#auction_month').prop('readonly', true);
+                }
+            });
+
+        }
+        else { // Other categories
+
+            toggleNameSection(true);
+
+            // remove old binding
+            $('#cat_type').off('change');
+            $('#othertransaction_bank_name').off('change');
+            $('#other_branch_name').off('change');
+        }
+
     });
 
 
@@ -426,17 +493,19 @@ $(document).ready(function () {
             'other_trans_name': $('#other_trans_name :selected').val(),
             'cat_type': $('#cat_type :selected').val(), // Debit or Credit
             'other_ref_id': $('#other_ref_id').val(),
+            'other_branch_name': $('#other_branch_name :selected').val(),
+            'to_bank': $('#to_bank :selected').val(),
             'other_trans_id': $('#other_trans_id').val(),
             'other_amnt': parseFloat($('#other_amnt').val().replace(/,/g, '')) || '', // Handle NaN
             'auction_month': $('#auction_month').val(),
             'other_remark': $('#other_remark').val()
         };
-    
+
         let otherAmount = otherTransData.other_amnt;
         let collMode = otherTransData.coll_mode;
         let catType = otherTransData.cat_type; // 1 = Credit, 2 = Debit
         let transCategory = parseInt(otherTransData.trans_category);
-    
+
         try {
             // Step 1: Fetch user's total credit and debit amounts
             let userTransactionsResponse = await $.post('api/accounts_files/accounts/get_user_transactions.php', {
@@ -444,23 +513,23 @@ $(document).ready(function () {
                 'group_id': otherTransData.group_id,
                 'group_mem': otherTransData.group_mem
             });
-    
+
             let totalCredit = parseFloat(userTransactionsResponse.total_type_1_amount || 0); // Total Credit
             let totalDebit = parseFloat(userTransactionsResponse.total_type_2_amount || 0);  // Total Debit
-    
+
             let balance;
             if (catType == '2') { // Debit Transaction
                 balance = totalCredit - totalDebit; // Calculate balance
             } else if (catType == '1') { // Credit Transaction
                 balance = totalDebit - totalCredit; // Calculate balance
             }
-    
+
             // Step 2: Validate Debit/Credit Transactions
             if (transCategory >= 3 && transCategory <= 9) {
                 if (balance > 0 && otherAmount > Math.abs(balance)) {
                     const formattedBalance = moneyFormatIndia(Math.abs(balance));
                     let drCr = (catType == '2') ? 'debit' : 'credit';
-    
+
                     swalError('Warning', 'You may only ' + drCr + ' up to: ' + formattedBalance);
                     $('#submit_other_transaction').attr('disabled', false);
                     return;
@@ -473,7 +542,7 @@ $(document).ready(function () {
                     return;
                 }
             }
-    
+
             // Step 3: Fetch hand cash and bank cash balances for validation
             if (catType == '2') { // Debit Transaction
                 let [hand_cash_balance, bank_cash_balance] = await new Promise((resolve) => {
@@ -481,7 +550,7 @@ $(document).ready(function () {
                         resolve([hand_cash_balance, bank_cash_balance]);
                     });
                 });
-    
+
                 if (collMode == '1' && otherAmount > hand_cash_balance) { // Hand cash
                     swalError('Warning', 'Insufficient hand cash balance.');
                     $('#submit_other_transaction').attr('disabled', false);
@@ -493,11 +562,11 @@ $(document).ready(function () {
                     return;
                 }
             }
-    
+
             // Step 4: Proceed if all validations pass
             if (otherTransFormValid(otherTransData)) {
                 let submissionResponse = await $.post('api/accounts_files/accounts/submit_other_transaction.php', otherTransData, 'json');
-    
+
                 if (submissionResponse == '1') {
                     swalSuccess('Success', 'Other Transaction added successfully.');
                     otherTransTable('#other_transaction_table');
@@ -507,6 +576,7 @@ $(document).ready(function () {
                     $('#name_id_cont').show();
                     $('#name_modl_btn').show();
                     $('.other_month_div').hide();
+                    $('.other_exchange_div').hide();
                     $('#submit_other_transaction').attr('disabled', false);
                 } else {
                     swalError('Error', 'Failed to add transaction.');
@@ -587,6 +657,36 @@ function getOpeningBal() {
         getClosingBal();
     });
 }
+function getExchangeData(otherName, othertransaction_cash_type, selectedBankId) {
+
+    let branch_id = $('#other_branch_name').val();
+    if (!branch_id || !otherName || !othertransaction_cash_type || (othertransaction_cash_type == '2' && !selectedBankId)) {
+        swalError('Warning', 'Please fill all required fields.');
+        return
+    }
+
+    $.post(
+        'api/accounts_files/accounts/getExchangeData.php',
+        { branch_id: branch_id, type: 2, other_name: otherName, othertransaction_cash_type: othertransaction_cash_type, selectedBankId: selectedBankId },
+        function (response) {
+
+            if (response && response.remaining_amount !== undefined && response.remaining_amount !== 0) {
+                console.log('Received remaining_amount:', response.remaining_amount); // Debug log
+                let exchange_amount = moneyFormatIndia(response.remaining_amount);
+                $('#other_amnt').val(exchange_amount);
+
+            } else {
+                $('#other_amnt').val(0);
+                swalError('Warning', 'No data found for the selected name and branch.');
+            }
+
+        },
+        'json'
+    ).fail(function () {
+        $('#other_amnt').val('');
+    });
+}
+
 function getGroupID() {
     $.post('api/accounts_files/accounts/getGroupid.php', function (response) {
         let appendOption = '';
@@ -635,14 +735,14 @@ function getCreditAuctionMonth(group_id, category_type, group_mem_id) {
 }
 function settleAmount(group_id) {
     let cus_id = $('#group_mem').val();
-    $.post('api/accounts_files/accounts/getSettleAccounts.php', { group_id: group_id ,cus_id:cus_id }, function (response) {
+    $.post('api/accounts_files/accounts/getSettleAccounts.php', { group_id: group_id, cus_id: cus_id }, function (response) {
         // Check if the response has any data
         if (response.length > 0) {
             let settle_amount = moneyFormatIndia(response[0].settlement_amount)
             $('#other_amnt').val(settle_amount);
         } else {
             $('#other_amnt').val(0); // Clear the field if no data is returned
-            swalError('Warning','The auction for this month is not yet completed')
+            swalError('Warning', 'The auction for this month is not yet completed')
         }
     }, 'json').fail(function () {
         $('#other_amnt').val(''); // Clear the field if there's an error
@@ -651,9 +751,9 @@ function settleAmount(group_id) {
 function getClosingBal(callback) {
     $.post('api/accounts_files/accounts/closing_balance.php', function (response) {
         if (response.length > 0) {
-            let close = parseInt($('.opening_val').text().replace(/,/g,'')) + parseInt(response[0]['closing_balance']);
-            let hand = parseInt($('.op_hand_cash_val').text().replace(/,/g,'')) + parseInt(response[0]['hand_cash']);
-            let bank = parseInt($('.op_bank_cash_val').text().replace(/,/g,'')) + parseInt(response[0]['bank_cash']);
+            let close = parseInt($('.opening_val').text().replace(/,/g, '')) + parseInt(response[0]['closing_balance']);
+            let hand = parseInt($('.op_hand_cash_val').text().replace(/,/g, '')) + parseInt(response[0]['hand_cash']);
+            let bank = parseInt($('.op_bank_cash_val').text().replace(/,/g, '')) + parseInt(response[0]['bank_cash']);
 
             $('.closing_val').text(moneyFormatIndia(close));
             $('.clse_hand_cash_val').text(moneyFormatIndia(hand));
@@ -711,12 +811,17 @@ function getLoanIssueList() {
     }, 'json');
 }
 
-function getBankName(dropdowndId) {
+function getBankName(dropdowndId, excludeId = '') {
     $.post('api/common_files/bank_name_list.php', function (response) {
         var bankName = '<option value="">Select Bank Name</option>';
+
         $.each(response, function (index, value) {
-            bankName += '<option value="' + value.id + '" data-id="' + value.account_number + '">' + value.bank_name + '</option>';
+            // Skip the selected bank
+            if (value.id != excludeId) {
+                bankName += '<option value="' + value.id + '" data-id="' + value.account_number + '">' + value.bank_name + '</option>';
+            }
         });
+
         $(dropdowndId).empty().html(bankName);
     }, 'json');
 }
@@ -729,15 +834,19 @@ function getInvoiceNo() {
 
 function getBranchList() {
     $.post('api/common_files/user_mapped_branches.php', function (response) {
-        let branchOption;
+        let branchOption = ''; // initialize properly
+
         branchOption += '<option value="">Select Branch Name</option>';
+
         $.each(response, function (index, value) {
             branchOption += '<option value="' + value.id + '">' + value.branch_name + '</option>';
         });
-        $('#branch_name').empty().html(branchOption);
+
+        // Apply to BOTH dropdowns
+        $('#branch_name, #other_branch_name').empty().html(branchOption);
+
     }, 'json');
 }
-
 
 function expensesFormValid(expensesData) {
     for (key in expensesData) {
@@ -832,7 +941,7 @@ function nameDropDown() {
 function otherTransFormValid(data) {
 
     for (key in data) {
-        if (key != 'bank_id' && key != 'other_trans_id' && key != 'group_id' && key != 'group_mem' && key != 'auction_month' && key != 'other_trans_name') {
+        if (key != 'bank_id' && key != 'other_trans_id' && key != 'group_id' && key != 'group_mem' && key != 'auction_month' && key != 'other_trans_name' && key != 'to_bank') {
             if (data[key] == '' || data[key] == null || data[key] == undefined) {
                 $('#submit_other_transaction').attr('disabled', false);
                 return false;
@@ -842,6 +951,12 @@ function otherTransFormValid(data) {
 
     if (data['coll_mode'] == '2') {
         if (data['bank_id'] == '' || data['bank_id'] == null || data['bank_id'] == undefined || data['other_trans_id'] == '' || data['other_trans_id'] == null || data['other_trans_id'] == undefined) {
+            $('#submit_other_transaction').attr('disabled', false);
+            return false;
+        }
+    }
+    if (data['trans_category'] == '4' && data['cat_type'] == '2' && data['coll_mode'] == '2') {
+        if (data['to_bank'] == '' || data['to_bank'] == null || data['to_bank'] == undefined) {
             $('#submit_other_transaction').attr('disabled', false);
             return false;
         }
@@ -874,6 +989,8 @@ function otherTransTable(tableId) {
             'type',
             'bank_namecash',
             'ref_id',
+            'branch_name',
+            'to_bank_name',
             'trans_id',
             'amount',
             'auction_month',
@@ -1020,7 +1137,7 @@ function updateTotalValue() {
         }
     });
 }
- 
+
 function loadToday() {
     // Clear table body
     $('#denominationTableBody').empty();
@@ -1029,7 +1146,7 @@ function loadToday() {
     $.ajax({
         url: 'api/accounts_files/accounts/get_today_data.php', // Replace with your actual API endpoint
         method: 'GET',
-        success: function(response) {
+        success: function (response) {
             let data;
             if (typeof response === "string") {
                 data = JSON.parse(response);
@@ -1060,7 +1177,7 @@ function loadToday() {
             // Recalculate the overall total after loading data
             calculateOverallTotal();
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error fetching data:", error);
             $('#denominationTableBody').append(`
                 <tr>
@@ -1102,7 +1219,7 @@ function loadPreviousDay() {
     $.ajax({
         url: 'api/accounts_files/accounts/get_previous_data.php', // Replace with your actual API endpoint
         method: 'GET',
-        success: function(response) {
+        success: function (response) {
             let data;
             if (typeof response === "string") {
                 data = JSON.parse(response);
@@ -1133,7 +1250,7 @@ function loadPreviousDay() {
             // Recalculate the overall total after loading data
             calculateOverallTotal();
         },
-        error: function(xhr, status, error) {
+        error: function (xhr, status, error) {
             console.error("Error fetching previous day's data:", error);
             $('#denominationTableBody').append(`
                 <tr>
@@ -1205,8 +1322,8 @@ toggleButtons.on("click", function () {
         loadPreviousDay();
     }
 });
-   // Button click for adding denominations
-$('#add_grup').on('click', function() {
+// Button click for adding denominations
+$('#add_grup').on('click', function () {
     // Clear the table body initially
     $('#denominationTableBody').empty();
 
@@ -1245,7 +1362,7 @@ function loadDataForPreviousDay() {
         $.ajax({
             url: 'api/accounts_files/accounts/get_previous_data.php', // Replace with your actual API endpoint
             method: 'GET',
-            success: function(response) {
+            success: function (response) {
                 let data;
                 if (typeof response === "string") {
                     data = JSON.parse(response);
@@ -1272,7 +1389,7 @@ function loadDataForPreviousDay() {
                 }
                 calculateOverallTotal();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("Error fetching previous day's data:", error);
                 resolve(false); // Error occurred, no data loaded
             }
@@ -1286,7 +1403,7 @@ function loadDataForToday() {
         $.ajax({
             url: 'api/accounts_files/accounts/get_today_data.php', // Replace with your actual API endpoint for today's data
             method: 'GET',
-            success: function(response) {
+            success: function (response) {
                 let data;
                 if (typeof response === "string") {
                     data = JSON.parse(response);
@@ -1313,7 +1430,7 @@ function loadDataForToday() {
                 }
                 calculateOverallTotal();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("Error fetching today's data:", error);
                 resolve(false); // Error occurred, no data loaded
             }

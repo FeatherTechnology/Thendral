@@ -1,11 +1,17 @@
 <?php
 require "../../../ajaxconfig.php";
+@session_start();
+$user_id = $_SESSION['user_id'];
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
+// Initialize bank_condition
+
 $current_date = date('Y-m-d');
 $loan_issue_list_arr = array();
 $cash_type = $_POST['cash_type'];
 $bank_id = $_POST['bank_id'];
 
-// Initialize bank_condition
 $bank_condition = ''; 
 
 // Initialize amount_column based on cash_type
@@ -24,6 +30,7 @@ if ($cash_type == '1') {
 $query = "WITH SettlementSummary AS (
     SELECT 
         si.insert_login_id,
+        si.group_id,
         DATE_FORMAT(si.settle_date, '%d-%m-%Y') AS settle_date,
         COUNT(DISTINCT CASE WHEN $amount_column > 0 THEN si.auction_id END) AS no_of_customers,
         SUM(CASE WHEN $amount_column > 0 THEN $amount_column ELSE 0 END) AS amount
@@ -33,18 +40,24 @@ $query = "WITH SettlementSummary AS (
         DATE(si.settle_date) = '$current_date'
         $bank_condition
     GROUP BY 
-        si.insert_login_id, DATE_FORMAT(si.settle_date, '%d-%m-%Y')
+        si.insert_login_id, si.group_id, DATE_FORMAT(si.settle_date, '%d-%m-%Y')
 )
+
 SELECT
     a.name AS user_name,
     GROUP_CONCAT(DISTINCT bc.branch_name ORDER BY bc.branch_name SEPARATOR ', ') AS branch_names,
-    ss.no_of_customers,
+    SUM(ss.no_of_customers) AS no_of_customers,
     ss.settle_date,
-    COALESCE(ss.amount, 0) AS total_settlement_amount
+    COALESCE(SUM(ss.amount), 0) AS total_settlement_amount
 FROM
-    users a
-INNER JOIN SettlementSummary ss ON ss.insert_login_id = a.id
-LEFT JOIN branch_creation bc ON FIND_IN_SET(bc.id, a.branch)
+    SettlementSummary ss
+INNER JOIN users a ON ss.insert_login_id = a.id
+LEFT JOIN group_creation gc ON ss.group_id = gc.grp_id
+LEFT JOIN branch_creation bc ON FIND_IN_SET(bc.id, gc.branch)
+
+WHERE
+    FIND_IN_SET(bc.id, '$user_branches') -- ✅ FILTER HERE
+
 GROUP BY
     a.name, ss.settle_date
 ORDER BY

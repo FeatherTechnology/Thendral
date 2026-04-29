@@ -2,8 +2,12 @@
 require "../../ajaxconfig.php";
 @session_start();
 $user_id = $_SESSION['user_id'];
+$response = array();
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
 $current_date = date('Y-m-d');
-
+ $branch_condition = " AND FIND_IN_SET(gc.branch, '$user_branches')";
 // Use a default value for $branchId if it's not set
 $branchId = isset($_POST['branchId']) ? $_POST['branchId'] : null;
 $response = array();
@@ -17,7 +21,10 @@ $month_paid = "SELECT COALESCE(SUM(c.collection_amount), 0) AS month_paid
 // Add conditions based on branchId
 if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
     $month_paid .= " AND gc.branch = '$branchId' ";
-} 
+} else  if ($branchId !== '0') {
+    // ✅ Decide user_id priority (POST > SESSION)
+    $month_paid .= "$branch_condition";
+}
 $month_paid .= "GROUP BY gc.grp_id";
 
 // Initialize the SQL for unpaid amount calculation
@@ -65,7 +72,10 @@ WHERE
 // Add conditions based on branchId for unpaid amount
 if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
     $month_unpaid .= " AND gc.branch = '$branchId'";
-} 
+}  else  if ($branchId !== '0') {
+    // ✅ Decide user_id priority (POST > SESSION)
+    $month_unpaid .= "$branch_condition";
+}
 $month_unpaid .= " GROUP BY gs.grp_creation_id";
 
 $prev_pen_amount  = "SELECT (
@@ -93,7 +103,11 @@ $prev_pen_amount  = "SELECT (
 // Add conditions based on branchId for unpaid amount
 if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
     $prev_pen_amount .= "WHERE gc.branch = '$branchId'";
-} 
+}  else  if ($branchId !== '0') {
+    // ✅ Decide user_id priority (POST > SESSION)
+    $prev_pen_amount .= "WHERE FIND_IN_SET(gc.branch, '$user_branches')";
+}
+
 $qryCount = "SELECT
     gs.id, 
     COALESCE((la.chit_amount * gs.share_percent / 100), 0) AS total_chit_amount,
@@ -132,7 +146,10 @@ WHERE
 ";
 if ($branchId !== null && $branchId !== '' && $branchId !== '0') {
     $qryCount .= " AND gc.branch = '$branchId' ";
-} 
+}   else  if ($branchId !== '0') {
+    // ✅ Decide user_id priority (POST > SESSION)
+    $qryCount .= "$branch_condition";
+}
 $qryCount .= "GROUP BY
 gs.id
 ORDER BY
@@ -150,10 +167,7 @@ foreach ($mappings as $mapping) {
     $last_month = $mapping['last_auction_month'];  // Assuming this value is already sanitized
 
     // Correct the query: 'pending_amount' should be 'total_amount'
-    $qry1 = "SELECT COALESCE(SUM(c.collection_amount), 0) AS total_collection_amount
-             FROM collection c
-             WHERE c.share_id = '$map_id'
-               AND c.auction_month <= '$last_month'";
+    $qry1 = "SELECT COALESCE(SUM(c.collection_amount), 0) AS total_collection_amount FROM collection c WHERE c.share_id = '$map_id' AND CAST(c.auction_month AS UNSIGNED) <= $last_month";
     $stmt1 = $pdo->query($qry1);
 
     // Fetch the result

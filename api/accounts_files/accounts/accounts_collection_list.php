@@ -1,5 +1,15 @@
 <?php
 require "../../../ajaxconfig.php";
+@session_start();
+$user_id = $_SESSION['user_id'];
+
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
+
+$user_branches_arr = explode(',', $user_branches);
+$user_branches_in = implode(',', array_map('intval', $user_branches_arr));
+
 $current_date = date('Y-m-d');
 $collection_list_arr = array();
 $cash_type = $_POST['cash_type'];
@@ -12,20 +22,30 @@ if ($cash_type == '1') {
     $cndtn = "coll_mode != '1' AND bank_id = '$bank_id'";
 }
 
-$qry = $pdo->query("WITH first_query AS (
+$qry = $pdo->query("
+WITH first_query AS (
     SELECT
         u.id AS userid,
         u.name,
+
+        -- ✅ Only allowed branch names
         GROUP_CONCAT(
             DISTINCT bc.branch_name
             ORDER BY bc.branch_name SEPARATOR ', '
         ) AS branch_name,
+
+        GROUP_CONCAT(
+            DISTINCT bc.id
+            ORDER BY bc.id
+        ) AS branch_id,
+
+        -- ✅ Customer count
         (
             SELECT COUNT(*)
             FROM collection nbc
             WHERE
-                $cndtn 
-                AND nbc.insert_login_id = u.id 
+                  $cndtn
+                AND nbc.insert_login_id = u.id
                 AND nbc.collection_date > COALESCE(
                     (
                         SELECT created_on
@@ -33,25 +53,28 @@ $qry = $pdo->query("WITH first_query AS (
                         WHERE user_id = u.id AND $cndtn
                         ORDER BY id DESC
                         LIMIT 1
-                    ), '1970-01-01 00:00:00'
-                ) 
+                    ),
+                    '1970-01-01 00:00:00'
+                )
                 AND nbc.collection_date <= NOW()
         ) AS no_of_customers,
+
         SUM(c.collection_amount) AS total_amount,
         '1' AS TYPE
-    FROM
-        collection c
+
+    FROM collection c
     LEFT JOIN users u ON c.insert_login_id = u.id
     LEFT JOIN group_creation gc ON c.group_id = gc.grp_id
-    LEFT JOIN branch_creation bc ON FIND_IN_SET(bc.id, gc.branch)
-    LEFT JOIN (
-        SELECT ace.user_id, ace.collection_amnt
-        FROM accounts_collect_entry ace
-        ORDER BY id DESC
-        LIMIT 1
-    ) AS last_collection ON c.insert_login_id = last_collection.user_id
+
+    -- ✅ CRITICAL FIX (restrict branch here)
+    LEFT JOIN branch_creation bc 
+        ON FIND_IN_SET(bc.id, gc.branch)
+        AND bc.id IN ($user_branches_in)   -- 🔥 replace with dynamic user branches
+
     WHERE
-        $cndtn
+        $cndtn 
+          AND bc.id IN ($user_branches_in)
+
         AND c.collection_date > COALESCE(
             (
                 SELECT created_on
@@ -59,46 +82,78 @@ $qry = $pdo->query("WITH first_query AS (
                 WHERE user_id = u.id AND $cndtn
                 ORDER BY id DESC
                 LIMIT 1
-            ), '1970-01-01 00:00:00'
-        ) 
+            ),
+            '1970-01-01 00:00:00'
+        )
+
         AND c.collection_date <= NOW()
         AND c.insert_login_id = u.id
+
     GROUP BY u.id
 ),
+
 second_query AS (
     SELECT 
-        us.id AS userid, 
-        us.name, 
-        ac.branch, 
-        SUM(ac.no_of_customers) AS no_of_customers,  
+        us.id AS userid,
+        us.name,
+
+        -- ✅ FIXED (no duplicate join)
+        (
+            SELECT GROUP_CONCAT(branch_name ORDER BY branch_name SEPARATOR ', ')
+            FROM branch_creation
+            WHERE FIND_IN_SET(id, ac.branch)
+            AND id IN ($user_branches_in)   -- 🔥 restrict to user branch
+        ) AS branch_name,
+
+        ac.branch AS branch_id,
+
+        SUM(ac.no_of_customers) AS no_of_customers,
         SUM(ac.collection_amnt) AS total_amount,
-        '2' AS type
-    FROM 
-        accounts_collect_entry ac
+
+        '2' AS TYPE
+
+    FROM accounts_collect_entry ac
     JOIN users us ON ac.user_id = us.id
-    WHERE 
+
+    WHERE
         $cndtn 
-        AND DATE(ac.created_on) = CURDATE() 
+
+        -- ✅ strict branch filter
+        AND ac.branch IN ($user_branches_in)
+
+        AND DATE(ac.created_on) = CURDATE()
+
         AND ac.user_id NOT IN (
-            SELECT userid 
-            FROM first_query
+            SELECT userid FROM first_query
         )
+
     GROUP BY us.id
 )
-SELECT userid, name, branch_name, no_of_customers, total_amount, type
+
+SELECT 
+    userid,
+    name,
+    branch_name,
+    branch_id,
+    no_of_customers,
+    total_amount,
+    type
 FROM (
     SELECT * FROM first_query
     UNION ALL
     SELECT * FROM second_query
-) AS subqry 
+) AS final_data
+
 ORDER BY userid ASC;
 ");
+
 
 if ($qry->rowCount() > 0) {
     while ($data = $qry->fetch(PDO::FETCH_ASSOC)) {
         $disabled = ($data['type'] == 2) ? 'disabled' : ''; // 1 - enabled; 2 - disabled
         $data['total_amount'] = moneyFormatIndia($data['total_amount']);
-        $data['action'] = "<a href='#' class='collect-money' value='" . $data['userid'] . "'><button class='btn btn-primary' " . $disabled . ">Collect</button></a> ";
+
+        $data['action'] = "<a href='#' class='collect-money' value='" . $data['userid'] . "'  data-branch='" . $data['branch_id'] . "'><button class='btn btn-primary' " . $disabled . ">Collect</button></a> ";
         $collection_list_arr[] = $data;
     }
 }

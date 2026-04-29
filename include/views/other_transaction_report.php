@@ -17,6 +17,7 @@
                                     <th>Group ID</th>
                                     <th>Name</th>
                                     <th>Customer Name</th>
+                                    <th>Branch</th>
                                     <th>Type</th>
                                     <th>Bank Name</th>
                                     <th>Reference ID</th>

@@ -63,7 +63,11 @@ if ($current_mapping_count > $total_members) {
     echo json_encode(['result' => 5, 'message' => 'Remove The Customer Mapping Details']);
     exit;
 }
-
+try {
+    // Begin transaction
+    $pdo->beginTransaction();
+    // Get the latest group ID
+    $selectIC = $pdo->query("SELECT grp_id FROM group_creation WHERE grp_id != '' ORDER BY id DESC LIMIT 1 FOR UPDATE");
 // Insert or Update Group Creation
 if ($id == '') {
     // Insert
@@ -82,6 +86,15 @@ if ($id == '') {
     }
 } else {
     // Update
+    if ($selectIC->rowCount() > 0) {
+        $row = $selectIC->fetch();
+        $ac2 = $row["grp_id"];
+        $appno2 = ltrim(strstr($ac2, '-'), '-'); // Extract numeric part after the hyphen
+        $appno2 = $appno2 + 1;
+        $grp_id = "G-" . $appno2;
+    } else {
+        $grp_id = "G-101"; // If no previous group ID exists, start with G-1
+    } 
     $qry = $pdo->query("UPDATE `group_creation` SET
         `grp_id` = '$group_id',
         `grp_name` = '$group_name',
@@ -110,6 +123,15 @@ if ($id == '') {
     }
 }
 
+   // Commit transaction
+   $pdo->commit();
+
+} catch (Exception $e) {
+    // Rollback the transaction on error
+    $pdo->rollBack();
+    echo "Error: " . $e->getMessage();
+    exit;
+}
 // Check if the query was successful
 if ($result == 1) {
     // Check customer mapping and update status

@@ -2,6 +2,11 @@
 require "../../../ajaxconfig.php";
 @session_start();
 $user_id = $_SESSION['user_id'];
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
+
+$branch_condition = "  FIND_IN_SET(branch, '$user_branches')";
 
 if (isset($_POST['IDEtype'])) {
     $IDEtype = $_POST['IDEtype'];
@@ -30,7 +35,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -40,7 +45,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition
 
             UNION ALL
 
@@ -50,7 +55,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -60,7 +65,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition
         ) AS opening
     ");
         $opening_bal = $opening_qry->fetch()['opening_balance'];
@@ -74,7 +79,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -84,7 +89,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition
             
             UNION ALL
             
@@ -94,7 +99,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -104,7 +109,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition
 
             UNION ALL
 
@@ -115,7 +120,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -126,7 +131,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition
             
             UNION ALL
 
@@ -137,7 +142,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -148,7 +153,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition
         ) AS closing
     ");
         $closing_bal = $closing_qry->fetch()['closing_balance'];
@@ -158,25 +163,25 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
 
     $qry = $pdo->query("SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition
     
     ORDER BY 1
     ");
@@ -235,7 +240,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -245,7 +250,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -255,7 +260,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -265,7 +270,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
         ) AS opening
     ");
         $opening_bal = $opening_qry->fetch()['opening_balance'];
@@ -279,7 +284,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -289,7 +294,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
             
             UNION ALL
             
@@ -299,7 +304,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -309,7 +314,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -320,7 +325,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -331,7 +336,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
             
             UNION ALL
 
@@ -342,7 +347,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -353,7 +358,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
         ) AS closing
     ");
         $closing_bal = $closing_qry->fetch()['closing_balance'];
@@ -363,25 +368,25 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
 
     $qry = $pdo->query("SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='1' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
     
     ORDER BY 1
     ");
@@ -440,7 +445,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -450,7 +455,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition
 
             UNION ALL
 
@@ -460,7 +465,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -470,7 +475,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition
         ) AS opening
     ");
         $opening_bal = $opening_qry->fetch()['opening_balance'];
@@ -484,7 +489,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -494,7 +499,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition
             
             UNION ALL
             
@@ -504,7 +509,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -514,7 +519,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition
 
             UNION ALL
 
@@ -525,7 +530,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -536,7 +541,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition
             
             UNION ALL
 
@@ -547,7 +552,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -558,7 +563,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition
         ) AS closing
     ");
         $closing_bal = $closing_qry->fetch()['closing_balance'];
@@ -568,25 +573,25 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
 
     $qry = $pdo->query("SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition
     
     ORDER BY 1
     ");
@@ -645,7 +650,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -655,7 +660,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -665,7 +670,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -675,7 +680,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
         ) AS opening
     ");
         $opening_bal = $opening_qry->fetch()['opening_balance'];
@@ -689,7 +694,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -699,7 +704,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
             
             UNION ALL
             
@@ -709,7 +714,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -719,7 +724,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -730,7 +735,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -741,7 +746,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
             
             UNION ALL
 
@@ -752,7 +757,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -763,7 +768,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
         ) AS closing
     ");
         $closing_bal = $closing_qry->fetch()['closing_balance'];
@@ -773,25 +778,25 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
 
     $qry = $pdo->query("SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='3' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
     
     ORDER BY 1
     ");
@@ -850,7 +855,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -860,7 +865,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition
 
             UNION ALL
 
@@ -870,7 +875,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -880,7 +885,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition
         ) AS opening
     ");
         $opening_bal = $opening_qry->fetch()['opening_balance'];
@@ -894,7 +899,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -904,7 +909,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition
             
             UNION ALL
             
@@ -914,7 +919,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -924,7 +929,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition
 
             UNION ALL
 
@@ -935,7 +940,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -946,7 +951,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition
             
             UNION ALL
 
@@ -957,7 +962,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition
 
             UNION ALL
 
@@ -968,7 +973,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition
         ) AS closing
     ");
         $closing_bal = $closing_qry->fetch()['closing_balance'];
@@ -978,25 +983,25 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
 
     $qry = $pdo->query("SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition
     
     ORDER BY 1
     ");
@@ -1055,7 +1060,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1065,7 +1070,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1075,7 +1080,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1085,7 +1090,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on < DATE_FORMAT(CURRENT_DATE(), '%Y-%m-01')
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
         ) AS opening
     ");
         $opening_bal = $opening_qry->fetch()['opening_balance'];
@@ -1099,7 +1104,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1109,7 +1114,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
             
             UNION ALL
             
@@ -1119,7 +1124,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1129,7 +1134,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             FROM other_transaction
             WHERE
                 created_on <= LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1140,7 +1145,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1151,7 +1156,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
             
             UNION ALL
 
@@ -1162,7 +1167,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
 
             UNION ALL
 
@@ -1173,7 +1178,7 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
             WHERE
                 MONTH(created_on) = MONTH(CURRENT_DATE())
                 AND YEAR(created_on) = YEAR(CURRENT_DATE())
-                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+                AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
         ) AS closing
     ");
         $closing_bal = $closing_qry->fetch()['closing_balance'];
@@ -1183,25 +1188,25 @@ if ($IDEtype == 1 and $IDEview_type == 1 and $IDE_name_id == '') { //Deposit wit
 
     $qry = $pdo->query("SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, '' AS Credit, amount AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 2 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, 'Hand Cash' AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 1 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
     
     UNION ALL 
     
     SELECT DATE_FORMAT(`created_on`, '%d-%m-%Y') AS tdate, bank_id AS ctype, amount AS Credit, '' AS Debit, amount AS Amount 
     FROM other_transaction 
-    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND insert_login_id = '$user_id' AND name ='$IDE_name_id'
+    WHERE MONTH(created_on) = MONTH(CURRENT_DATE()) AND YEAR(created_on) = YEAR(CURRENT_DATE()) AND `trans_cat` ='4' AND coll_mode = 2 AND type = 1 AND $branch_condition AND name ='$IDE_name_id'
     
     ORDER BY 1
     ");

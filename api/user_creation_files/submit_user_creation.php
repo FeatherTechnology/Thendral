@@ -15,6 +15,7 @@ $branch_name = implode(',', $_POST['branch_name']);
 $designation = $_POST['designation'];
 $occ_detail = $_POST['occ_detail'];
 $collection_access = $_POST['collection_access'];
+$report_access = $_POST['report_access'];
 $submenus = implode(',', $_POST['submenus']);
 $id = $_POST['id'];
 
@@ -24,13 +25,13 @@ if ($qry->rowCount() > 0) {
     $last_id = '0'; //Already exists.
 } else {
     if ($id != '0' && $id != '') {
-        $qry = $pdo->query("UPDATE `users` SET `name`='$name',`user_code`='$user_code',`role`='$role',`address`='$address',`place`='$place',`email`='$email',`mobile`='$mobile_no',`user_name`='$user_name',`password`='$password',`branch`='$branch_name',`designation`='$designation',`occ_detail`='$occ_detail',`collection_access`='$collection_access',`screens`='$submenus',`update_login_id`='$user_id',`updated_on`=now() WHERE `id`='$id'");
+        $qry = $pdo->query("UPDATE `users` SET `name`='$name',`user_code`='$user_code',`role`='$role',`address`='$address',`place`='$place',`email`='$email',`mobile`='$mobile_no',`user_name`='$user_name',`password`='$password',`branch`='$branch_name',`designation`='$designation',`occ_detail`='$occ_detail',`collection_access`='$collection_access',`report_access`='$report_access',`screens`='$submenus',`update_login_id`='$user_id',`updated_on`=now() WHERE `id`='$id'");
         if ($qry) {
             $status = '1';
             $last_id = $id;
         }
     } else {
-        $qry = $pdo->query("INSERT INTO `users`(`name`, `user_code`, `role`, `address`, `place`, `email`, `mobile`, `user_name`, `password`, `branch`, `designation`,`occ_detail`,`collection_access`,`screens`, `insert_login_id`, `created_on`) VALUES ('$name','$user_code','$role','$address','$place','$email','$mobile_no','$user_name','$password','$branch_name','$designation','$occ_detail','$collection_access','$submenus','$user_id',now())");
+        $qry = $pdo->query("INSERT INTO `users`(`name`, `user_code`, `role`, `address`, `place`, `email`, `mobile`, `user_name`, `password`, `branch`, `designation`,`occ_detail`,`collection_access`,`report_access`,`screens`, `insert_login_id`, `created_on`) VALUES ('$name','$user_code','$role','$address','$place','$email','$mobile_no','$user_name','$password','$branch_name','$designation','$occ_detail','$collection_access','$report_access','$submenus','$user_id',now())");
         if ($qry) {
             $status ='2'; 
             $last_id = $pdo->lastInsertId();

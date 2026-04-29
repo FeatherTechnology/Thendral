@@ -148,18 +148,18 @@ function getUserAccess() {
     },'json');
 }
 function getProcessingGroupList() {
-    let branchId = $('#branch_id :selected').val();
+      let branchId = $('#branch_id').length ? $('#branch_id').val() : '';
     serverSideTable('#group_creation_table', branchId , 'api/dashboard_files/get_process_group_list.php');
 
 }
 
 function getApprovalCounts() {
-    let branchId = $('#branch_id :selected').val();
+    let branchId = $('#branch_id').length ? $('#branch_id').val() : '';
     serverSideTable('#auction_list_table', branchId , 'api/dashboard_files/get_dashboard_auction_list.php');
 }
 
 function getCollectionCounts() {
-    let branchId = $('#branch_id :selected').val();
+    let branchId = $('#branch_id').length ? $('#branch_id').val() : '';
     $.post('api/dashboard_files/get_collection_details.php', { branchId }, function (response) {
         $('#tot_paid').text(moneyFormatIndia(response['total_paid']))
         $('#today_paid').text(moneyFormatIndia(response['today_paid']))
@@ -167,14 +167,14 @@ function getCollectionCounts() {
 }
 
 function getClosedCounts() {
-    let branchId = $('#branch_id :selected').val();
+    let branchId = $('#branch_id').length ? $('#branch_id').val() : '';
     $.post('api/dashboard_files/get_settlement_details.php', { branchId }, function (response) {
         $('#tot_settle').text(moneyFormatIndia(response['total_settle']))
         $('#today_settle').text(moneyFormatIndia(response['today_settle']))
     }, 'json');
 }
 function getColsummaryCounts() {
-    let branchId = $('#branch_id :selected').val();
+    let branchId = $('#branch_id').length ? $('#branch_id').val() : '';
     $.post('api/dashboard_files/get_collection_summary_details.php', { branchId }, function (response) {
         $('#month_paid').text(moneyFormatIndia(response['month_paid']))
         $('#month_unpaid').text(moneyFormatIndia(response['month_unpaid']))

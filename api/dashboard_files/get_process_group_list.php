@@ -1,11 +1,21 @@
 <?php
 //Showing Group list in status process.
 require '../../ajaxconfig.php';
-
-if(isset($_POST['params']) && $_POST['params'] !='' && $_POST['params'] !='0'){
-    $branch_id = "AND gc.branch = '".$_POST['params']."'";
-}else{
+@session_start();
+if (isset($_POST['params']) && $_POST['params'] != '' && $_POST['params'] != '0') {
+    $branch_id = "AND gc.branch = '" . $_POST['params'] . "'";
+    $branch_condition = '';
+} else if ($_POST['params'] != '0') {
     $branch_id = '';
+    // ✅ Decide user_id priority (POST > SESSION)
+    $user_id = $_SESSION['user_id'];
+    $userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+    $userData = $userQry->fetch();
+    $user_branches = $userData['branch']; // e.g. "1,2,3"
+    $branch_condition = " AND FIND_IN_SET(gc.branch, '$user_branches')";
+} else {
+    $branch_id = '';
+    $branch_condition = '';
 }
 
 // Define status mapping array
@@ -32,7 +42,7 @@ $column = array(
 $query = "SELECT gc.id, gc.grp_id, gc.grp_name, gc.chit_value, gc.total_months, gc.date,gc.start_month,gc.end_month, gc.commission, bc.branch_name,gc.status
         FROM group_creation gc 
         JOIN branch_creation bc ON gc.branch = bc.id 
-        WHERE gc.status = 1  $branch_id";
+        WHERE gc.status = 1  $branch_id $branch_condition";
 
 // Add search condition if search term is provided
 if (isset($_POST['search']) && $_POST['search'] != "") {

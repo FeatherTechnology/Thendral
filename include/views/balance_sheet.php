@@ -4,9 +4,11 @@
         <input type="button" class="toggle-button" data-toggle='modal' data-target='#dayModal' value='Day Wise'>
         <input type="button" class="toggle-button" value='Today'>
         <input type="button" class="toggle-button" data-toggle='modal' data-target='#monthModal' value='Month Wise'>
-        <select type="text" class="toggle-button" id='by_user' name='by_user'>
-            <option value=''>Select User</option>
-        </select>
+        <?php if ($_SESSION['user_id'] == 1) { ?>
+            <select class="toggle-button" id="by_user" name="by_user">
+                <option value="">Select User</option>
+            </select>
+        <?php } ?>
     </div> <br>
 
     <!----------------------------- CARD START Balance Sheet ------------------------------>
@@ -190,57 +192,57 @@
 
 <!-- Modal for Day Choose -->
 <div class="modal fade" id="dayModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-	<div class="modal-dialog " role="document">
-		<div class="modal-content" style="background-color: white">
-			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLongTitle">Day Wise</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body">
-				<div class="row container">
-					<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-						<label for="to_date">From Date</label>
-						<input type="date" name="from_date" id="from_date" class='form-control'>
-					</div>
-					<div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
-						<label for="to_date">To Date</label>
-						<input type="date" name="to_date" id="to_date" class='form-control'>
-					</div>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" id='submitDaywise'>Submit</button>
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-			</div>
-		</div>
-	</div>
+    <div class="modal-dialog " role="document">
+        <div class="modal-content" style="background-color: white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Day Wise</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row container">
+                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                        <label for="to_date">From Date</label>
+                        <input type="date" name="from_date" id="from_date" class='form-control'>
+                    </div>
+                    <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-12">
+                        <label for="to_date">To Date</label>
+                        <input type="date" name="to_date" id="to_date" class='form-control'>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id='submitDaywise'>Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal for Month Choose -->
 <div class="modal fade" id="monthModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-	<div class="modal-dialog " role="document">
-		<div class="modal-content" style="background-color: white">
-			<div class="modal-header">
-				<h5 class="modal-title" id="exampleModalLongTitle">Month Wise</h5>
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-					<span aria-hidden="true">&times;</span>
-				</button>
-			</div>
-			<div class="modal-body">
-				<div class="row container">
-					<div class="col-12">
-						<label for="for_month">Month of</label>
-						<input type="month" name="for_month" id="for_month" class='form-control'>
-					</div>
+    <div class="modal-dialog " role="document">
+        <div class="modal-content" style="background-color: white">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Month Wise</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row container">
+                    <div class="col-12">
+                        <label for="for_month">Month of</label>
+                        <input type="month" name="for_month" id="for_month" class='form-control'>
+                    </div>
 
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" id='submitMonthwise'>Submit</button>
-				<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-			</div>
-		</div>
-	</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id='submitMonthwise'>Submit</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>

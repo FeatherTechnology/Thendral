@@ -3,11 +3,14 @@ require "../../../ajaxconfig.php";
 $current_date = date('Y-m-d');
 @session_start();
 $user_id = $_SESSION['user_id'];
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
 
 $exp_cat = ["1" => 'Pooja', "2" => 'Vehicle', "3" => 'Fuel', "4" => 'Stationary', "5" => 'Press', "6" => 'Food', "7" => 'Rent', "8" => 'EB', "9" => 'Mobile bill', "10" => 'Office Maintenance', "11" => 'Salary', "12" => 'Tax & Auditor', "13" => 'Int Less', "14" => 'Agent Incentive', "15" => 'Common', "16" => 'Other'];
 $cash_type = ["1" => 'Hand Cash', "2" => 'Bank Cash'];
 $exp_list_arr = array();
-$qry = $pdo->query("SELECT e.*, bc.branch_name, b.bank_name FROM expenses e LEFT JOIN branch_creation bc ON e.branch = bc.id LEFT JOIN bank_creation b ON e.bank_id = b.id WHERE e.insert_login_id = '$user_id' AND DATE(e.created_on) = '$current_date' ");
+$qry = $pdo->query("SELECT e.*, bc.branch_name, b.bank_name FROM expenses e LEFT JOIN branch_creation bc ON e.branch = bc.id LEFT JOIN bank_creation b ON e.bank_id = b.id WHERE FIND_IN_SET(e.branch, '$user_branches') AND DATE(e.created_on) = '$current_date' ");
 if ($qry->rowCount() > 0) {
     while ($result = $qry->fetch()) {
         $result['branch'] = $result['branch_name'];

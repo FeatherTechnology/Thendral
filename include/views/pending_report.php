@@ -16,6 +16,7 @@
                                     <th>Customer Name</th>
                                     <th>Place</th>
                                     <th>Mobile</th>
+                                    <th>Branch</th>
                                     <th>Group ID</th>
                                     <th>Group Name</th>
                                     <th>Chit Value</th>
@@ -28,6 +29,7 @@
                             <tbody></tbody>
                             <tfoot>
                             <tr>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>

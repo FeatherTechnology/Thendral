@@ -1,6 +1,11 @@
 <?php
 require "../../../ajaxconfig.php";
+@session_start();
+$user_id = $_SESSION['user_id'];
 
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
 // First query to fetch group information
 $qry = $pdo->query("
     SELECT
@@ -11,7 +16,7 @@ $qry = $pdo->query("
     FROM
         group_creation
     WHERE
-        STATUS >= 3 AND STATUS <= 5
+        STATUS >= 3 AND STATUS <= 5 and FIND_IN_SET(branch, '$user_branches')
 ");
 
 $response = [];

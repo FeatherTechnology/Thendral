@@ -16,6 +16,7 @@
                                 <th>Customer ID</th>
                                 <th>Customer Name</th>
                                 <th>Place</th>
+                                <th>Branch</th>
                                 <th>Mobile</th>
                                 <th>Group ID</th>
                                 <th>Group Name</th>
@@ -27,6 +28,7 @@
                         <tbody></tbody>
                         <tfoot>
                             <tr>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                                 <td></td>

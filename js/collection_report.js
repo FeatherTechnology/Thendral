@@ -63,7 +63,7 @@ $(document).ready(function () {
                 };
 
                 // Array of column indices to sum
-                var columnsToSum = [9];
+                var columnsToSum = [10];
 
                 // Loop through each column index
                 columnsToSum.forEach(function (colIndex) {

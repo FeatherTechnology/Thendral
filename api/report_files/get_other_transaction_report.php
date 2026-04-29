@@ -6,6 +6,22 @@ $user_id = $_SESSION['user_id'];
 $from_date = $_POST['params']['from_date'];
 $to_date = $_POST['params']['to_date'];
 
+$userQry = $pdo->query("SELECT branch, report_access FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+
+$user_branches = $userData['branch']; // e.g. "1,2"
+$report_access = $userData['report_access'];
+
+$branch_condition = '';
+
+if ($report_access == '1') {
+    // user has limited access → only their branches
+    $user_branches_arr = explode(',', $user_branches);
+
+    $branch_ids = implode(',', array_map('intval', $user_branches_arr));
+
+    $branch_condition = " AND a.branch IN ($branch_ids)";
+}
 $trans_cat = ["1" => 'Deposit', "2" => 'Investment', "3" => 'EL', "4" => 'Exchange', "5" => 'Bank Deposit', "6" => 'Bank Withdrawal', "7" => 'Chit Advance', "8" => 'Other Income', "9" => 'Bank Unbilled'];
 $cash_type = ["1" => 'Hand Cash', "2" => 'Bank Cash'];
 $crdr = ["1" => 'Credit', "2" => 'Debit'];
@@ -14,9 +30,10 @@ $column = array(
     'a.id',
     'a.trans_cat',
     'gc.grp_id',
-    ' b.name',
+    'b.name',
     'cc.cus_name',
-    ' e.bank_name',
+    'bc.branch_name',
+    'e.bank_name',
     'a.auction_month',
     'a.ref_id',
     'a.trans_id',
@@ -32,21 +49,23 @@ $query = "SELECT
         d.name as username,  
         CONCAT(cc.first_name, ' ', cc.last_name) AS cus_name,
         e.bank_name as bank_namecash,
-        a.auction_month 
+        a.auction_month,
+        bc.branch_name
     FROM `other_transaction` a 
     LEFT JOIN other_trans_name b ON a.name = b.id 
     LEFT JOIN group_creation gc ON a.group_id = gc.grp_id 
     LEFT JOIN users d ON a.user_name = d.id 
     LEFT JOIN bank_creation e ON a.bank_id = e.id 
+    LEFT JOIN branch_creation bc ON a.branch = bc.id 
     LEFT JOIN customer_creation cc ON a.group_mem = cc.id 
-    WHERE a.insert_login_id = '$user_id' 
-    AND DATE(a.created_on) BETWEEN '$from_date' AND '$to_date'";
+    WHERE DATE(a.created_on) BETWEEN '$from_date' AND '$to_date' $branch_condition";
 
 if (isset($_POST['search']) && $_POST['search'] != "") {
     $search = $_POST['search'];
     $query .= " AND (a.trans_cat LIKE '%" . $search . "%'
                       OR group_id LIKE '%" . $search . "%'
                       OR  b.name LIKE '%" . $search . "%'
+                      OR  bc.branch_name LIKE '%" . $search . "%'
                       OR cus_name LIKE '%" . $search . "%'
                       OR  e.bank_name LIKE '%" . $search . "%'
                       OR a.auction_month  LIKE '%" . $search . "%'
@@ -95,6 +114,7 @@ foreach ($result as $row) {
     $sub_array[] = isset($row['group_id']) ? $row['group_id'] : '';
     $sub_array[] = isset($row['transname']) ? $row['transname'] : '';
     $sub_array[] = isset($row['cus_name']) ? $row['cus_name'] : '';
+    $sub_array[] = isset($row['branch_name']) ? $row['branch_name'] : '';
     $sub_array[] = isset($crdr[$row['type']]) ? $crdr[$row['type']]: '';
     $sub_array[] = isset($row['bank_namecash']) ? $row['bank_namecash'] : '';
     $sub_array[] = isset($row['ref_id']) ? $row['ref_id'] : '';

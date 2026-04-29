@@ -65,7 +65,6 @@ WHERE
      gc.status IN (3, 4) -- Fetch only groups with status 4
     AND cc.id = '$id'
     AND us.id = '$user_id'";
-
 // Handle search filter
 if (isset($_POST['search']) && $_POST['search'] != "") {
     $search = $_POST['search'];

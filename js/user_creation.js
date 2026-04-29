@@ -172,10 +172,11 @@ $(document).ready(function () {
             branch_name: $('#branch_name').val(),
             occ_detail:$("#occ_detail").val(),
             collection_access: $('#collection_access').val(),
+            report_access: $('#report_access').val(),
             submenus: selectedSubmenuIds,
             id: $('#user_creation_id').val()
         }
-        var data = ['name', 'user_id','role', 'user_name', 'password', 'confirm_password', 'place','designation','collection_access']
+        var data = ['name', 'user_id','role', 'user_name', 'password', 'confirm_password', 'place','designation','collection_access','report_access']
 
         var isValid = true;
         data.forEach(function (entry) {
@@ -229,6 +230,7 @@ $(document).ready(function () {
             $('#confirm_password').val(response[0].password);
             $('#occ_detail').val(response[0].occ_detail);
             $('#collection_access').val(response[0].collection_access);
+            $('#report_access').val(response[0].report_access);
 
             setTimeout(() => {
                 getUserID(id)
@@ -320,6 +322,7 @@ $(document).ready(function () {
         $('#password').css('border', '1px solid #cecece');
         $('#confirm_password').css('border', '1px solid #cecece');
         $('#collection_access').css('border', '1px solid #cecece');
+        $('#report_access').css('border', '1px solid #cecece');
         $('#branch_name').closest('.choices').find('.choices__inner').css('border', '1px solid #cecece');
     });
 

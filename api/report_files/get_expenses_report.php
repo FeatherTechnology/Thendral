@@ -5,6 +5,24 @@ $user_id = $_SESSION['user_id'];
 
 $from_date = $_POST['params']['from_date'];
 $to_date = $_POST['params']['to_date'];
+
+$userQry = $pdo->query("SELECT branch, report_access FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+
+$user_branches = $userData['branch']; // e.g. "1,2"
+$report_access = $userData['report_access'];
+
+$branch_condition = '';
+
+if ($report_access == '1') {
+    // user has limited access → only their branches
+    $user_branches_arr = explode(',', $user_branches);
+
+    $branch_ids = implode(',', array_map('intval', $user_branches_arr));
+
+    $branch_condition = " AND e.branch IN ($branch_ids)";
+}
+// if report_access == 2 → no condition (show all)
 $exp_cat = [
     "1" => 'Pooja', 
     "2" => 'Vehicle', 
@@ -39,8 +57,7 @@ $query = "SELECT e.id,e.invoice_id,e.expenses_category,e.description,e.amount, b
           FROM expenses e 
           LEFT JOIN branch_creation bc ON e.branch = bc.id 
           LEFT JOIN bank_creation b ON e.bank_id = b.id 
-          WHERE e.insert_login_id = '$user_id' 
-          AND DATE(e.created_on) BETWEEN '$from_date' AND '$to_date'";
+          WHERE DATE(e.created_on) BETWEEN '$from_date' AND '$to_date' $branch_condition";
 
 if (isset($_POST['search']) && $_POST['search'] != "") {
     $search = $_POST['search'];

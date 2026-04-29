@@ -6,11 +6,30 @@ $user_id = $_SESSION['user_id'];
 $from_date = $_POST['from_date'];
 $to_date = $_POST['to_date'];
 
+
+$userQry = $pdo->query("SELECT branch, report_access FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+
+$user_branches = $userData['branch']; // e.g. "1,2"
+$report_access = $userData['report_access'];
+
+$branch_condition = '';
+
+if ($report_access == '1') {
+    // user has limited access → only their branches
+    $user_branches_arr = explode(',', $user_branches);
+
+    $branch_ids = implode(',', array_map('intval', $user_branches_arr));
+
+    $branch_condition = " AND gc.branch IN ($branch_ids)";
+}
+
 $column = array(
     'c.id',
     'cc.cus_id',
     'cc.first_name',
     'pl.place',
+    'bc.branch_name',
     'cc.mobile1',
     'gc.grp_id',
     'gc.grp_name',
@@ -24,6 +43,7 @@ $query = "SELECT
     cc.cus_id,
     CONCAT(cc.first_name, ' ', cc.last_name) AS first_name,
     pl.place,
+    bc.branch_name,
     cc.mobile1,
     gc.grp_id,
     gc.grp_name,
@@ -40,16 +60,18 @@ LEFT JOIN group_creation gc ON
     c.group_id = gc.grp_id
 LEFT JOIN place pl ON
     cc.place = pl.id
-JOIN users u ON
-    u.id = c.insert_login_id
+LEFT JOIN branch_creation bc ON
+    gc.branch = bc.id
 WHERE
-    u.id = '1' AND DATE(c.collection_date) BETWEEN '$from_date' AND '$to_date'";
+  DATE(c.collection_date) BETWEEN '$from_date' AND '$to_date' $branch_condition";
 
 if (isset($_POST['search'])) {
     if ($_POST['search'] != "") {
         $query .= " and (cc.cus_id LIKE '%" . $_POST['search'] . "%'
                     OR  CONCAT(cc.first_name, ' ', cc.last_name) LIKE '%" . $_POST['search'] . "%'
                     OR pl.place LIKE '%" . $_POST['search'] . "%'
+                    OR bc.branch_name LIKE '%" . $_POST['search'] . "%'
+                    OR cc.mobile1 LIKE '%" . $_POST['search'] . "%'
                     OR gc.grp_id LIKE '%" . $_POST['search'] . "%'
                     OR gc.grp_name LIKE '%" . $_POST['search'] . "%'
                     OR c.auction_month LIKE '%" . $_POST['search'] . "%'
@@ -89,6 +111,7 @@ foreach ($result as $row) {
     $sub_array[] = isset($row['cus_id']) ? $row['cus_id'] : '';
     $sub_array[] = isset($row['first_name']) ? $row['first_name'] : '';
     $sub_array[] = isset($row['place']) ? $row['place'] : '';
+    $sub_array[] = isset($row['branch_name']) ? $row['branch_name'] : '';
     $sub_array[] = isset($row['mobile1']) ? $row['mobile1'] : '';
     $sub_array[] = isset($row['grp_id']) ? $row['grp_id'] : '';
     $sub_array[] = isset($row['grp_name']) ? $row['grp_name'] : '';

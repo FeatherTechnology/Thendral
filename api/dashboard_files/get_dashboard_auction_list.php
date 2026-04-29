@@ -1,12 +1,23 @@
 <?php
 // Today Auction List and next Auction date in the future.
 require '../../ajaxconfig.php';
-
+@session_start();
 if (isset($_POST['params']) && $_POST['params'] != '' && $_POST['params'] != '0') {
     $branch_id = "AND gc.branch = '" . $_POST['params'] . "'";
+    $branch_condition = '';
+} else if ($_POST['params'] != '0') {
+    $branch_id = '';
+    // ✅ Decide user_id priority (POST > SESSION)
+    $user_id = $_SESSION['user_id'];
+    $userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+    $userData = $userQry->fetch();
+    $user_branches = $userData['branch']; // e.g. "1,2,3"
+    $branch_condition = " AND FIND_IN_SET(gc.branch, '$user_branches')";
 } else {
     $branch_id = '';
+    $branch_condition = '';
 }
+
 
 $currentMonth = date('m');
 $currentYear = date('Y');
@@ -64,14 +75,12 @@ $query  = "WITH RankedDates AS (
         auction_details ad ON gc.grp_id = ad.group_id
     JOIN 
         branch_creation bc ON gc.branch = bc.id
-    JOIN 
-        users us ON FIND_IN_SET(gc.branch, us.branch)
     WHERE 
         gc.status BETWEEN 2 AND 3
         AND (ad.status = 1 OR ad.date >= CURDATE())  -- Include past dates where status is 1
         AND YEAR(ad.date) = '$currentYear'
         AND MONTH(ad.date) = '$currentMonth'
-        $searchQuery $branch_id
+        $searchQuery $branch_id $branch_condition
 ),
 UpcomingAuctions AS (
     SELECT 
@@ -138,6 +147,7 @@ SELECT DISTINCT
 FROM 
     FilteredAuctions fa
 ";
+
 // Add ordering condition
 if (isset($_POST['order'])) {
     $column = ['id', 'grp_id', 'grp_name', 'chit_value', 'total_months', 'creation_date', 'auction_date', 'auction_month', 'branch_name', 'status'];
@@ -167,7 +177,6 @@ if (isset($_POST['order'])) {
     LPAD(minutes, 2, '0') ASC, 
     -- Finally, order by id
     id ASC";
-   
 }
 $query1 = '';
 if (isset($_POST['length']) && $_POST['length'] != -1) {
@@ -192,19 +201,19 @@ foreach ($result as $row) {
     $sub_array[] = isset($row['chit_value']) ? moneyFormatIndia($row['chit_value']) : ''; // Apply formatting here
     $sub_array[] = isset($row['total_months']) ? $row['total_months'] : '';
     $sub_array[] = isset($row['auction_date']) ? date('j', strtotime($row['auction_date'])) : '';
-     // Format hours, minutes, and ampm
-     $formattedTime = '';
-     if (isset($row['hours']) && isset($row['minutes']) && isset($row['ampm'])) {
-         $formattedTime = sprintf("%02d:%02d %s", (int)$row['hours'], (int)$row['minutes'], strtoupper($row['ampm']));
-     }
- 
-     $sub_array[] = $formattedTime; // Add formatted time to sub-array
+    // Format hours, minutes, and ampm
+    $formattedTime = '';
+    if (isset($row['hours']) && isset($row['minutes']) && isset($row['ampm'])) {
+        $formattedTime = sprintf("%02d:%02d %s", (int)$row['hours'], (int)$row['minutes'], strtoupper($row['ampm']));
+    }
+
+    $sub_array[] = $formattedTime; // Add formatted time to sub-array
     $sub_array[] = isset($row['auction_month']) ? $row['auction_month'] : '';
     $sub_array[] = isset($row['branch_name']) ? $row['branch_name'] : '';
     $sub_array[] = isset($row['status']) ? $auction_status[$row['status']] : '';
 
 
-    $action = "<a href='auction' class='btn btn-primary open-auction-list'  data-grpid='" . $row['grp_id']. "' data-grpname='".$row['grp_name']."' data-chitval='".$row['chit_value']."'>&nbsp;View</button>";
+    $action = "<a href='auction' class='btn btn-primary open-auction-list'  data-grpid='" . $row['grp_id'] . "' data-grpname='" . $row['grp_name'] . "' data-chitval='" . $row['chit_value'] . "'>&nbsp;View</button>";
 
     $sub_array[] = $action;
     $data[] = $sub_array;
@@ -230,12 +239,13 @@ $output = array(
 
 echo json_encode($output);
 
-function moneyFormatIndia($num) {
+function moneyFormatIndia($num)
+{
     $explrestunits = "";
     if (strlen($num) > 3) {
         $lastthree = substr($num, strlen($num) - 3, strlen($num));
         $restunits = substr($num, 0, strlen($num) - 3); // extracts the last three digits
-        $restunits = (strlen($restunits) % 2 == 1) ? "0" . $restunits : $restunits; 
+        $restunits = (strlen($restunits) % 2 == 1) ? "0" . $restunits : $restunits;
         $expunit = str_split($restunits, 2);
         for ($i = 0; $i < sizeof($expunit); $i++) {
             // creates each of the 2 unit pairs, adds a comma
@@ -251,4 +261,3 @@ function moneyFormatIndia($num) {
     }
     return $thecash;
 }
-?>

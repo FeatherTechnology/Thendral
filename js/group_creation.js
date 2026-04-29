@@ -820,8 +820,9 @@ function callGrpFunctions() {
     getCustomerList();
     getJoiningMonth()
 }
+
 function getBranchList() {
-    $.post('api/common_files/get_branch_list.php', function (response) {
+    $.post('api/common_files/user_mapped_branches.php', function (response) {
         let branchOptn = '';
         branchOptn = '<option value="">Select Branch</option>';
         response.forEach(val => {

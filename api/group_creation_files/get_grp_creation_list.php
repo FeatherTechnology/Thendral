@@ -27,7 +27,8 @@ $column = array(
 $query = "SELECT gc.id, gc.grp_id, gc.grp_name, gc.chit_value, gc.total_months, gc.date,gc.start_month,gc.end_month, gc.commission, bc.branch_name,gc.status
           FROM group_creation gc 
           JOIN branch_creation bc ON gc.branch = bc.id 
-          WHERE 1";
+          JOIN users us ON FIND_IN_SET(gc.branch, us.branch) > 0
+          WHERE us.id = '$user_id'";
 
 // Add search condition if search term is provided
 if (isset($_POST['search']) && $_POST['search'] != "") {

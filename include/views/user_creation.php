@@ -190,6 +190,16 @@
                                             </select>
                                         </div>
                                     </div>
+                                     <div class="col-sm-4 col-md-4 col-lg-4">
+                                        <div class="form-group">
+                                            <label for="report_access">Report Access</label><span class="text-danger">*</span>
+                                            <select class="form-control" id="report_access" name="report_access" tabindex="18" >
+                                                <option value="">Select Report Access</option>
+                                                <option value="1">Individual</option>
+                                                <option value="2">Overall</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

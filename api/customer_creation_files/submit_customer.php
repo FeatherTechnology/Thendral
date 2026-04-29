@@ -42,12 +42,36 @@ $reference = $_POST['reference'];
 $customer_id = $_POST['customer_id'];
 $user_id = $_SESSION['user_id'];
 
+try {
+    // Begin transaction
+    $pdo->beginTransaction();
+    // Get the latest customer ID
+    $selectIC = $pdo->query("SELECT cus_id FROM customer_creation WHERE cus_id != '' ORDER BY id DESC LIMIT 1 FOR UPDATE");
+
 if ($customer_id != '') {
     $qry = $pdo->query("UPDATE `customer_creation` SET `reference_type`='$reference_type', `cus_name`='$cus_name',`ref_cus_id`='$ref_cus_id',`name`='$name', `mobile`='$mobile', `declaration`='$declaration',`cus_id`='$cus_id', `aadhar_number`='$aadhar_number', `first_name`='$first_name', `last_name`='$last_name', `dob`='$dob',`age`='$age',`place`='$place', `mobile1`='$mobile1', `mobile2`='$mobile2', `whatsapp`='$whatsapp', `address`='$address', `native_address`='$native_address',`pic`='$picture',`tot_income`='$tot_income', `chit_limit`='$chit_limit', `reference`='$reference', `update_login_id`='$user_id', updated_on = now() WHERE `id`='$customer_id'");
     $result = 0; // Update
 } else {
+    if ($selectIC->rowCount() > 0) {
+        $row = $selectIC->fetch();
+        $ac2 = $row["cus_id"];
+        $appno2 = ltrim(strstr($ac2, '-'), '-'); // Extract numeric part after the hyphen
+        $appno2 = $appno2 + 1;
+        $cus_id = "C-" . $appno2;
+    } else {
+        $cus_id = "C-101"; // If no previous customer ID exists, start with C-1
+    } 
     $qry = $pdo->query("INSERT INTO `customer_creation`(`reference_type`, `cus_name`,`ref_cus_id`, `name`, `mobile`, `declaration`, `cus_id`,`aadhar_number`, `first_name`, `last_name`,`dob`,`age`,`place`, `mobile1`, `mobile2`, `whatsapp`, `address`, `native_address`,`pic`, `tot_income`, `chit_limit`, `reference`, `insert_login_id`, `created_on`) VALUES ('$reference_type', '$cus_name','$ref_cus_id', '$name', '$mobile', '$declaration','$cus_id','$aadhar_number', '$first_name', '$last_name','$dob','$age','$place', '$mobile1', '$mobile2', '$whatsapp', '$address', '$native_address', '$picture','$tot_income', '$chit_limit', '$reference', '$user_id', now())");
     $result = 1; // Insert
+}
+   // Commit transaction
+   $pdo->commit();
+
+} catch (Exception $e) {
+    // Rollback the transaction on error
+    $pdo->rollBack();
+    echo "Error: " . $e->getMessage();
+    exit;
 }
 
 echo json_encode($result);

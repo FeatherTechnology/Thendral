@@ -40,7 +40,7 @@ $(document).ready(function () {
             dom: 'lBfrtip',
             buttons: [{
                 extend: 'excel',
-                title: "Collection Report List"
+                title: "Pending Report List"
             },
             {
                 extend: 'colvis',
@@ -63,7 +63,7 @@ $(document).ready(function () {
                 };
 
                 // Array of column indices to sum
-                var columnsToSum = [10];
+                var columnsToSum = [11];
 
                 // Loop through each column index
                 columnsToSum.forEach(function (colIndex) {

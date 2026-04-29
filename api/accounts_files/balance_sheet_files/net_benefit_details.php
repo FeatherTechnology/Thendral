@@ -1,25 +1,30 @@
 <?php
 require "../../../ajaxconfig.php";
-
+@session_start();
+// ✅ Decide user_id priority (POST > SESSION)
+$user_id = !empty($_POST['user_id']) ? $_POST['user_id'] : $_SESSION['user_id'];
+$userQry = $pdo->query("SELECT branch FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+$user_branches = $userData['branch']; // e.g. "1,2,3"
+$branch_condition = " AND FIND_IN_SET(branch, '$user_branches')";
 $type = $_POST['type'];
 $user_id = isset($_POST['user_id']) ? $_POST['user_id'] : ''; // Check if user_id is set
-$userwhere = $user_id != '' ? " AND insert_login_id = '" . $user_id . "' " : ''; // User-based filtering
-$siuserswhere = $user_id != '' ? " AND c.insert_login_id = '" . $user_id . "' " : ''; // Settlement info user-based filtering    
+
 
 // Date conditions based on type (today, day range, or month)
 if ($type == 'today') {
-    $where = " DATE(created_on) = CURRENT_DATE $userwhere";
-    $siwhere = " DATE(c.collection_date) = CURRENT_DATE $siuserswhere";
+    $where = " DATE(created_on) = CURRENT_DATE";
+    $siwhere = " DATE(c.collection_date) = CURRENT_DATE";
 } else if ($type == 'day') {
     $from_date = $_POST['from_date'];
     $to_date = $_POST['to_date'];
-    $where = " (DATE(created_on) >= '$from_date' AND DATE(created_on) <= '$to_date') $userwhere ";
-    $siwhere = " (DATE(c.collection_date) >= '$from_date' AND DATE(c.collection_date) <= '$to_date') $siuserswhere ";
+    $where = " (DATE(created_on) >= '$from_date' AND DATE(created_on) <= '$to_date') ";
+    $siwhere = " (DATE(c.collection_date) >= '$from_date' AND DATE(c.collection_date) <= '$to_date') ";
 } else if ($type == 'month') {
     $month = date('m', strtotime($_POST['month']));
     $year = date('Y', strtotime($_POST['month']));
-    $where = " (MONTH(created_on) = '$month' AND YEAR(created_on) = $year) $userwhere";
-    $siwhere = " (MONTH(c.collection_date) = '$month' AND YEAR(c.collection_date) = $year) $siuserswhere";
+    $where = " (MONTH(created_on) = '$month' AND YEAR(created_on) = $year)";
+    $siwhere = " (MONTH(c.collection_date) = '$month' AND YEAR(c.collection_date) = $year)";
 }
 
 $result = array();
@@ -41,10 +46,11 @@ FROM
 JOIN 
     group_creation gc ON c.group_id = gc.grp_id 
 WHERE 
-    $siwhere 
+    $siwhere AND FIND_IN_SET(gc.branch, '$user_branches')
 GROUP BY 
     gc.grp_id, c.share_id;
 ");
+
 
 $benefit = 0; // Initialize benefit variable
 // Initialize an array to hold all cus_mapping_ids for this group
@@ -69,7 +75,7 @@ while ($row = $qry->fetch(PDO::FETCH_ASSOC)) {
             ad.date AS auction_date,
             ad.chit_amount,
             gs.share_percent,
-             (ad.chit_amount * gs.share_percent / 100) AS chit_share,
+            (ad.chit_amount * gs.share_percent / 100) AS chit_share,
              gs.share_percent
         FROM 
             auction_details ad
@@ -385,6 +391,7 @@ ORDER BY
 //print_r($excluded_customers);
 // Check conditions for excluded customers after the while loop
 foreach ($excluded_customers as $share_id => $auction_data) {
+        $finl_val=0;
     // Iterate through all auctions including previous ones
     if (isset($excluded_customers[$share_id]) && is_array($excluded_customers[$share_id])) {
         foreach ($excluded_customers[$share_id] as $auction_info) {
@@ -485,11 +492,11 @@ foreach ($excluded_customers as $share_id => $auction_data) {
 }
 
 // Query for Other Income
-$qry3 = $pdo->query("SELECT COALESCE(SUM(amount), 0) AS oi_dr FROM `other_transaction` WHERE trans_cat = '8' AND type = '1' AND $where");
+$qry3 = $pdo->query("SELECT COALESCE(SUM(amount), 0) AS oi_dr FROM `other_transaction` WHERE trans_cat = '8' AND type = '1' $branch_condition AND $where");
 $oicr = $qry3->fetchColumn() ?: 0; // Fetch total other income or default to 0
 
 // Query for Expenses
-$qry4 = $pdo->query("SELECT COALESCE(SUM(amount), 0) AS exp_dr FROM `expenses` WHERE $where");
+$qry4 = $pdo->query("SELECT COALESCE(SUM(amount), 0) AS exp_dr FROM `expenses` WHERE $where $branch_condition");
 $expdr = $qry4->fetchColumn() ?: 0; // Fetch total expenses or default to 0
 
 $result[0]['oicr'] = $oicr;

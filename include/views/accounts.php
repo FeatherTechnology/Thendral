@@ -295,7 +295,7 @@ function moneyFormatIndia($num1)
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 overflow-x-cls">
                         <table id="accounts_other_trans_table" class="table custom-table">
                             <thead>
                                 <tr>
@@ -307,6 +307,8 @@ function moneyFormatIndia($num1)
                                     <th>Type</th>
                                     <th>Bank Name</th>
                                     <th>Reference ID</th>
+                                    <th>Branch Name</th>
+                                     <th>To Bank</th>
                                     <th>Transaction ID</th>
                                     <th>Amount</th>
                                     <th>Auction Month</th>
@@ -414,7 +416,7 @@ function moneyFormatIndia($num1)
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12 exp_trans_div" style="display: none;">
                                 <div class="form-group">
                                     <label for="expenses_trans_id">Transaction ID</label><span class="text-danger">*</span>
-                                    <input type="number" class="form-control" name="expenses_trans_id" id="expenses_trans_id" tabindex="13">
+                                    <input type="text" class="form-control" name="expenses_trans_id" id="expenses_trans_id" tabindex="13">
                                 </div>
                             </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
@@ -535,6 +537,14 @@ function moneyFormatIndia($num1)
                                     </select>
                                 </div>
                             </div>
+                              <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
+                                <div class="form-group">
+                                    <label for="other_branch_name">Branch Name</label><span class="text-danger">*</span>
+                                    <select class="form-control" name="other_branch_name" id="other_branch_name" tabindex="6">
+                                        <option value="">Select Branch Name</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12">
                                 <div class="form-group">
                                     <label for="cat_type">Type</label><span class="text-danger">*</span>
@@ -549,10 +559,18 @@ function moneyFormatIndia($num1)
                                     <input type="text" class="form-control" name="other_ref_id" id="other_ref_id" tabindex="9" readonly>
                                 </div>
                             </div>
+                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12 other_exchange_div" style="display: none;">
+                                <div class="form-group">
+                                    <label for="to_bank">To Bank</label><span class="text-danger">*</span>
+                                    <select class="form-control" name="to_bank" id="to_bank" tabindex="8">
+                                        <option value="">Select To Bank</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12 other_trans_div" style="display: none;">
                                 <div class="form-group">
                                     <label for="other_trans_id">Transaction ID</label><span class="text-danger">*</span>
-                                    <input type="number" class="form-control" name="other_trans_id" id="other_trans_id" tabindex="10">
+                                    <input type="text" class="form-control" name="other_trans_id" id="other_trans_id" tabindex="10">
                                 </div>
                             </div>
                             <!-- <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4 col-12 other_user_name_div" style="display: none;">
@@ -604,6 +622,8 @@ function moneyFormatIndia($num1)
                                     <th>Type</th>
                                     <th>Bank Name</th>
                                     <th>Reference ID</th>
+                                    <th>Branch Name</th>
+                                    <th>To Bank</th>
                                     <th>Transaction ID</th>
                                     <th>Amount</th>
                                     <th>Auction Month</th>

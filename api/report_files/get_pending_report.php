@@ -2,6 +2,22 @@
 include '../../ajaxconfig.php';
 @session_start();
 $user_id = $_SESSION['user_id'];
+$userQry = $pdo->query("SELECT branch, report_access FROM users WHERE id = '$user_id'");
+$userData = $userQry->fetch();
+
+$user_branches = $userData['branch']; // e.g. "1,2"
+$report_access = $userData['report_access'];
+
+$branch_condition = '';
+
+if ($report_access == '1') {
+    // user has limited access → only their branches
+    $user_branches_arr = explode(',', $user_branches);
+
+    $branch_ids = implode(',', array_map('intval', $user_branches_arr));
+
+    $branch_condition = " AND gc.branch IN ($branch_ids)";
+}
 $from_date = $_POST['from_date'];
 $current_time = date('H:i:s');
 $dateTime = $from_date . ' ' . $current_time;
@@ -20,10 +36,12 @@ $query2 = "SELECT gs.id, gc.grp_id, COALESCE((la.chit_amount * gs.share_percent 
                 SELECT MAX(created_on) FROM collection WHERE share_id = gs.id AND auction_month = la.last_auction_month
             ) 
             JOIN group_creation gc ON gs.grp_creation_id = gc.grp_id 
-            WHERE c.share_id IS NULL OR (c.payable != c.collection_amount) 
+            LEFT JOIN branch_creation bc ON gc.branch = bc.id
+            WHERE c.share_id IS NULL OR (c.payable != c.collection_amount) $branch_condition
             GROUP BY gs.id";
 
 $stmt3 = $pdo->query($query2);
+
 $ids = array();
 $previous_amounts = array();
 $payables = array(); // Store payable amounts for each share ID
@@ -64,7 +82,7 @@ foreach ($stmt3 as $row1) {
     }
 }
 
-$query = "SELECT gs.id, cc.cus_id, CONCAT(cc.first_name, ' ', cc.last_name) AS first_name, pl.place, cc.mobile1, 
+$query = "SELECT gs.id, cc.cus_id, CONCAT(cc.first_name, ' ', cc.last_name) AS first_name, pl.place, cc.mobile1, bc.branch_name,
            gc.grp_id, gc.grp_name, gc.chit_value, la.last_auction_month, 
            COALESCE((a.chit_amount * gs.share_percent / 100), 0) AS current_chit, 
            COALESCE((la.chit_amount * gs.share_percent / 100), 0) AS total_chit_amount 
@@ -79,15 +97,16 @@ $query = "SELECT gs.id, cc.cus_id, CONCAT(cc.first_name, ' ', cc.last_name) AS f
            ) la ON gs.grp_creation_id = la.group_id 
            LEFT JOIN auction_details a ON la.auction_id = a.id 
            JOIN group_creation gc ON gs.grp_creation_id = gc.grp_id 
+           LEFT JOIN branch_creation bc ON gc.branch = bc.id
            JOIN customer_creation cc ON gs.cus_id = cc.id 
            LEFT JOIN place pl ON cc.place = pl.id 
-           WHERE gs.id IN (" . implode(',', $ids) . ") 
+           WHERE gs.id IN (" . implode(',', $ids) . ") $branch_condition
            GROUP BY gs.id";
 
-$column = array('gs.id', 'cc.cus_id', 'cc.first_name', 'pl.place', 'cc.mobile1', 'gc.grp_id', 'gc.grp_name', 'gc.chit_value', 'last_auction_month', 'gs.id', 'gs.id','gs.id');
+$column = array('gs.id', 'cc.cus_id', 'cc.first_name', 'pl.place', 'cc.mobile1', 'bc.branch_name', 'gc.grp_id', 'gc.grp_name', 'gc.chit_value', 'last_auction_month', 'gs.id', 'gs.id','gs.id');
 
 if (isset($_POST['search']) && $_POST['search'] != "") {
-    $query .= " and (cc.cus_id LIKE '%" . $_POST['search'] . "%' OR CONCAT(cc.first_name, ' ', cc.last_name) LIKE '%" . $_POST['search'] . "%' OR pl.place LIKE '%" . $_POST['search'] . "%' OR gc.grp_id LIKE '%" . $_POST['search'] . "%' OR gc.grp_name LIKE '%" . $_POST['search'] . "%' OR gc.chit_value LIKE '%" . $_POST['search'] . "%') ";
+    $query .= " and (cc.cus_id LIKE '%" . $_POST['search'] . "%' OR CONCAT(cc.first_name, ' ', cc.last_name) LIKE '%" . $_POST['search'] . "%' OR pl.place LIKE '%" . $_POST['search'] . "%' OR bc.branch_name LIKE '%" . $_POST['search'] . "%' OR gc.grp_id LIKE '%" . $_POST['search'] . "%' OR gc.grp_name LIKE '%" . $_POST['search'] . "%' OR gc.chit_value LIKE '%" . $_POST['search'] . "%') ";
 }
 
 if (isset($_POST['order'])) {
@@ -119,6 +138,7 @@ foreach ($result as $row) {
     $sub_array[] = isset($row['first_name']) ? $row['first_name'] : '';
     $sub_array[] = isset($row['place']) ? $row['place'] : '';
     $sub_array[] = isset($row['mobile1']) ? $row['mobile1'] : '';
+    $sub_array[] = isset($row['branch_name']) ? $row['branch_name'] : '';
     $sub_array[] = isset($row['grp_id']) ? $row['grp_id'] : '';
     $sub_array[] = isset($row['grp_name']) ? $row['grp_name'] : '';
     $sub_array[] = isset($row['chit_value']) ? moneyFormatIndia($row['chit_value']) : '';
